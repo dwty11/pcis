@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCIS — Persistent Cognitive Identity System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-card-hover: #1a1a25;
+  --border: #1e1e2e;
+  --border-bright: #2a2a3e;
+  --text: #e0e0e8;
+  --text-dim: #8888a0;
+  --text-muted: #555570;
+  --accent: #4f8ef7;
+  --accent-glow: rgba(79, 142, 247, 0.15);
+  --purple: #a78bfa;
+  --purple-glow: rgba(167, 139, 250, 0.15);
+  --green: #34d399;
+  --green-glow: rgba(52, 211, 153, 0.12);
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(79,142,247,0.03) 0%, transparent 100%);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  letter-spacing: -1px;
+}
+
+.logo-text {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.header-meta {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  max-width: 220px;
+}
+
+.header-meta #headerRoot {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 40px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(18, 18, 26, 0.5);
+}
+
+.tab {
+  padding: 14px 28px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(79, 142, 247, 0.05);
+}
+
+/* ── Content ── */
+.content { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-bright); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card-badge {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* ── Boot Screen ── */
+.boot-columns {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: 0;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .boot-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.boot-explain {
+  padding: 24px 0 24px 28px;
+  border-left: 1px solid var(--border);
+  align-self: stretch;
+}
+
+@media (max-width: 860px) {
+  .boot-explain {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding: 24px 0 0 0;
+    margin-top: 20px;
+  }
+}
+
+.boot-explain-section {
+  margin-bottom: 28px;
+}
+
+.boot-explain-section:last-child {
+  margin-bottom: 0;
+}
+
+.boot-explain-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.boot-explain-text {
+  font-size: 13px;
+  line-height: 1.75;
+  color: rgba(240, 240, 245, 0.75);
+}
+
+.boot-terminal {
+  background: #08080d;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  min-height: 380px;
+  max-height: 500px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.boot-terminal .line {
+  opacity: 0;
+  animation: fadeIn 0.15s forwards;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+.boot-terminal .ok { color: var(--green); }
+.boot-terminal .warn { color: var(--yellow); }
+.boot-terminal .err { color: var(--red); }
+.boot-terminal .dim { color: var(--text-muted); }
+.boot-terminal .hash { color: var(--purple); }
+.boot-terminal .file { color: var(--accent); }
+.boot-terminal .label { color: var(--text-dim); }
+
+.boot-result {
+  text-align: center;
+  margin-top: 32px;
+  display: none;
+}
+
+.boot-result.visible { display: block; }
+
+.boot-status {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+.boot-status.clean { color: var(--green); text-shadow: 0 0 40px var(--green-glow); }
+.boot-status.changed { color: var(--yellow); }
+.boot-status.error { color: var(--red); }
+
+.boot-root {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--purple);
+  word-break: break-all;
+  padding: 12px 20px;
+  background: var(--purple-glow);
+  border-radius: 8px;
+  display: inline-block;
+  max-width: 600px;
+  margin-top: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid var(--accent);
+  background: rgba(79, 142, 247, 0.1);
+  color: var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover {
+  background: rgba(79, 142, 247, 0.2);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-center { display: flex; justify-content: center; margin-bottom: 24px; }
+
+/* ── Tree Screen ── */
+.tree-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.branch-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.branch-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.branch-card:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.branch-card:hover::before { opacity: 1; }
+
+.branch-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.branch-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.branch-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.branch-hash {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Branch Expanded View ── */
+.branch-expanded {
+  display: none;
+  margin-top: 16px;
+}
+.branch-expanded.visible { display: block; }
+
+.leaf-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+.leaf-item.counter {
+  border-left: 3px solid var(--orange);
+}
+
+.leaf-content {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.leaf-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.confidence-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confidence-track {
+  width: 60px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.conf-high { background: var(--green); }
+.conf-mid { background: var(--yellow); }
+.conf-low { background: var(--orange); }
+
+/* ── Back button ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+.back-btn:hover { color: var(--text); border-color: var(--border-bright); }
+
+/* ── Query Screen ── */
+.query-input-wrap {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.query-input {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.query-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.query-input::placeholder { color: var(--text-muted); }
+
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 14px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.result-card:hover { border-color: var(--border-bright); }
+
+.result-rank {
+  position: absolute;
+  top: -1px; left: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 12px;
+  background: var(--accent);
+  color: white;
+  border-radius: 0 0 6px 6px;
+  letter-spacing: 1px;
+}
+
+.result-branch {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--purple-glow);
+  color: var(--purple);
+  text-transform: capitalize;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+
+.result-content {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.result-hash {
+  word-break: break-all;
+  color: var(--purple);
+}
+
+.query-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.match-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Adversarial Screen ── */
+.adversarial-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--orange);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.adv-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--orange);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.adv-original {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.adv-original-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.adv-counter {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+.adv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Stats Row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.stat-value.purple { color: var(--purple); }
+.stat-value.green { color: var(--green); }
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Detail view overlay ── */
+.detail-view {
+  display: none;
+}
+.detail-view.visible {
+  display: block;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+/* ── Loading ── */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Pulse dot ── */
+.pulse-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">P</div>
+    <div>
+      <div class="logo-text">PCIS</div>
+      <div class="logo-sub">Persistent Cognitive Identity System</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div><span class="pulse-dot"></span> &nbsp;System Active</div>
+    <div id="headerRoot" style="margin-top:4px"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="boot">Boot</div>
+  <div class="tab" data-tab="tree">Knowledge Tree</div>
+  <div class="tab" data-tab="query">Query</div>
+  <div class="tab" data-tab="adversarial">Adversarial</div>
+  <div class="tab" data-tab="adversarial-validation">External LLM Validation</div>
+</div>
+
+<div class="content">
+
+  <!-- BOOT SCREEN -->
+  <div class="screen active" id="screen-boot">
+    <div class="btn-center">
+      <button class="btn" id="bootBtn" onclick="runBoot()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v6M4.5 3.5L8 7l3.5-3.5M2 9a6 6 0 1012 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Run Integrity Check
+      </button>
+    </div>
+    <div class="boot-columns">
+      <div class="boot-col-left">
+        <div class="boot-terminal" id="bootTerminal">
+          <div class="line dim" style="animation-delay:0s">Waiting for integrity check...</div>
+        </div>
+      </div>
+      <div class="boot-explain">
+        <div class="boot-explain-section">
+          <div class="boot-explain-label">What is happening</div>
+          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on every memory and knowledge file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the Merkle root changes and the status flags CHANGED.<br><br>This is not a status flag. It is a mathematical proof, computed in real time.</div>
+        </div>
+        <div class="boot-explain-section">
+          <div class="boot-explain-label">Data Directory</div>
+          <div class="boot-explain-text">The data directory is the persistent memory layer — containing all identity files, the knowledge tree, and the integrity manifest. This is what PCIS protects. Everything the AI knows about your clients, your products, and your compliance history lives here — signed, dated, and tamper-evident.</div>
+        </div>
+      </div>
+    </div>
+    <div class="boot-result" id="bootResult">
+      <div class="boot-status" id="bootStatus"></div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Merkle Root</div>
+      <div class="boot-root" id="bootRoot"></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted)" id="bootTimestamp"></div>
+    </div>
+  </div>
+
+  <!-- TREE SCREEN -->
+  <div class="screen" id="screen-tree">
+    <div class="stats-row" id="treeStats"></div>
+    <div id="treeOverview">
+      <div class="section-title">Branches</div>
+      <div class="tree-grid" id="treeGrid"></div>
+    </div>
+    <div class="detail-view" id="treeDetail">
+      <button class="back-btn" onclick="showTreeOverview()">&larr; All Branches</button>
+      <div id="treeDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- QUERY SCREEN -->
+  <div class="screen" id="screen-query">
+    <div class="query-input-wrap">
+      <input class="query-input" id="queryInput" type="text" placeholder="Search knowledge tree..." autocomplete="off">
+      <button class="btn" id="queryBtn" onclick="runQuery()">Query Memory</button>
+    </div>
+    <div id="queryResults">
+      <div class="query-empty">Enter a query to search across all knowledge branches</div>
+    </div>
+  </div>
+
+  <!-- ADVERSARIAL SCREEN -->
+  <div class="screen" id="screen-adversarial">
+    <div class="stats-row" id="advStats"></div>
+    <div class="section-title">Recent Adversarial Challenges</div>
+    <div id="advList">
+      <div class="loading"><div class="spinner"></div> Loading adversarial data...</div>
+    </div>
+  </div>
+
+  <!-- EXTERNAL LLM VALIDATION SCREEN -->
+  <div class="screen" id="screen-adversarial">
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">External LLM Validation</h2>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
+        Independent adversarial pass executed on an external LLM inside a closed perimeter.
+        No external data sent — only knowledge entries from the local tree.
+      </p>
+    </div>
+    <div class="stats-row" id="gcStats"></div>
+    <div id="gcMerkle" style="margin-bottom:28px"></div>
+    <div class="section-title">Adversarial Challenges</div>
+    <div id="gcList">
+      <div class="loading"><div class="spinner"></div> Loading validation data...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Tab navigation ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('screen-' + tab.dataset.tab).classList.add('active');
+
+    // Auto-load data
+    if (tab.dataset.tab === 'tree' && !treeLoaded) loadTree();
+    if (tab.dataset.tab === 'adversarial' && !advLoaded) loadAdversarial();
+    if (tab.dataset.tab === 'adversarial-validation' && !valLoaded) loadAdversarialValidation();
+  });
+});
+
+// ── Boot Screen ──
+async function runBoot() {
+  const btn = document.getElementById('bootBtn');
+  const terminal = document.getElementById('bootTerminal');
+  const result = document.getElementById('bootResult');
+
+  btn.disabled = true;
+  terminal.innerHTML = '';
+  result.classList.remove('visible');
+
+  addLine('PCIS Integrity Verification System v1.0', 'label', 0);
+  addLine('\u2501'.repeat(48), 'dim', 100);
+  addLine('', 'dim', 200);
+  addLine('Initializing SHA-256 verification engine...', 'dim', 300);
+  addLine('Data directory: /secure/ai-memory/data/', 'file', 500);
+  addLine('', 'dim', 600);
+
+  try {
+    const res = await fetch('/api/boot');
+    const data = await res.json();
+
+    let delay = 700;
+    addLine('Scanning tracked memory files:', 'label', delay);
+    delay += 200;
+
+    for (const fc of data.file_checks) {
+      const statusColor = fc.status === 'OK' ? 'ok' : 'err';
+      const statusText = fc.status === 'OK' ? '\u2713 OK' : '\u2717 MISSING';
+      const hashText = fc.hash ? fc.hash : '\u2014';
+      addLine(`  ${statusText}  ${fc.file}`, statusColor, delay);
+      addLine(`         ${hashText}`, 'hash', delay + 30);
+      delay += 120;
+    }
+
+    delay += 200;
+    addLine('', 'dim', delay);
+    addLine('\u2501'.repeat(48), 'dim', delay + 50);
+    addLine(`Computing Merkle root from ${data.file_checks.length} file hashes...`, 'dim', delay + 150);
+
+    setTimeout(() => {
+      result.classList.add('visible');
+      const statusEl = document.getElementById('bootStatus');
+      statusEl.textContent = data.status;
+      statusEl.className = 'boot-status ' + data.status.toLowerCase();
+      document.getElementById('bootRoot').textContent = data.merkle_root;
+      document.getElementById('bootTimestamp').textContent = data.timestamp;
+      document.getElementById('headerRoot').textContent = 'root: ' + data.merkle_root.slice(0, 16) + '...';
+      btn.disabled = false;
+    }, delay + 500);
+
+  } catch (e) {
+    addLine('ERROR: ' + e.message, 'err', 800);
+    btn.disabled = false;
+  }
+}
+
+function addLine(text, cls, delay) {
+  const terminal = document.getElementById('bootTerminal');
+  setTimeout(() => {
+    const div = document.createElement('div');
+    div.className = 'line ' + cls;
+    div.textContent = text;
+    div.style.animationDelay = '0s';
+    terminal.appendChild(div);
+    terminal.scrollTop = terminal.scrollHeight;
+  }, delay);
+}
+
+// ── Tree Screen ──
+let treeLoaded = false;
+let treeData = null;
+
+async function loadTree() {
+  try {
+    const res = await fetch('/api/tree');
+    treeData = await res.json();
+    treeLoaded = true;
+    renderTreeStats();
+    renderTreeGrid();
+  } catch (e) {
+    document.getElementById('treeGrid').innerHTML = '<div class="loading">Failed to load tree data</div>';
+  }
+}
+
+function renderTreeStats() {
+  document.getElementById('treeStats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${treeData.total_leaves}</div>
+      <div class="stat-label">Total Leaves</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value purple">${treeData.branch_count}</div>
+      <div class="stat-label">Branches</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value green">${treeData.root_hash}...</div>
+      <div class="stat-label">Merkle Root</div>
+    </div>
+  `;
+}
+
+function renderTreeGrid() {
+  const grid = document.getElementById('treeGrid');
+  grid.innerHTML = treeData.branches.map(b => `
+    <div class="branch-card" onclick="showBranch('${b.name}')">
+      <div class="branch-name">${b.name}</div>
+      <div class="branch-stats">
+        <span>${b.leaf_count} leaves</span>
+        <span>${b.all_leaves.filter(l => l.is_counter).length} counters</span>
+      </div>
+      <div class="branch-hash">${b.hash}...</div>
+    </div>
+  `).join('');
+}
+
+function showBranch(name) {
+  const branch = treeData.branches.find(b => b.name === name);
+  if (!branch) return;
+
+  document.getElementById('treeOverview').style.display = 'none';
+  const detail = document.getElementById('treeDetail');
+  detail.classList.add('visible');
+
+  const leaves = branch.all_leaves;
+  document.getElementById('treeDetailContent').innerHTML = `
+    <div class="card-header">
+      <div>
+        <div class="card-title" style="font-size:20px;text-transform:capitalize">${branch.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${branch.leaf_count} leaves &middot; hash: ${branch.hash}...</div>
+      </div>
+    </div>
+    ${leaves.map(l => `
+      <div class="leaf-item${l.is_counter ? ' counter' : ''}">
+        <div class="leaf-content">${escapeHtml(l.content)}</div>
+        <div class="leaf-meta">
+          <span>${l.source}</span>
+          <span>${l.created}</span>
+          <span class="confidence-bar">
+            <span class="confidence-track">
+              <span class="confidence-fill ${l.confidence >= 0.8 ? 'conf-high' : l.confidence >= 0.6 ? 'conf-mid' : 'conf-low'}"
+                    style="width:${l.confidence * 100}%"></span>
+            </span>
+            ${l.confidence}
+          </span>
+          <span style="color:var(--purple)">${l.hash}...</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function showTreeOverview() {
+  document.getElementById('treeOverview').style.display = 'block';
+  document.getElementById('treeDetail').classList.remove('visible');
+}
+
+// ── Query Screen ──
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runQuery();
+});
+
+async function runQuery() {
+  const input = document.getElementById('queryInput');
+  const query = input.value.trim();
+  if (!query) return;
+
+  const resultsDiv = document.getElementById('queryResults');
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Searching knowledge tree...</div>';
+
+  try {
+    const res = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const data = await res.json();
+
+    if (data.results.length === 0) {
+      resultsDiv.innerHTML = '<div class="query-empty">No matches found for "' + escapeHtml(query) + '"</div>';
+      return;
+    }
+
+    resultsDiv.innerHTML = `
+      <div class="match-count">${data.total_matches} matches found — showing top ${data.results.length}</div>
+      ${data.results.map((r, i) => `
+        <div class="result-card">
+          <div class="result-rank">#${i + 1}</div>
+          <div class="result-branch">${r.branch}</div>
+          <div class="result-content">${escapeHtml(r.content)}</div>
+          <div class="result-meta">
+            <span>source: ${r.source}</span>
+            <span>${r.created}</span>
+            <span class="confidence-bar">
+              conf:
+              <span class="confidence-track">
+                <span class="confidence-fill ${r.confidence >= 0.8 ? 'conf-high' : r.confidence >= 0.6 ? 'conf-mid' : 'conf-low'}"
+                      style="width:${r.confidence * 100}%"></span>
+              </span>
+              ${r.confidence}
+            </span>
+            <span>score: ${r.score}</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
+            <span class="result-hash">sha256: ${r.hash}</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) {
+    resultsDiv.innerHTML = '<div class="query-empty">Error: ' + e.message + '</div>';
+  }
+}
+
+// ── Adversarial Screen ──
+let advLoaded = false;
+
+async function loadAdversarial() {
+  try {
+    const [advRes, statusRes] = await Promise.all([
+      fetch('/api/adversarial'),
+      fetch('/api/status'),
+    ]);
+    const advData = await advRes.json();
+    const statusData = await statusRes.json();
+    advLoaded = true;
+
+    document.getElementById('advStats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--orange)">${advData.total_counters}</div>
+        <div class="stat-label">Counter-Arguments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${statusData.tree_stats.total_leaves}</div>
+        <div class="stat-label">Total Leaves</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value purple">${statusData.last_gardener_run || 'N/A'}</div>
+        <div class="stat-label">Last Gardener Run</div>
+      </div>
+    `;
+
+    const list = document.getElementById('advList');
+    if (advData.counters.length === 0) {
+      list.innerHTML = '<div class="query-empty">No adversarial challenges recorded yet</div>';
+      return;
+    }
+
+    list.innerHTML = advData.counters.map(c => {
+      let displayContent = c.counter_content;
+      const bracketEnd = displayContent.indexOf(']');
+      if (bracketEnd !== -1) {
+        displayContent = displayContent.substring(bracketEnd + 1).trim();
+      }
+
+      return `
+        <div class="adversarial-card">
+          <div class="adv-label">Adversarial Challenge</div>
+          ${c.original ? `
+            <div class="adv-original">
+              <div class="adv-original-label">Original Claim (${c.original.branch})</div>
+              ${escapeHtml(c.original.content)}
+              <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">
+                confidence: ${c.original.confidence} &middot; id: ${c.original.id}
+              </div>
+            </div>
+          ` : ''}
+          <div class="adv-counter">${escapeHtml(displayContent)}</div>
+          <div class="adv-meta">
+            <span>branch: ${c.branch}</span>
+            <span>confidence: ${c.confidence}</span>
+            <span>${c.source}</span>
+            <span>${c.created}</span>
+            <span style="color:var(--purple)">${c.hash}...</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    document.getElementById('advList').innerHTML = '<div class="query-empty">Error loading adversarial data</div>';
+  }
+}
+
+// ── External LLM Validation Screen ──
+let valLoaded = false;
+
+async function loadAdversarialValidation() {
+  try {
+    const res = await fetch('/api/adversarial-validation');
+    const data = await res.json();
+    valLoaded = true;
+
+    if (data.status === 'not_run') {
+      document.getElementById('gcStats').innerHTML = '';
+      document.getElementById('gcMerkle').innerHTML = '';
+      document.getElementById('gcList').innerHTML = '<div class="query-empty">Validation not yet run. Execute adversarial_validator.py first.</div>';
+      return;
+    }
+
+    document.getElementById('gcStats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-value">${data.run_date}</div>
+        <div class="stat-label">Run Date</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value purple">${data.model}</div>
+        <div class="stat-label">Model</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--orange)">${data.entries_challenged}</div>
+        <div class="stat-label">Entries Challenged</div>
+      </div>
+    `;
+
+    document.getElementById('gcMerkle').innerHTML = `
+      <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root Transition</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
+          <span style="color:var(--text-dim)">${data.merkle_root_before.slice(0,24)}...</span>
+          <span style="color:var(--purple);font-size:18px">&rarr;</span>
+          <span style="color:var(--green)">${data.merkle_root_after.slice(0,24)}...</span>
+        </div>
+      </div>
+    `;
+
+    const list = document.getElementById('gcList');
+    if (!data.counters || data.counters.length === 0) {
+      list.innerHTML = '<div class="query-empty">No challenges in this run</div>';
+      return;
+    }
+
+    list.innerHTML = data.counters.map(c => {
+      const originalClip = c.original_content ? escapeHtml(c.original_content.slice(0, 100)) + (c.original_content.length > 100 ? '...' : '') : 'N/A';
+      const challenge = c.content.startsWith('COUNTER: ') ? c.content.slice(9) : c.content;
+      return `
+        <div class="adversarial-card" style="border-left-color:var(--purple)">
+          <div class="adv-label" style="color:var(--purple)">LLM Challenge</div>
+          <div class="adv-original">
+            <div class="adv-original-label">Original Claim</div>
+            ${originalClip}
+          </div>
+          <div class="adv-counter">${escapeHtml(challenge)}</div>
+          <div class="adv-meta">
+            <span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${c.branch}</span>
+            <span>confidence: ${c.confidence}</span>
+            <span style="color:var(--purple)">${c.hash.slice(0,24)}...</span>
+            <span>source: ${c.source}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    document.getElementById('gcList').innerHTML = '<div class="query-empty">Error loading validation data: ' + e.message + '</div>';
+  }
+}
+
+// ── Utility ──
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ── Load status on page load ──
+(async function() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    document.getElementById('headerRoot').textContent = 'root: ' + data.tree_stats.root_hash + '...';
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>

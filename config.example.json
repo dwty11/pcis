@@ -1,0 +1,6 @@
+{
+  "base_dir": ".",
+  "llm_api_key": "",
+  "model_name": "your-model-name",
+  "demo_mode": true
+}

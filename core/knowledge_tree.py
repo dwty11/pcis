@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""
+knowledge_tree.py — Merkle Knowledge Tree
+
+A structured knowledge store where every piece of knowledge:
+- Has a hash (integrity)
+- Knows where it came from (provenance)
+- Knows when it was learned (temporality)
+- Can be synced across instances (portability)
+
+Usage:
+    python3 knowledge_tree.py --add <branch> <knowledge> [--source <source>] [--confidence <0-1>]
+    python3 knowledge_tree.py --show [branch]
+    python3 knowledge_tree.py --root
+    python3 knowledge_tree.py --diff <other_tree.json>
+    python3 knowledge_tree.py --export
+    python3 knowledge_tree.py --prune <branch> <leaf_id>
+
+Examples:
+    python3 knowledge_tree.py --add technical "REST endpoints should use plural nouns" --source "style-guide" --confidence 0.85
+    python3 knowledge_tree.py --add lessons "Skimming time-sensitive data is a trust violation" --source "session-2026-03-03"
+    python3 knowledge_tree.py --show technical
+    python3 knowledge_tree.py --root
+    python3 knowledge_tree.py --diff /path/to/other/knowledge_tree.json
+
+No external dependencies. Python 3.8+.
+"""
+
+import hashlib
+import json
+import os
+import sys
+from datetime import datetime, timezone, timedelta
+
+BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
+TZ_UTC = timezone.utc
+
+DEFAULT_BRANCHES = [
+    "identity", "philosophy", "lessons", "technical", "relationships",
+]
+
+
+def now_utc():
+    return datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def hash_leaf(content, branch, timestamp):
+    data = f"{branch}:{timestamp}:{content}"
+    return hashlib.sha256(data.encode()).hexdigest()
+
+
+def compute_branch_hash(leaves):
+    if not leaves:
+        return hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
+    leaf_hashes = [leaf["hash"] for leaf in leaves]
+    combined = "|".join(sorted(leaf_hashes))
+    return hashlib.sha256(combined.encode()).hexdigest()
+
+
+def compute_root_hash(tree):
+    branches = tree.get("branches", {})
+    branch_hashes = []
+    for name in sorted(branches.keys()):
+        branch = branches[name]
+        branch_hashes.append(f"{name}:{branch.get('hash', 'EMPTY')}")
+    if not branch_hashes:
+        return hashlib.sha256(b"EMPTY_TREE").hexdigest()
+    level = [hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
+    while len(level) > 1:
+        next_level = []
+        for i in range(0, len(level), 2):
+            if i + 1 < len(level):
+                combined = level[i] + level[i + 1]
+            else:
+                combined = level[i] + level[i]
+            next_level.append(hashlib.sha256(combined.encode()).hexdigest())
+        level = next_level
+    return level[0]
+
+
+def load_tree():
+    if os.path.exists(TREE_FILE):
+        with open(TREE_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Error: knowledge tree file is corrupted ({e}).")
+                print(f"       Refusing to overwrite. Fix or remove {TREE_FILE} manually.")
+                sys.exit(1)
+    tree = {
+        "version": 1,
+        "created": now_utc(),
+        "last_updated": now_utc(),
+        "root_hash": "",
+        "instance": "primary",
+        "branches": {}
+    }
+    for branch in DEFAULT_BRANCHES:
+        tree["branches"][branch] = {
+            "hash": hashlib.sha256(b"EMPTY_BRANCH").hexdigest(),
+            "leaves": []
+        }
+    tree["root_hash"] = compute_root_hash(tree)
+    return tree
+
+
+def save_tree(tree):
+    tree["last_updated"] = now_utc()
+    tree["root_hash"] = compute_root_hash(tree)
+    os.makedirs(os.path.dirname(TREE_FILE), exist_ok=True)
+    tmp = TREE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(tree, f, indent=2)
+    os.replace(tmp, TREE_FILE)
+
+
+def add_knowledge(tree, branch, content, source="session", confidence=0.7):
+    if branch not in tree["branches"]:
+        tree["branches"][branch] = {"hash": "", "leaves": []}
+    timestamp = now_utc()
+    leaf_hash = hash_leaf(content, branch, timestamp)
+    leaf = {
+        "id": leaf_hash[:12],
+        "hash": leaf_hash,
+        "content": content,
+        "source": source,
+        "confidence": confidence,
+        "created": timestamp,
+        "promoted_to": None
+    }
+    tree["branches"][branch]["leaves"].append(leaf)
+    tree["branches"][branch]["hash"] = compute_branch_hash(
+        tree["branches"][branch]["leaves"]
+    )
+    return leaf_hash[:12]
+
+
+def prune_leaf(tree, branch, leaf_id):
+    if branch not in tree["branches"]:
+        return False
+    leaves = tree["branches"][branch]["leaves"]
+    original_len = len(leaves)
+    tree["branches"][branch]["leaves"] = [
+        l for l in leaves if l["id"] != leaf_id
+    ]
+    if len(tree["branches"][branch]["leaves"]) < original_len:
+        tree["branches"][branch]["hash"] = compute_branch_hash(
+            tree["branches"][branch]["leaves"]
+        )
+        return True
+    return False
+
+
+def diff_trees(tree_a, tree_b):
+    result = {
+        "roots_match": tree_a.get("root_hash") == tree_b.get("root_hash"),
+        "branches_only_in_a": [],
+        "branches_only_in_b": [],
+        "branches_diverged": [],
+        "branches_identical": [],
+        "leaves_only_in_a": {},
+        "leaves_only_in_b": {},
+    }
+    branches_a = set(tree_a.get("branches", {}).keys())
+    branches_b = set(tree_b.get("branches", {}).keys())
+    result["branches_only_in_a"] = list(branches_a - branches_b)
+    result["branches_only_in_b"] = list(branches_b - branches_a)
+    for branch in branches_a & branches_b:
+        hash_a = tree_a["branches"][branch].get("hash", "")
+        hash_b = tree_b["branches"][branch].get("hash", "")
+        if hash_a == hash_b:
+            result["branches_identical"].append(branch)
+        else:
+            result["branches_diverged"].append(branch)
+            ids_a = {l["id"] for l in tree_a["branches"][branch]["leaves"]}
+            ids_b = {l["id"] for l in tree_b["branches"][branch]["leaves"]}
+            only_a = ids_a - ids_b
+            only_b = ids_b - ids_a
+            if only_a:
+                result["leaves_only_in_a"][branch] = [
+                    l for l in tree_a["branches"][branch]["leaves"]
+                    if l["id"] in only_a
+                ]
+            if only_b:
+                result["leaves_only_in_b"][branch] = [
+                    l for l in tree_b["branches"][branch]["leaves"]
+                    if l["id"] in only_b
+                ]
+    return result
+
+# --- CLI ---------------------------------------------------------------
+
+def cmd_add(args):
+    if len(args) < 2:
+        print("Usage: --add <branch> <knowledge> [--source X] [--confidence 0.N]")
+        sys.exit(1)
+    branch = args[0]
+    content = args[1]
+    source = "session"
+    confidence = 0.7
+    for i, arg in enumerate(args):
+        if arg == "--source" and i + 1 < len(args):
+            source = args[i + 1]
+        if arg == "--confidence" and i + 1 < len(args):
+            confidence = float(args[i + 1])
+    tree = load_tree()
+    leaf_id = add_knowledge(tree, branch, content, source, confidence)
+    save_tree(tree)
+    print(f"Added to [{branch}]: {content[:60]}...")
+    print(f"   ID: {leaf_id} | Source: {source} | Confidence: {confidence}")
+    print(f"   Root: {tree['root_hash'][:24]}...")
+
+    # Auto-index for semantic search if index exists
+    try:
+        from knowledge_search import incremental_index, INDEX_FILE
+        if os.path.exists(INDEX_FILE):
+            if incremental_index(leaf_id, branch, content, source, confidence):
+                print(f"   Indexed for semantic search.")
+            else:
+                print(f"   Search indexing failed -- run knowledge_search.py --reindex")
+    except (ImportError, Exception):
+        pass  # semantic search not set up yet, that's fine
+
+
+def cmd_show(args):
+    tree = load_tree()
+    if args:
+        branch = args[0]
+        if branch not in tree["branches"]:
+            print(f"Branch '{branch}' not found. Available: {list(tree['branches'].keys())}")
+            return
+        leaves = tree["branches"][branch]["leaves"]
+        print(f"\nBranch: {branch} ({len(leaves)} leaves)")
+        print(f"   Hash: {tree['branches'][branch]['hash'][:24]}...\n")
+        for leaf in leaves:
+            conf = leaf["confidence"]
+            bar = "#" * int(conf * 10) + "." * (10 - int(conf * 10))
+            print(f"   [{leaf['id']}] {leaf['content'][:70]}")
+            print(f"            source: {leaf['source']} | confidence: [{bar}] {conf}")
+            print(f"            created: {leaf['created']}")
+            if leaf.get("promoted_to"):
+                print(f"            -> promoted to: {leaf['promoted_to']}")
+            print()
+    else:
+        print(f"\nKnowledge Tree")
+        print(f"   Root: {tree['root_hash'][:24]}...")
+        print(f"   Last updated: {tree['last_updated']}")
+        print(f"   Instance: {tree.get('instance', 'primary')}\n")
+        for name in sorted(tree["branches"].keys()):
+            branch = tree["branches"][name]
+            count = len(branch["leaves"])
+            print(f"   {name:20s}  {count:3d} leaves  {branch['hash'][:16]}...")
+        total = sum(len(b["leaves"]) for b in tree["branches"].values())
+        print(f"\n   Total: {total} knowledge leaves across {len(tree['branches'])} branches")
+
+
+def cmd_root():
+    tree = load_tree()
+    print(tree["root_hash"])
+
+
+def cmd_diff(args):
+    if not args:
+        print("Usage: --diff <path_to_other_tree.json>")
+        sys.exit(1)
+    tree_a = load_tree()
+    try:
+        with open(args[0], "r") as f:
+            tree_b = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading {args[0]}: {e}")
+        sys.exit(1)
+    result = diff_trees(tree_a, tree_b)
+    if result["roots_match"]:
+        print("Trees are identical.")
+        return
+    print("Trees diverge:\n")
+    if result["branches_only_in_a"]:
+        print(f"  Branches only in local:  {result['branches_only_in_a']}")
+    if result["branches_only_in_b"]:
+        print(f"  Branches only in remote: {result['branches_only_in_b']}")
+    if result["branches_identical"]:
+        print(f"  Identical branches:      {result['branches_identical']}")
+    if result["branches_diverged"]:
+        print(f"  Diverged branches:       {result['branches_diverged']}")
+    for branch, leaves in result.get("leaves_only_in_a", {}).items():
+        print(f"\n  [{branch}] Local has {len(leaves)} leaf(s) not in remote:")
+        for l in leaves:
+            print(f"    + {l['id']}: {l['content'][:60]}...")
+    for branch, leaves in result.get("leaves_only_in_b", {}).items():
+        print(f"\n  [{branch}] Remote has {len(leaves)} leaf(s) not in local:")
+        for l in leaves:
+            print(f"    + {l['id']}: {l['content'][:60]}...")
+
+
+def cmd_export():
+    tree = load_tree()
+    print(json.dumps(tree, indent=2))
+
+
+def cmd_prune(args):
+    if len(args) < 2:
+        print("Usage: --prune <branch> <leaf_id>")
+        sys.exit(1)
+    tree = load_tree()
+    if prune_leaf(tree, args[0], args[1]):
+        save_tree(tree)
+        print(f"Pruned leaf {args[1]} from [{args[0]}]")
+        print(f"   New root: {tree['root_hash'][:24]}...")
+    else:
+        print(f"Leaf {args[1]} not found in [{args[0]}]")
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if not args:
+        cmd_show([])
+    elif args[0] == "--add":
+        cmd_add(args[1:])
+    elif args[0] == "--show":
+        cmd_show(args[1:])
+    elif args[0] == "--root":
+        cmd_root()
+    elif args[0] == "--diff":
+        cmd_diff(args[1:])
+    elif args[0] == "--export":
+        cmd_export()
+    elif args[0] == "--prune":
+        cmd_prune(args[1:])
+    elif args[0] == "--help":
+        print(__doc__)
+    else:
+        print(f"Unknown command: {args[0]}")
+        print("Use --help for usage.")
+        sys.exit(1)
