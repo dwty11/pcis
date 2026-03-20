@@ -24,7 +24,7 @@ For a full description of the six architectural contributions — knowledge tree
 ## Install
 
 ```bash
-git clone https://github.com/your-org/pcis.git
+git clone https://github.com/dwty11/pcis.git
 cd pcis
 bash setup.sh
 ```
