@@ -5,7 +5,7 @@
 
 > **License:** Business Source License 1.1 — non-commercial use is free. Commercial deployments require a license (email idwty@proton.me). Converts to Apache 2.0 on 2030-03-20. [See LICENSE](LICENSE)
 
-![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-BSL%201.1-orange) ![Version](https://img.shields.io/badge/version-1.0.0-green) ![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/dwty11/pcis/releases) [![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)](https://github.com/dwty11/pcis/commits/main)
 
 ---
 
@@ -117,7 +117,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
 ---
 
+## More
+
+- [ROADMAP.md](ROADMAP.md) — where this is going
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to help
+- [ARCHITECTURE.md](ARCHITECTURE.md) — deep dive on the six contributions
+
+---
+
 ## License
+
+**Non-commercial use is 100% free forever. Commercial licensing available now — just email.**
 
 Business Source License 1.1 — free for non-commercial use. Commercial production deployment requires a license.  
 Converts to Apache 2.0 on 2030-03-20.  
