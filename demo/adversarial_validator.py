@@ -21,7 +21,7 @@ DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
 TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
 OUTPUT_FILE = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
 KEY_FILE = os.path.expanduser("config.json")
-TZ_MOSCOW = timezone(timedelta(hours=3))
+TZ_UTC = timezone(timedelta(hours=0))
 RUN_DATE = "2026-03-20"
 MODEL = "the configured LLM"
 
@@ -49,10 +49,10 @@ def send_to_llm(token, leaf_content, retries=2):
     """Send adversarial prompt to configured LLM with retry logic."""
     url = "LLM_ENDPOINT"
     prompt = (
-        "Ты — аналитик по управлению рисками. Вот утверждение из корпоративной базы знаний ИИ:\n\n"
-        f"«{leaf_content}»\n\n"
-        "Найди слабые места в этом утверждении: где оно может быть неточным, "
-        "чрезмерно уверенным или упускает контраргумент? Ответь одним абзацем, конкретно."
+        "You are a critical analyst reviewing an AI knowledge base entry.\n\n"
+        f"Entry: {leaf_content}\n\n"
+        "Identify weaknesses in this entry: where might it be inaccurate, overconfident, "
+        "or missing an important counter-argument? Reply in one concise paragraph."
     )
     headers = {
         "Authorization": f"Bearer {token}",
@@ -82,11 +82,11 @@ def send_to_llm(token, leaf_content, retries=2):
 
 # Fallback challenges when LLM API is unreachable (network/geo restrictions)
 FALLBACK_CHALLENGES = {
-    "products": "Указанные ипотечные ставки привязаны к конкретной дате и подвержены быстрому устареванию. При текущей волатильности ключевой ставки ЦБ РФ (пересмотр возможен каждые 6 недель) утверждение о ставке 16.2% для зарплатных клиентов может потерять актуальность в течение нескольких дней. Кроме того, отсутствует оговорка о региональных различиях в условиях — филиалы могут применять собственные надбавки. Уверенность 0.92 чрезмерна для данных, имеющих столь короткий срок жизни.",
-    "compliance": "Утверждение о полном соответствии системы PCIS требованиям локализации данных основано на текущей архитектуре, но не учитывает потенциальные изменения в законодательстве. Формулировка «нет внешних вызовов» требует регулярной верификации — любое обновление зависимостей или интеграция нового модуля может нарушить это условие. Отсутствует упоминание о периодичности аудита соответствия.",
-    "lessons": "Вывод о предпочтениях коммуникационного стиля Петрова сделан на основании ограниченного числа наблюдений и подвержен эффекту подтверждения (confirmation bias). Предпочтение data-led подхода может зависеть от контекста обсуждения — при обсуждении стратегических вопросов клиент может ценить relationship-ориентированный подход. Рекомендация строить всю коммуникацию исключительно на аналитике может привести к потере личного контакта.",
-    "clients": "Информация о клиенте Сорокиной содержит субъективные оценки чувствительности темы наследственного планирования без указания на источник этой оценки. Рекомендация «обсуждать только по её инициативе» может привести к упущенным возможностям, если клиент ожидает проактивного подхода, но стесняется поднять тему сама. Требуется периодическая переоценка этого ограничения.",
-    "relationships": "Оценка NPS 9/10 для Петрова датирована декабрём 2025 — данные устарели на 3+ месяца. Лояльность клиента, привёдшего 2 рекомендации, может быть переоценена: рекомендации могли быть ситуативными, а не отражать глубокую приверженность банку. Высокий приоритет удержания не подкреплён анализом стоимости удержания vs. доходности клиента.",
+    "products": "The stated product specifications are tied to a specific point in time and subject to rapid change. High confidence scores on time-sensitive data should include a staleness decay parameter — what is true today may be materially different in 30 days. The knowledge tree should track a 'valid_until' field for perishable facts.",
+    "compliance": "The compliance assertion covers current architecture but does not account for dependency updates or third-party integrations that may introduce external calls. This leaf requires a periodic re-verification trigger — a static assertion about dynamic properties is structurally weak. Suggest adding a review_by date.",
+    "lessons": "The behavioral pattern described here is based on a limited observation window and is subject to confirmation bias. Patterns inferred from fewer than 5 data points should carry confidence no higher than 0.6. Recommend flagging this leaf for re-evaluation after 3 additional interactions.",
+    "clients": "This leaf contains a subjective assessment without citing the source of the sensitivity evaluation. Recommendations derived from assumed preferences rather than stated ones carry implicit risk. The knowledge tree should distinguish between observed facts and inferred preferences.",
+    "relationships": "Relationship quality scores have a half-life. A score recorded 3+ months ago without a refresh event should be automatically downgraded in confidence. High-priority retention flags not backed by recency data can lead to misallocated effort.",
 }
 
 
@@ -182,7 +182,7 @@ def main():
         # Build COUNTER leaf
         content = f"COUNTER: {response}"
         content_hash = hashlib.sha256(content.encode()).hexdigest()
-        now = datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3")
+        now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         counter_leaf = {
             "id": content_hash[:12],
@@ -218,7 +218,7 @@ def main():
 
     merkle_after = compute_merkle_root(tree)
     tree["root_hash"] = merkle_after
-    tree["last_updated"] = datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3")
+    tree["last_updated"] = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Save updated tree
     with open(TREE_FILE, "w") as f:

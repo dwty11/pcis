@@ -17,7 +17,7 @@ Usage:
     python3 gardener.py --branch lessons   # Focus on one branch only
     python3 gardener.py --gap-scan          # Extract today's results, find knowledge gaps
 
-Schedule: Daily cron, 02:00 GMT+3 (quiet hours) — adversarial pass + gap-scan
+Schedule: Daily cron, 02:00 UTC (quiet hours) — adversarial pass + gap-scan
 Model: qwen3:14b (free, local)
 """
 
@@ -36,15 +36,15 @@ GARDEN_STAGING = os.path.join(WORKSPACE, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(WORKSPACE, "memory", "gardener-pending-notify.flag")
 OLLAMA_URL = "http://localhost:11434/api/generate"
 GARDENER_MODEL = "qwen3:14b"
-TZ_MOSCOW = timezone(timedelta(hours=3))
+TZ_UTC = timezone(timedelta(hours=0))
 
 
-def now_moscow():
-    return datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3")
+def now_local():
+    return datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
-def today_moscow():
-    return datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d")
+def today_local():
+    return datetime.now(TZ_UTC).strftime("%Y-%m-%d")
 
 
 def load_tree():
@@ -69,7 +69,7 @@ def save_tree(tree):
         )
         return hashlib.sha256(combined.encode()).hexdigest()
 
-    tree["last_updated"] = now_moscow()
+    tree["last_updated"] = now_local()
     for branch_name, branch in tree["branches"].items():
         branch["hash"] = compute_branch_hash(branch["leaves"])
     tree["root_hash"] = compute_root_hash(tree)
@@ -83,7 +83,7 @@ def add_leaf(tree, branch, content, source, confidence):
     if branch not in tree["branches"]:
         tree["branches"][branch] = {"hash": "", "leaves": []}
 
-    timestamp = now_moscow()
+    timestamp = now_local()
     leaf_hash = hashlib.sha256(f"{content}{branch}{timestamp}".encode()).hexdigest()
     leaf = {
         "id": leaf_hash[:12],
@@ -103,7 +103,7 @@ def load_recent_memory(days=5):
     memory_dir = os.path.join(WORKSPACE, "memory")
     combined = []
     for i in range(days):
-        dt = datetime.now(TZ_MOSCOW) - timedelta(days=i)
+        dt = datetime.now(TZ_UTC) - timedelta(days=i)
         fname = os.path.join(memory_dir, f"{dt.strftime('%Y-%m-%d')}.md")
         if os.path.exists(fname):
             with open(fname) as f:
@@ -252,7 +252,7 @@ def write_garden_log(counters, synapses, flags, dry_run):
     os.makedirs(os.path.dirname(GARDEN_LOG), exist_ok=True)
     mode_tag = "[DRY RUN]" if dry_run else "[COMMITTED]"
     lines = [
-        f"\n## Gardening Session — {now_moscow()} {mode_tag}\n",
+        f"\n## Gardening Session — {now_local()} {mode_tag}\n",
         f"### Counter-leaves added: {len(counters)}",
     ]
     for c in counters:
@@ -274,7 +274,7 @@ def write_staging_file(synapses, flags, staged_counters=None):
     """Write staged synapses and constitutional counter-leaves to review file."""
     staged_counters = staged_counters or []
     lines = [
-        f"# Gardener Staging — {now_moscow()}",
+        f"# Gardener Staging — {now_local()}",
         "_Review before committing. Run `python3 gardener.py --apply-staging` to apply all._",
         "",
     ]
@@ -317,7 +317,7 @@ def apply_staging(tree):
         print("No synapses found in staging file.")
         return 0
 
-    source = f"gardener-staged-{today_moscow()}"
+    source = f"gardener-staged-{today_local()}"
     count = 0
     for conf_str, synapse_content in blocks:
         synapse_content = synapse_content.strip()
@@ -349,7 +349,7 @@ def write_notify_flag(committed_counters, staged_synapses, flags, dry_run=False,
         return
 
     lines = [
-        f"date: {now_moscow()}",
+        f"date: {now_local()}",
         f"counters_committed: {len(committed_counters)}",
         f"counters_staged_constitutional: {len(staged_counters)}",
         f"synapses_staged: {len(staged_synapses)}",
@@ -425,10 +425,10 @@ GAP_SCAN_PROMPT = (
 
 def gap_scan():
     """Read today's daily note, extract results, find knowledge-tree gaps."""
-    date_str = today_moscow()
+    date_str = today_local()
     daily_note = os.path.join(WORKSPACE, "memory", f"{date_str}.md")
 
-    print(f"🔍 Gap scan starting — {now_moscow()}")
+    print(f"🔍 Gap scan starting — {now_local()}")
     print(f"   Daily note: {daily_note}")
 
     if not os.path.exists(daily_note):
@@ -534,7 +534,7 @@ def gap_scan():
         lines.append(existing)
         lines.append("")
     else:
-        lines.append(f"# Gardener Staging — {now_moscow()}")
+        lines.append(f"# Gardener Staging — {now_local()}")
         lines.append("_Review before committing. Run `python3 gardener.py --apply-staging` to apply all._")
         lines.append("")
 
@@ -554,7 +554,7 @@ def gap_scan():
         f.write(summary + "\n")
 
     print(f"🔔 Notify flag written → {GARDEN_NOTIFY_FLAG}")
-    print(f"✅ Gap scan complete — {now_moscow()}")
+    print(f"✅ Gap scan complete — {now_local()}")
 
 
 def main():
@@ -573,14 +573,14 @@ def main():
 
     # Shortcut: apply staged synapses without running full gardening pass
     if args.apply_staging:
-        print(f"🌱 Applying staged synapses — {now_moscow()}")
+        print(f"🌱 Applying staged synapses — {now_local()}")
         tree = load_tree()
         count = apply_staging(tree)
         if count == 0:
             print("Nothing to apply.")
         return
 
-    print(f"🌱 Gardener starting — {now_moscow()}")
+    print(f"🌱 Gardener starting — {now_local()}")
     print(f"   Model: {GARDENER_MODEL}")
     print(f"   Mode: {'DRY RUN' if args.dry_run else 'COMMIT'}")
     if args.branch:
@@ -667,7 +667,7 @@ def main():
 
     if not args.dry_run:
         print("\n✍️  Committing operational counter-leaves to knowledge tree...")
-        source = f"gardener-{today_moscow()}"
+        source = f"gardener-{today_local()}"
 
         committed_written = []
         for c in committed_counters:
@@ -702,7 +702,7 @@ def main():
     write_notify_flag(committed_counters, staged_synapses, flags, dry_run=args.dry_run,
                       staged_counters=staged_counters)
 
-    print(f"\n✅ Gardening complete — {now_moscow()}")
+    print(f"\n✅ Gardening complete — {now_local()}")
 
 
 if __name__ == "__main__":
