@@ -27,6 +27,22 @@ Open `http://localhost:5555` — five tabs showing the full architecture live.
 
 ---
 
+## See It in Action
+
+**Boot — Merkle integrity check, computed in real time:**
+![Boot - Merkle Verified](docs/screenshots/boot-verified.png)
+
+**Knowledge Tree — 5 branches, 19 leaves, Merkle root visible:**
+![Knowledge Tree](docs/screenshots/tree.png)
+
+**Query — answers pinned to verified leaves with SHA-256 hashes:**
+![Query Result](docs/screenshots/query-result.png)
+
+**Adversarial — self-challenge generating counter-arguments:**
+![Adversarial Pass](docs/screenshots/adversarial.png)
+
+---
+
 ## What PCIS Does
 
 PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely knows, with cryptographic proof of what it knew and when.
