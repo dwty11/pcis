@@ -3,6 +3,8 @@
 
 **PCIS gives an AI agent a persistent, verifiable identity — so it stays itself across sessions, model changes, and restarts.**
 
+> **License:** Business Source License 1.1 — non-commercial use is free. Commercial deployments require a license (email idwty@proton.me). Converts to Apache 2.0 on 2030-03-20. [See LICENSE](LICENSE)
+
 PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely knows, with cryptographic proof of what it knew and when.
 
 The problem it solves: every AI agent deployed today starts each session with no memory of what happened before. At scale, this means agents contradict themselves, lose client context, hallucinate history, and produce outputs that cannot be audited. PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over time.

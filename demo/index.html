@@ -728,7 +728,7 @@ body {
         </div>
         <div class="boot-explain-section">
           <div class="boot-explain-label">Data Directory</div>
-          <div class="boot-explain-text">The data directory is the persistent memory layer — containing all identity files, the knowledge tree, and the integrity manifest. This is what PCIS protects. Everything the AI knows about your clients, your products, and your compliance history lives here — signed, dated, and tamper-evident.</div>
+          <div class="boot-explain-text">The data directory is the persistent memory layer — containing all identity files, the knowledge tree, and the integrity manifest. This is what PCIS protects. Everything the AI knows lives here — signed, dated, and tamper-evident.</div>
         </div>
       </div>
     </div>
@@ -822,7 +822,7 @@ async function runBoot() {
   addLine('\u2501'.repeat(48), 'dim', 100);
   addLine('', 'dim', 200);
   addLine('Initializing SHA-256 verification engine...', 'dim', 300);
-  addLine('Data directory: /secure/ai-memory/data/', 'file', 500);
+  addLine('Data directory: ./data/', 'file', 500);
   addLine('', 'dim', 600);
 
   try {

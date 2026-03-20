@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCIS — Stack Position</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: rgba(18, 21, 34, 0.85);
+      --text: #f0f0f5;
+      --muted: rgba(240, 240, 245, 0.55);
+      --accent: #4f8ef7;
+      --accent-2: #a78bfa;
+      --ok: #8ef7b2;
+      --gold: #f7c94f;
+      --line: rgba(255, 255, 255, 0.09);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    .diagram {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .title p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── Stack layers ── */
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .layer {
+      border-radius: 14px;
+      padding: 22px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      border: 1px solid var(--line);
+      transition: box-shadow 0.2s;
+    }
+
+    /* connector lines between layers */
+    .connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      position: relative;
+    }
+    .connector::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+    }
+    .connector-arrow {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      z-index: 1;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* Layer variants */
+    .layer-external {
+      background: rgba(24, 28, 48, 0.6);
+    }
+    .layer-orchestration {
+      background: rgba(79, 142, 247, 0.08);
+      border-color: rgba(79, 142, 247, 0.25);
+    }
+    .layer-pcis {
+      background: rgba(167, 139, 250, 0.10);
+      border-color: rgba(167, 139, 250, 0.35);
+      box-shadow: 0 0 40px rgba(167, 139, 250, 0.08);
+    }
+    .layer-llm {
+      background: rgba(142, 247, 178, 0.06);
+      border-color: rgba(142, 247, 178, 0.18);
+    }
+
+    .layer-icon {
+      font-size: 1.6rem;
+      width: 44px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .layer-content {
+      flex: 1;
+    }
+    .layer-name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+    .layer-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layer-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+    }
+    .tag-blue {
+      background: rgba(79, 142, 247, 0.15);
+      color: #7db4ff;
+      border: 1px solid rgba(79, 142, 247, 0.25);
+    }
+    .tag-purple {
+      background: rgba(167, 139, 250, 0.15);
+      color: #c4b0ff;
+      border: 1px solid rgba(167, 139, 250, 0.3);
+    }
+    .tag-green {
+      background: rgba(142, 247, 178, 0.10);
+      color: #8ef7b2;
+      border: 1px solid rgba(142, 247, 178, 0.2);
+    }
+    .tag-muted {
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    /* PCIS highlight badge */
+    .pcis-badge {
+      flex-shrink: 0;
+      background: rgba(167, 139, 250, 0.18);
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #c4b0ff;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Side comparison panel ── */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .compare-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+    }
+    .compare-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compare-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .compare-card li {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .compare-card li::before {
+      content: '–';
+      flex-shrink: 0;
+      opacity: 0.4;
+    }
+
+    .orch-head { color: #7db4ff; }
+    .pcis-head { color: #c4b0ff; }
+
+    /* ── Tagline ── */
+    .tagline {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      line-height: 1.6;
+    }
+    .tagline strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram">
+
+    <div class="title">
+      <h1>Where PCIS Lives in the Stack</h1>
+      <p>Orchestration routes agents. PCIS makes them remember.</p>
+    </div>
+
+    <div class="stack">
+
+      <!-- Layer 1: User / Applications -->
+      <div class="layer layer-external">
+        <div class="layer-icon">👤</div>
+        <div class="layer-content">
+          <div class="layer-name">Users & Applications</div>
+          <div class="layer-desc">Chat interfaces, internal tools, API consumers, business workflows</div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <span class="connector-arrow">requests &amp; sessions</span>
+      </div>
+
+      <!-- Layer 2: Orchestration -->
+      <div class="layer layer-orchestration">
+        <div class="layer-icon">🔀</div>
+        <div class="layer-content">
+          <div class="layer-name">Orchestration Layer</div>
+          <div class="layer-desc">Routes requests, manages sessions, schedules tasks, handles channels and access control</div>
+          <div class="layer-tags">
+            <span class="tag tag-blue">routing</span>
+            <span class="tag tag-blue">scheduling</span>
+            <span class="tag tag-blue">channels</span>
+            <span class="tag tag-blue">access control</span>
+            <span class="tag tag-muted">e.g. OpenClaw / internal platform</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector">
+        <span class="connector-arrow">agent calls</span>
+      </div>
+
+      <!-- Layer 3: PCIS — highlighted -->
+      <div class="layer layer-pcis">
+        <div class="layer-icon">🧠</div>
+        <div class="layer-content">
+          <div class="layer-name">PCIS — Cognitive Infrastructure</div>
+          <div class="layer-desc">Persistent memory, verified knowledge, identity continuity, adversarial integrity checks. Any agent that runs above this layer stays coherent across sessions.</div>
+          <div class="layer-tags">
+            <span class="tag tag-purple">knowledge tree</span>
+            <span class="tag tag-purple">Merkle integrity</span>
+            <span class="tag tag-purple">gap-scan</span>
+            <span class="tag tag-purple">adversarial pass</span>
+            <span class="tag tag-purple">identity continuity</span>
+          </div>
+        </div>
+        <div class="pcis-badge">PCIS<br>v1.0</div>
+      </div>
+
+      <div class="connector">
+        <span class="connector-arrow">verified context</span>
+      </div>
+
+      <!-- Layer 4: LLM -->
+      <div class="layer layer-llm">
+        <div class="layer-icon">⚙️</div>
+        <div class="layer-content">
+          <div class="layer-name">LLM Layer</div>
+          <div class="layer-desc">Model inference — GigaChat, GPT-4, Claude, or any local model. Stateless by design; PCIS provides the state.</div>
+          <div class="layer-tags">
+            <span class="tag tag-green">GigaChat</span>
+            <span class="tag tag-muted">model-agnostic</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /stack -->
+
+    <!-- Side-by-side comparison -->
+    <div class="compare">
+      <div class="compare-card">
+        <h3><span>🔀</span> <span class="orch-head">Orchestration</span></h3>
+        <ul>
+          <li>Routes messages to the right agent</li>
+          <li>Manages concurrent sessions</li>
+          <li>Handles channel delivery (chat, API, email)</li>
+          <li>Schedules recurring tasks</li>
+          <li>Enforces access control</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h3><span>🧠</span> <span class="pcis-head">PCIS</span></h3>
+        <ul>
+          <li>Stores and verifies what agents know</li>
+          <li>Detects knowledge drift and hallucination</li>
+          <li>Maintains agent identity across sessions</li>
+          <li>Fills gaps the agent doesn't know it has</li>
+          <li>Validates outputs against verified ground truth</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tagline">
+      <strong>Complementary, not competing.</strong><br>
+      Orchestration decides <em>who</em> handles a request and <em>when</em>.<br>
+      PCIS decides <em>what that agent knows</em> — and whether it can be trusted.
+    </div>
+
+  </div>
+</body>
+</html>
