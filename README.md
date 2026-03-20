@@ -92,4 +92,7 @@ Copy `config.example.json` to `config.json` and fill in your values:
 
 ## License
 
-MIT
+Business Source License 1.1 — free for non-commercial use. Commercial production deployment requires a license.  
+Converts to Apache 2.0 on 2030-03-20.  
+Commercial inquiries: idwty@proton.me  
+See [LICENSE](LICENSE) for full terms.
