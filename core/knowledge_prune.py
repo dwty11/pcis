@@ -42,9 +42,9 @@ def now_utc():
 def days_since(date_str):
     """Calculate days since a date string."""
     try:
-        for fmt in ["%Y-%m-%d %H:%M:%S UTC", "%Y-%m-%d %H:%M:%S UTC", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
+        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
             try:
-                dt = datetime.strptime(date_str.replace(" UTC", "").replace(" UTC", ""), fmt.replace(" UTC", "").replace(" UTC", ""))
+                dt = datetime.strptime(date_str.replace(" UTC", ""), fmt)
                 now = datetime.now()
                 return (now - dt).days
             except ValueError:
