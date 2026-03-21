@@ -105,13 +105,13 @@ All prune actions logged to `data/prune-log.json`.
 
 | Class | What it verifies |
 |-------|-----------------|
-| `TestMerkleHashing` | Root hash changes when knowledge changes; tamper detection |
-| `TestLeafHashing` | Hash determinism, order independence, field sensitivity |
-| `TestDemoTreeIntegrity` | Demo tree loads, has correct structure, contains no personal data |
-| `TestCrossModuleHashConsistency` | `gardener.py`, `knowledge_prune.py`, and `knowledge_tree.py` produce identical roots, branch hashes, and leaf hashes for the same data |
-| `TestAddKnowledgeValidation` | Empty content and oversized content raise `ValueError` |
-| `TestConcurrentSaveTree` | Two threads adding 5 leaves each under `tree_lock()` — final tree contains exactly 10 leaves, no data loss |
-| `TestIdentityPortability` | Root hash is identical across GPT-4, Claude, Llama, GigaChat, and Qwen configs — model-agnostic identity is an enforced invariant, not an accident |
+| `TestMerkleHashing` | Root hash changes on add/edit, determinism, branch-hash order independence, tamper detection |
+| `TestAdversarialCounters` | COUNTER leaf detection, challenged-ID parsing, normal leaves not misidentified |
+| `TestDemoTreeIntegrity` | Demo tree schema, confidence ranges, root hash presence, no personal data leakage |
+| `TestCrossModuleHashConsistency` | All modules produce identical root, branch, and leaf hashes for the same data |
+| `TestAddKnowledgeValidation` | Empty and oversized content rejected with `ValueError` |
+| `TestConcurrentSaveTree` | Two threads × 5 writes under `tree_lock()` → exactly 10 leaves, zero data loss |
+| `TestIdentityPortability` | Root hash identical across model configs — model-agnostic identity enforced |
 
 Run with: `python -m pytest tests/ -v`
 
