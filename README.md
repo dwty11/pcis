@@ -55,6 +55,21 @@ For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
+## PCIS as External Memory Continual Learning (EMCL)
+
+Continual learning — teaching AI systems to accumulate knowledge over time without forgetting what they already know — is one of the central unsolved problems in AI research. Traditional approaches update model weights directly, which leads to catastrophic forgetting: new knowledge overwrites old.
+
+PCIS takes a different path. Instead of retraining the model, it externalizes memory into a structured, verifiable tree:
+
+- The **knowledge tree** functions as a replay buffer — prior knowledge is never overwritten, only extended or challenged
+- The **adversarial gardener** applies stability pressure — high-confidence beliefs are challenged nightly, preventing overfit to recent context
+- The **gap-scan** drives plasticity — it identifies what the agent should know but doesn't, targeting learning where it's needed
+- The **pruning protocol** manages forgetting deliberately — stale knowledge is flagged and removed by design, not by accident
+
+This architecture maps directly onto the stability-plasticity tradeoff that makes continual learning hard. The difference: PCIS does it at the knowledge layer, without touching model weights, and with cryptographic proof of every state.
+
+---
+
 ## Six Contributions
 
 1. **Persistent Knowledge Tree** — structured memory that survives session restarts
