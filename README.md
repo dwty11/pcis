@@ -49,7 +49,7 @@ PCIS is a cognitive infrastructure layer for AI agents. It gives agents persiste
 
 The problem: every AI agent deployed today starts each session with no memory of what happened before. At scale — contradictions, hallucinated history, lost client context, no audit trail. PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over time.
 
-PCIS is model-agnostic. It runs on GigaChat, GPT-4, Claude, or any local model. Switching the underlying model requires no changes to the memory layer.
+PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model — including GigaChat for on-prem deployments. Switching the underlying model requires no changes to the memory layer.
 
 For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
