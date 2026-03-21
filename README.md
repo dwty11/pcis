@@ -1,7 +1,7 @@
 # PCIS — Persistent Cognitive Identity Systems
 ### The still point of the turning model.
 
-**Give your AI agent a cryptographically verifiable long-term identity — so it never forgets who it is.**
+**Git for knowledge and beliefs. Give your AI agent a cryptographically verifiable long-term identity — so it never forgets who it is, what it knows, or why.**
 
 > **License:** Business Source License 1.1 — non-commercial use is free. Commercial deployments require a license (email idwty@proton.me). Converts to Apache 2.0 on 2030-03-20. [See LICENSE](LICENSE)
 
@@ -116,7 +116,7 @@ Runs: adversarial pass + gap-scan + pruning review. Recommended as a nightly cro
 ## Run Adversarial Validation
 
 ```bash
-python demo/adversarial_validator.py --tree data/tree.json --output data/validation_run.json
+python core/adversarial_validator.py --tree data/tree.json --output data/validation_run.json
 ```
 
 Requires an LLM API key. Set it in `config.json` (copy from `config.example.json`).
@@ -171,4 +171,4 @@ Converts to Apache 2.0 on 2030-03-20.
 Commercial inquiries: idwty@proton.me  
 See [LICENSE](LICENSE) for full terms.
 
-Registered as a Computer Program (Программа для ЭВМ) with Rospatent. Application No. 7009976726, filed 2026-03-11.
+Registered as a Computer Program (Программа для ЭВМ) with Rospatent. Application No. 7069955475, filed 2026-03-21.
