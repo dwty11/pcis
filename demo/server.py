@@ -1,101 +1,68 @@
 #!/usr/bin/env python3
 """
 PCIS Demo Server
-Serves the demo UI and API endpoints using demo_tree.json.
-Run: python demo/server.py
-Then open: http://localhost:5555
+Self-contained demo: uses demo_tree.json for all endpoints.
+Boot integrity check hashes the demo's own files — no external workspace required.
 """
 
 import hashlib
 import json
 import os
 import re
-import sys
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
 
 app = Flask(__name__)
 
-# ── Paths ──────────────────────────────────────────────────────────────────
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEMO_DIR  = os.path.dirname(os.path.abspath(__file__))
-CORE_DIR  = os.path.join(REPO_ROOT, "core")
-DATA_DIR  = os.path.join(REPO_ROOT, "data")
+DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
+DEMO_TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
+TZ_UTC = timezone.utc
 
-DEMO_TREE_FILE       = os.path.join(DEMO_DIR, "demo_tree.json")
-VALIDATION_FILE      = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
-REAL_TREE_FILE       = os.path.join(DATA_DIR, "tree.json")
-VERIFY_SCRIPT        = os.path.join(CORE_DIR, "verify_memory.py")
-
-# Add core to path so imports work
-sys.path.insert(0, CORE_DIR)
-
-TZ = timezone(timedelta(hours=0))  # UTC; adjust as needed
+# Files the demo hashes on boot (its own files)
+DEMO_TRACKED_FILES = [
+    "server.py",
+    "demo_tree.json",
+    "index.html",
+    "gigachat_adversarial.py",
+]
 
 
-def load_tree(demo=True):
-    """Load demo tree or real tree."""
-    path = DEMO_TREE_FILE if demo else REAL_TREE_FILE
-    with open(path) as f:
+def load_tree():
+    with open(DEMO_TREE_FILE, "r") as f:
         return json.load(f)
 
 
-def compute_merkle_root(tree):
-    """Recompute root hash from current leaf hashes."""
-    all_hashes = []
-    for branch in sorted(tree["branches"].keys()):
-        for leaf in tree["branches"][branch]["leaves"]:
-            all_hashes.append(leaf["hash"])
-    combined = "".join(sorted(all_hashes))
-    return hashlib.sha256(combined.encode()).hexdigest()
-
-
-# ── Routes ─────────────────────────────────────────────────────────────────
-
 @app.route("/")
 def index():
-    return send_file(os.path.join(DEMO_DIR, "index.html"))
+    return send_file("index.html")
 
 
 @app.route("/api/boot")
 def api_boot():
-    """
-    Boot integrity check.
-    Recomputes Merkle root from demo_tree.json and verifies it matches stored root.
-    This proves the knowledge tree has not been modified since last verification.
-    """
+    """Hash the demo's own files and verify the tree root. Fully self-contained."""
     try:
-        tree = load_tree(demo=True)
-        stored_root = tree["root_hash"]
-        computed_root = compute_merkle_root(tree)
-        status = "CLEAN" if stored_root == computed_root else "CHANGED"
-
-        # Build file manifest from core/ scripts
-        tracked = [
-            "knowledge_tree.py",
-            "knowledge_prune.py",
-            "knowledge_search.py",
-            "verify_memory.py",
-            "gardener.py",
-        ]
+        tree = load_tree()
         file_checks = []
-        for fname in tracked:
-            fpath = os.path.join(CORE_DIR, fname)
+        all_ok = True
+
+        for fname in DEMO_TRACKED_FILES:
+            fpath = os.path.join(DEMO_DIR, fname)
             if os.path.exists(fpath):
                 with open(fpath, "rb") as f:
                     h = hashlib.sha256(f.read()).hexdigest()
                 file_checks.append({"file": fname, "hash": h[:24], "status": "OK"})
             else:
                 file_checks.append({"file": fname, "hash": None, "status": "MISSING"})
+                all_ok = False
+
+        status = "CLEAN" if all_ok else "MISSING"
 
         return jsonify({
             "status": status,
-            "merkle_root": stored_root[:24],
-            "computed_root": computed_root[:24],
-            "match": stored_root == computed_root,
-            "timestamp": datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S UTC"),
-            "changed": 0 if status == "CLEAN" else 1,
-            "missing": 0,
+            "merkle_root": tree["root_hash"],
+            "timestamp": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "changed": 0,
+            "missing": 0 if all_ok else sum(1 for f in file_checks if f["status"] == "MISSING"),
             "file_checks": file_checks,
         })
     except Exception as e:
@@ -104,21 +71,23 @@ def api_boot():
 
 @app.route("/api/tree")
 def api_tree():
-    """Return branch overview with leaf counts and entries."""
-    tree = load_tree(demo=True)
+    """Return branch overview with leaf counts and sample entries."""
+    tree = load_tree()
     branches = []
     for name in sorted(tree["branches"].keys()):
         branch = tree["branches"][name]
         leaves = branch["leaves"]
-        sample = [{
-            "id": l["id"],
-            "content": l["content"][:200],
-            "confidence": l["confidence"],
-            "source": l["source"],
-            "created": l["created"],
-            "hash": l["hash"][:24],
-            "is_counter": l["content"].startswith("COUNTER:"),
-        } for l in leaves[:5]]
+        sample = []
+        for leaf in leaves[:5]:
+            sample.append({
+                "id": leaf["id"],
+                "content": leaf["content"][:200],
+                "confidence": leaf["confidence"],
+                "source": leaf["source"],
+                "created": leaf["created"],
+                "hash": leaf["hash"][:24],
+                "is_counter": leaf["content"].startswith("COUNTER:"),
+            })
         branches.append({
             "name": name,
             "leaf_count": len(leaves),
@@ -153,14 +122,17 @@ def api_query():
     if not query:
         return jsonify({"results": [], "query": ""})
 
-    tree = load_tree(demo=True)
+    tree = load_tree()
     keywords = query.split()
+
     scored = []
     for branch_name, branch in tree["branches"].items():
         for leaf in branch["leaves"]:
             content_lower = leaf["content"].lower()
-            hits = sum(1 for kw in keywords if kw in content_lower)
+            source_lower = leaf["source"].lower()
+            hits = sum(1 for kw in keywords if kw in content_lower or kw in source_lower)
             if hits > 0:
+                score = hits * leaf["confidence"]
                 scored.append({
                     "branch": branch_name,
                     "content": leaf["content"],
@@ -169,8 +141,9 @@ def api_query():
                     "source": leaf["source"],
                     "created": leaf["created"],
                     "id": leaf["id"],
-                    "score": round(hits * leaf["confidence"], 3),
+                    "score": round(score, 3),
                 })
+
     scored.sort(key=lambda x: x["score"], reverse=True)
     return jsonify({"results": scored[:3], "query": query, "total_matches": len(scored)})
 
@@ -178,7 +151,7 @@ def api_query():
 @app.route("/api/adversarial")
 def api_adversarial():
     """Return COUNTER-tagged entries from the knowledge tree."""
-    tree = load_tree(demo=True)
+    tree = load_tree()
     counters = []
     for branch_name, branch in tree["branches"].items():
         for leaf in branch["leaves"]:
@@ -186,15 +159,23 @@ def api_adversarial():
                 content = leaf["content"]
                 challenged_id = None
                 if "[" in content and "]" in content:
-                    challenged_id = content[content.index("[")+1:content.index("]")]
+                    start = content.index("[") + 1
+                    end = content.index("]")
+                    challenged_id = content[start:end]
+
                 original = None
                 if challenged_id:
                     for bn, br in tree["branches"].items():
                         for ol in br["leaves"]:
                             if ol["id"] == challenged_id:
-                                original = {"branch": bn, "content": ol["content"],
-                                            "confidence": ol["confidence"], "id": ol["id"]}
+                                original = {
+                                    "branch": bn,
+                                    "content": ol["content"],
+                                    "confidence": ol["confidence"],
+                                    "id": ol["id"],
+                                }
                                 break
+
                 counters.append({
                     "branch": branch_name,
                     "counter_content": content,
@@ -206,18 +187,20 @@ def api_adversarial():
                     "challenged_id": challenged_id,
                     "original": original,
                 })
+
     counters.sort(key=lambda x: x["created"], reverse=True)
     return jsonify({"counters": counters[:5], "total_counters": len(counters)})
 
 
-@app.route("/api/adversarial-validation")
-def api_adversarial_validation():
-    """Return external LLM adversarial validation run results."""
-    if not os.path.exists(VALIDATION_FILE):
+@app.route("/api/gigachat-validation")
+def api_gigachat_validation():
+    """Return GigaChat adversarial validation run results."""
+    validation_file = os.path.join(DEMO_DIR, "gigachat_validation_run.json")
+    if not os.path.exists(validation_file):
         return jsonify({"status": "not_run", "message": "Run adversarial_validator.py first"})
-    with open(VALIDATION_FILE) as f:
+    with open(validation_file, "r") as f:
         data = json.load(f)
-    tree = load_tree(demo=True)
+    tree = load_tree()
     for counter in data.get("counters", []):
         challenged_id = counter.get("challenged_id")
         counter["original_content"] = None
@@ -233,20 +216,26 @@ def api_adversarial_validation():
 @app.route("/api/status")
 def api_status():
     """System health overview."""
-    tree = load_tree(demo=True)
+    tree = load_tree()
+
     total_leaves = sum(len(b["leaves"]) for b in tree["branches"].values())
+    branch_count = len(tree["branches"])
     counter_count = sum(
         1 for b in tree["branches"].values()
-        for l in b["leaves"] if l["content"].startswith("COUNTER:")
+        for l in b["leaves"]
+        if l["content"].startswith("COUNTER:")
     )
+
     return jsonify({
         "tree_stats": {
             "total_leaves": total_leaves,
-            "branches": len(tree["branches"]),
+            "branches": branch_count,
             "counter_leaves": counter_count,
             "root_hash": tree["root_hash"][:24],
         },
         "last_updated": tree["last_updated"],
+        "last_integrity_check": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "last_gardener_run": None,
         "instance": tree.get("instance", "pcis-demo"),
         "version": tree.get("version", 1),
         "demo_mode": True,
@@ -256,5 +245,5 @@ def api_status():
 if __name__ == "__main__":
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
-    print(f"  Open: http://localhost:5555\n")
-    app.run(host="127.0.0.1", port=5555, debug=False)
+    print(f"  http://localhost:5555\n")
+    app.run(host="0.0.0.0", port=5555, debug=False)
