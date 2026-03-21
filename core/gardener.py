@@ -41,7 +41,7 @@ log = logging.getLogger("pcis.gardener")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
-    save_tree, add_knowledge as _kt_add_knowledge,
+    save_tree, add_knowledge as _kt_add_knowledge, tree_lock,
 )
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -284,7 +284,7 @@ def write_staging_file(synapses, flags, staged_counters=None):
         f.write("\n".join(lines) + "\n")
 
 
-def apply_staging(tree):
+def apply_staging():
     """Commit all staged synapses from the staging file to the tree."""
     if not os.path.exists(GARDEN_STAGING):
         log.info("No staging file found.")
@@ -302,20 +302,20 @@ def apply_staging(tree):
 
     source = f"gardener-staged-{today_local()}"
     count = 0
-    for conf_str, synapse_content in blocks:
-        synapse_content = synapse_content.strip()
-        if not synapse_content:
-            continue
-        try:
-            conf = float(conf_str)
-        except ValueError:
-            conf = 0.65
-        leaf_id = add_leaf(tree, "philosophy", f"SYNAPSE: {synapse_content}", source, conf)
-        log.info("🔗 Applied synapse [%s] to philosophy", leaf_id)
-        count += 1
+    with tree_lock() as tree:
+        for conf_str, synapse_content in blocks:
+            synapse_content = synapse_content.strip()
+            if not synapse_content:
+                continue
+            try:
+                conf = float(conf_str)
+            except ValueError:
+                conf = 0.65
+            leaf_id = add_leaf(tree, "philosophy", f"SYNAPSE: {synapse_content}", source, conf)
+            log.info("🔗 Applied synapse [%s] to philosophy", leaf_id)
+            count += 1
 
     if count:
-        save_tree(tree)
         os.remove(GARDEN_STAGING)
         if os.path.exists(GARDEN_NOTIFY_FLAG):
             os.remove(GARDEN_NOTIFY_FLAG)
@@ -557,8 +557,7 @@ def main():
     # Shortcut: apply staged synapses without running full gardening pass
     if args.apply_staging:
         log.info("🌱 Applying staged synapses — %s", now_local())
-        tree = load_tree()
-        count = apply_staging(tree)
+        count = apply_staging()
         if count == 0:
             log.info("Nothing to apply.")
         return
@@ -666,19 +665,18 @@ def main():
         source = f"gardener-{today_local()}"
 
         committed_written = []
-        for c in committed_counters:
-            branch = c["branch"]
-            if branch in tree["branches"]:
-                leaf_id = add_leaf(tree, branch, c["content"], source, c["confidence"])
-                log.info("✅ Added counter [%s] to %s", leaf_id, branch)
-                committed_written.append({**c, "leaf_id": leaf_id})
-            else:
-                log.warning("⚠️  Unknown branch '%s' — skipped", branch)
-        committed_counters = committed_written
-
         if committed_counters:
-            save_tree(tree)
+            with tree_lock() as fresh_tree:
+                for c in committed_counters:
+                    branch = c["branch"]
+                    if branch in fresh_tree["branches"]:
+                        leaf_id = add_leaf(fresh_tree, branch, c["content"], source, c["confidence"])
+                        log.info("✅ Added counter [%s] to %s", leaf_id, branch)
+                        committed_written.append({**c, "leaf_id": leaf_id})
+                    else:
+                        log.warning("⚠️  Unknown branch '%s' — skipped", branch)
             log.info("💾 Tree saved.")
+        committed_counters = committed_written
 
         if staged_synapses or staged_counters:
             total_staged = len(staged_synapses) + len(staged_counters)

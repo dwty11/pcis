@@ -32,7 +32,7 @@ PRUNE_LOG = os.path.join(BASE_DIR, "data", "prune-log.json")
 TZ_UTC = timezone.utc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from knowledge_tree import compute_root_hash, compute_branch_hash, save_tree
+from knowledge_tree import compute_root_hash, compute_branch_hash, save_tree, tree_lock
 
 
 def now_utc():
@@ -263,19 +263,18 @@ def cmd_execute(yes=False, dry_run=False):
         return
 
     pruned = 0
-    for c in candidates:
-        branch = tree["branches"].get(c["branch"])
-        if branch:
-            before = len(branch["leaves"])
-            branch["leaves"] = [l for l in branch["leaves"] if l["id"] != c["id"]]
-            if len(branch["leaves"]) < before:
-                branch["hash"] = compute_branch_hash(branch["leaves"])
-                pruned += 1
+    with tree_lock() as tree:
+        for c in candidates:
+            branch = tree["branches"].get(c["branch"])
+            if branch:
+                before = len(branch["leaves"])
+                branch["leaves"] = [l for l in branch["leaves"] if l["id"] != c["id"]]
+                if len(branch["leaves"]) < before:
+                    branch["hash"] = compute_branch_hash(branch["leaves"])
+                    pruned += 1
 
-    save_tree(tree)
-
-    log = load_prune_log()
-    log["sessions"].append({
+    prune_log = load_prune_log()
+    prune_log["sessions"].append({
         "timestamp": now_utc(),
         "pruned": pruned,
         "refreshed": 0,
@@ -283,8 +282,8 @@ def cmd_execute(yes=False, dry_run=False):
         "mode": "execute",
         "total_leaves_after": sum(len(b.get("leaves", [])) for b in tree.get("branches", {}).values()),
     })
-    log["total_pruned"] += pruned
-    save_prune_log(log)
+    prune_log["total_pruned"] += pruned
+    save_prune_log(prune_log)
 
     print(f"Pruned {pruned} leaf(s). New root: {tree['root_hash'][:24]}...")
 
@@ -362,19 +361,20 @@ def cmd_review(yes=False, dry_run=False):
         return
 
     if actions["pruned"] > 0 or actions["refreshed"] > 0:
-        save_tree(tree)
+        with tree_lock() as locked_tree:
+            locked_tree.update(tree)
 
-        log = load_prune_log()
-        log["sessions"].append({
+        prune_log = load_prune_log()
+        prune_log["sessions"].append({
             "timestamp": now_utc(),
             "pruned": actions["pruned"],
             "refreshed": actions["refreshed"],
             "kept": actions["kept"],
             "total_leaves_after": sum(len(b.get("leaves", [])) for b in tree.get("branches", {}).values()),
         })
-        log["total_pruned"] += actions["pruned"]
-        log["total_refreshed"] += actions["refreshed"]
-        save_prune_log(log)
+        prune_log["total_pruned"] += actions["pruned"]
+        prune_log["total_refreshed"] += actions["refreshed"]
+        save_prune_log(prune_log)
 
     print(f"\nSession complete:")
     print(f"  Kept: {actions['kept']} | Pruned: {actions['pruned']} | Refreshed: {actions['refreshed']}")

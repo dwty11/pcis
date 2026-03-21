@@ -31,6 +31,7 @@ import hashlib
 import json
 import os
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -80,14 +81,15 @@ def compute_root_hash(tree):
     return level[0]
 
 
-def load_tree():
-    if os.path.exists(TREE_FILE):
-        with open(TREE_FILE, "r") as f:
+def load_tree(path=None):
+    path = path or TREE_FILE
+    if os.path.exists(path):
+        with open(path, "r") as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError as e:
                 print(f"Error: knowledge tree file is corrupted ({e}).")
-                print(f"       Refusing to overwrite. Fix or remove {TREE_FILE} manually.")
+                print(f"       Refusing to overwrite. Fix or remove {path} manually.")
                 sys.exit(1)
     tree = {
         "version": 1,
@@ -107,21 +109,41 @@ def load_tree():
 
 
 def save_tree(tree, path=None):
+    """Save tree atomically with file locking.
+    For multi-process safety, prefer tree_lock() context manager."""
     path = path or TREE_FILE
     lock_path = path + ".lock"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(lock_path, 'w') as lock_f:
         fcntl.flock(lock_f, fcntl.LOCK_EX)
-        tree["last_updated"] = now_utc()
-        for branch_name in tree.get("branches", {}):
-            tree["branches"][branch_name]["hash"] = compute_branch_hash(
-                tree["branches"][branch_name]["leaves"]
-            )
-        tree["root_hash"] = compute_root_hash(tree)
-        tmp_path = path + ".tmp"
-        with open(tmp_path, 'w', encoding='utf-8') as f:
-            json.dump(tree, f, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, path)
+        _write_tree(tree, path)
+
+
+def _write_tree(tree, path):
+    """Write tree to disk (no locking). Called by save_tree and tree_lock."""
+    tree["last_updated"] = now_utc()
+    for branch_name in tree.get("branches", {}):
+        tree["branches"][branch_name]["hash"] = compute_branch_hash(
+            tree["branches"][branch_name]["leaves"]
+        )
+    tree["root_hash"] = compute_root_hash(tree)
+    tmp_path = path + ".tmp"
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(tree, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, path)
+
+
+@contextmanager
+def tree_lock(path=None):
+    """Acquire exclusive lock on tree file. Yields loaded tree, saves on exit."""
+    path = path or TREE_FILE
+    lock_path = path + ".lock"
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(lock_path, 'w') as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        tree = load_tree(path)
+        yield tree
+        _write_tree(tree, path)
 
 
 def add_knowledge(tree, branch, content, source="session", confidence=0.7):
@@ -219,9 +241,8 @@ def cmd_add(args):
             source = args[i + 1]
         if arg == "--confidence" and i + 1 < len(args):
             confidence = float(args[i + 1])
-    tree = load_tree()
-    leaf_id = add_knowledge(tree, branch, content, source, confidence)
-    save_tree(tree)
+    with tree_lock() as tree:
+        leaf_id = add_knowledge(tree, branch, content, source, confidence)
     print(f"Added to [{branch}]: {content[:60]}...")
     print(f"   ID: {leaf_id} | Source: {source} | Confidence: {confidence}")
     print(f"   Root: {tree['root_hash'][:24]}...")
@@ -318,13 +339,12 @@ def cmd_prune(args):
     if len(args) < 2:
         print("Usage: --prune <branch> <leaf_id>")
         sys.exit(1)
-    tree = load_tree()
-    if prune_leaf(tree, args[0], args[1]):
-        save_tree(tree)
-        print(f"Pruned leaf {args[1]} from [{args[0]}]")
-        print(f"   New root: {tree['root_hash'][:24]}...")
-    else:
-        print(f"Leaf {args[1]} not found in [{args[0]}]")
+    with tree_lock() as tree:
+        if prune_leaf(tree, args[0], args[1]):
+            print(f"Pruned leaf {args[1]} from [{args[0]}]")
+            print(f"   New root: {tree['root_hash'][:24]}...")
+        else:
+            print(f"Leaf {args[1]} not found in [{args[0]}]")
 
 
 if __name__ == "__main__":
