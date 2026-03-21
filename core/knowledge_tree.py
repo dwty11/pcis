@@ -106,15 +106,22 @@ def load_tree():
     return tree
 
 
-def save_tree(tree):
-    tree["last_updated"] = now_utc()
-    tree["root_hash"] = compute_root_hash(tree)
-    os.makedirs(os.path.dirname(TREE_FILE), exist_ok=True)
-    tmp = TREE_FILE + ".tmp"
-    with open(tmp, "w") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
-        json.dump(tree, f, indent=2)
-    os.replace(tmp, TREE_FILE)
+def save_tree(tree, path=None):
+    path = path or TREE_FILE
+    lock_path = path + ".lock"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(lock_path, 'w') as lock_f:
+        fcntl.flock(lock_f, fcntl.LOCK_EX)
+        tree["last_updated"] = now_utc()
+        for branch_name in tree.get("branches", {}):
+            tree["branches"][branch_name]["hash"] = compute_branch_hash(
+                tree["branches"][branch_name]["leaves"]
+            )
+        tree["root_hash"] = compute_root_hash(tree)
+        tmp_path = path + ".tmp"
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            json.dump(tree, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, path)
 
 
 def add_knowledge(tree, branch, content, source="session", confidence=0.7):

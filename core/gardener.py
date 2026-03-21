@@ -41,6 +41,7 @@ log = logging.getLogger("pcis.gardener")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
+    save_tree, add_knowledge as _kt_add_knowledge,
 )
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -63,41 +64,21 @@ def today_local():
 
 def load_tree():
     if not os.path.exists(TREE_FILE):
-        log.error("Knowledge tree not found: %s", TREE_FILE)
+        log.error("❌ Knowledge tree not found: %s", TREE_FILE)
         sys.exit(1)
     with open(TREE_FILE) as f:
         return json.load(f)
 
 
-def save_tree(tree):
-    tree["last_updated"] = now_local()
-    for branch_name, branch in tree["branches"].items():
-        branch["hash"] = compute_branch_hash(branch["leaves"])
-    tree["root_hash"] = compute_root_hash(tree)
-    os.makedirs(os.path.dirname(TREE_FILE), exist_ok=True)
-    tmp = TREE_FILE + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(tree, f, indent=2)
-    os.replace(tmp, TREE_FILE)
-
 
 def add_leaf(tree, branch, content, source, confidence):
-    if branch not in tree["branches"]:
-        tree["branches"][branch] = {"hash": "", "leaves": []}
-
-    timestamp = now_local()
-    leaf_hash = _kt_hash_leaf(content, branch, timestamp)
-    leaf = {
-        "id": leaf_hash[:12],
-        "hash": leaf_hash,
-        "content": content,
-        "source": source,
-        "confidence": confidence,
-        "created": timestamp,
-        "promoted_to": None
-    }
-    tree["branches"][branch]["leaves"].append(leaf)
-    return leaf_hash[:12]
+    """Add a leaf via knowledge_tree.add_knowledge with validation."""
+    try:
+        return _kt_add_knowledge(tree, branch, content, source, confidence)
+    except ValueError as e:
+        log.warning("⚠️  Skipping invalid leaf for [%s]: %s — content: %s",
+                    branch, e, content[:100])
+        return None
 
 
 def load_recent_memory(days=5):
@@ -157,7 +138,7 @@ def call_ollama(prompt, model=GARDENER_MODEL):
             result = json.loads(resp.read().decode())
             return result.get("response", "").strip()
     except urllib.error.URLError as e:
-        log.error("Ollama unreachable: %s", e)
+        log.error("❌ Ollama unreachable: %s", e)
         sys.exit(1)
 
 
@@ -330,7 +311,7 @@ def apply_staging(tree):
         except ValueError:
             conf = 0.65
         leaf_id = add_leaf(tree, "philosophy", f"SYNAPSE: {synapse_content}", source, conf)
-        log.info("Applied synapse [%s] to philosophy", leaf_id)
+        log.info("🔗 Applied synapse [%s] to philosophy", leaf_id)
         count += 1
 
     if count:
@@ -338,7 +319,7 @@ def apply_staging(tree):
         os.remove(GARDEN_STAGING)
         if os.path.exists(GARDEN_NOTIFY_FLAG):
             os.remove(GARDEN_NOTIFY_FLAG)
-        log.info("Tree saved. Staging cleared. (%d synapses applied)", count)
+        log.info("✅ Tree saved. Staging cleared. (%d synapses applied)", count)
     return count
 
 
@@ -430,23 +411,23 @@ def gap_scan():
     date_str = today_local()
     daily_note = os.path.join(BASE_DIR, "memory", f"{date_str}.md")
 
-    log.info("Gap scan starting — %s", now_local())
+    log.info("🔍 Gap scan starting — %s", now_local())
     log.info("Daily note: %s", daily_note)
 
     if not os.path.exists(daily_note):
-        log.error("No daily note found for %s", date_str)
+        log.error("❌ No daily note found for %s", date_str)
         return
 
     with open(daily_note) as f:
         note_content = f.read()
 
     if not note_content.strip():
-        log.warning("Daily note is empty — nothing to scan.")
+        log.warning("⚠️  Daily note is empty — nothing to scan.")
         return
 
     # Ask LLM to extract significant results
     prompt = f"{GAP_SCAN_PROMPT}\n\n---\n\n{note_content}"
-    log.info("Calling Qwen3:14b to extract results...")
+    log.info("🧠 Calling Qwen3:14b to extract results...")
     response = call_ollama(prompt)
 
     # Parse JSON list from response — handle markdown fences and fallbacks
@@ -480,16 +461,16 @@ def gap_scan():
         debug_path = "/tmp/gap_scan_debug.txt"
         with open(debug_path, "w") as df:
             df.write(response)
-        log.warning("Could not parse JSON list from LLM response.")
+        log.warning("⚠️  Could not parse JSON list from LLM response.")
         log.warning("Raw response dumped to %s", debug_path)
         log.warning("First 300 chars: %s", response[:300])
         return
 
     if not results:
-        log.warning("LLM extracted zero results.")
+        log.warning("⚠️  LLM extracted zero results.")
         return
 
-    log.info("Extracted %d result(s) from daily note", len(results))
+    log.info("📋 Extracted %d result(s) from daily note", len(results))
 
     # Check each result against knowledge tree via knowledge_search.py
     import subprocess
@@ -506,7 +487,7 @@ def gap_scan():
             )
             output = proc.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            log.warning("Search failed for '%s': %s", result_text[:60], e)
+            log.warning("⚠️  Search failed for '%s': %s", result_text[:60], e)
             continue
 
         # Parse top score from search output — format: [##########..........] 0.XXX
@@ -519,10 +500,10 @@ def gap_scan():
         else:
             log.info("COVERED (%.3f): %s", top_score, result_text[:100])
 
-    log.info("Summary: %d gap(s) / %d result(s)", len(gaps), len(results))
+    log.info("📊 Summary: %d gap(s) / %d result(s)", len(gaps), len(results))
 
     if not gaps:
-        log.info("No knowledge gaps found.")
+        log.info("✅ No knowledge gaps found.")
         return
 
     # Stage gaps to gardener-staging.md
@@ -548,15 +529,15 @@ def gap_scan():
     with open(GARDEN_STAGING, "w") as f:
         f.write("\n".join(lines) + "\n")
 
-    log.info("Staged %d gap(s) -> %s", len(gaps), GARDEN_STAGING)
+    log.info("📋 Staged %d gap(s) -> %s", len(gaps), GARDEN_STAGING)
 
     # Write notify flag
     summary = f"gap-scan found {len(gaps)} missing result(s) — staged for review"
     with open(GARDEN_NOTIFY_FLAG, "w") as f:
         f.write(summary + "\n")
 
-    log.info("Notify flag written -> %s", GARDEN_NOTIFY_FLAG)
-    log.info("Gap scan complete — %s", now_local())
+    log.info("🔔 Notify flag written -> %s", GARDEN_NOTIFY_FLAG)
+    log.info("✅ Gap scan complete — %s", now_local())
 
 
 def main():
@@ -575,14 +556,14 @@ def main():
 
     # Shortcut: apply staged synapses without running full gardening pass
     if args.apply_staging:
-        log.info("Applying staged synapses — %s", now_local())
+        log.info("🌱 Applying staged synapses — %s", now_local())
         tree = load_tree()
         count = apply_staging(tree)
         if count == 0:
             log.info("Nothing to apply.")
         return
 
-    log.info("Gardener starting — %s", now_local())
+    log.info("🌱 Gardener starting — %s", now_local())
     log.info("Model: %s", GARDENER_MODEL)
     log.info("Mode: %s", "DRY RUN" if args.dry_run else "COMMIT")
     if args.branch:
@@ -612,7 +593,7 @@ def main():
         already_challenged=already_challenged_text
     )
 
-    log.info("Calling Qwen3:14b for adversarial review...")
+    log.info("🧠 Calling Qwen3:14b for adversarial review...")
     response = call_ollama(prompt)
 
     if args.verbose:
@@ -624,7 +605,7 @@ def main():
 
     # Retry once if parse produces zero results
     if not (counters or synapses or flags):
-        log.warning("Parse produced 0 results on first attempt — retrying...")
+        log.warning("⚠️  Parse produced 0 results on first attempt — retrying...")
         response = call_ollama(prompt)
         if args.verbose:
             log.info("=== RAW LLM OUTPUT (retry) ===")
@@ -632,32 +613,32 @@ def main():
             log.info("==============================")
         counters, synapses, flags = parse_gardener_output(response)
 
-    log.info("Results:")
-    log.info("Counter-leaves: %d", len(counters))
-    log.info("Synapses:       %d", len(synapses))
-    log.info("Flags:          %d", len(flags))
+    log.info("📋 Results:")
+    log.info("   Counter-leaves: %d", len(counters))
+    log.info("   Synapses:       %d", len(synapses))
+    log.info("   Flags:          %d", len(flags))
 
     if not (counters or synapses or flags):
         branch_label = args.branch if args.branch else "all"
         log.warning(
-            "Gardener parse produced 0 results for branch %s after 2 attempts "
+            "⚠️  Gardener parse produced 0 results for branch %s after 2 attempts "
             "— LLM output may be malformed", branch_label
         )
         return
 
     # Show what we found
     if counters:
-        log.info("Counter-leaves:")
+        log.info("⚔️  Counter-leaves:")
         for c in counters:
             log.info("[%s] %s", c['branch'], c['content'][:120])
 
     if synapses:
-        log.info("Synapses:")
+        log.info("🔗 Synapses:")
         for s in synapses:
             log.info("%s", s['content'][:120])
 
     if flags:
-        log.info("Flags:")
+        log.info("🚩 Flags:")
         for fl in flags:
             log.info("[%s] %s", fl['leaf_id'], fl['reason'])
 
@@ -676,12 +657,12 @@ def main():
             committed_counters.append(c) if not args.dry_run else None
 
     if staged_counters:
-        log.info("Staging %d constitutional counter-leaf(ves) for review:", len(staged_counters))
+        log.info("📋 Staging %d constitutional counter-leaf(ves) for review:", len(staged_counters))
         for c in staged_counters:
             log.info("[%s] %s", c['branch'], c['content'][:120])
 
     if not args.dry_run:
-        log.info("Committing operational counter-leaves to knowledge tree...")
+        log.info("✍️  Committing operational counter-leaves to knowledge tree...")
         source = f"gardener-{today_local()}"
 
         committed_written = []
@@ -689,25 +670,25 @@ def main():
             branch = c["branch"]
             if branch in tree["branches"]:
                 leaf_id = add_leaf(tree, branch, c["content"], source, c["confidence"])
-                log.info("Added counter [%s] to %s", leaf_id, branch)
+                log.info("✅ Added counter [%s] to %s", leaf_id, branch)
                 committed_written.append({**c, "leaf_id": leaf_id})
             else:
-                log.warning("Unknown branch '%s' — skipped", branch)
+                log.warning("⚠️  Unknown branch '%s' — skipped", branch)
         committed_counters = committed_written
 
         if committed_counters:
             save_tree(tree)
-            log.info("Tree saved.")
+            log.info("💾 Tree saved.")
 
         if staged_synapses or staged_counters:
             total_staged = len(staged_synapses) + len(staged_counters)
-            log.info("Staging %d item(s) for review -> %s", total_staged, GARDEN_STAGING)
+            log.info("📋 Staging %d item(s) for review -> %s", total_staged, GARDEN_STAGING)
             log.info("(Run: python3 gardener.py --apply-staging to commit)")
     else:
         committed_counters = []
 
     write_garden_log(counters, synapses, flags, dry_run=args.dry_run)
-    log.info("Log written -> %s", GARDEN_LOG)
+    log.info("📝 Log written -> %s", GARDEN_LOG)
 
     # Write staging file for synapses + constitutional counter-leaves
     if not args.dry_run and (staged_synapses or staged_counters):
@@ -717,7 +698,7 @@ def main():
     write_notify_flag(committed_counters, staged_synapses, flags, dry_run=args.dry_run,
                       staged_counters=staged_counters)
 
-    log.info("Gardening complete — %s", now_local())
+    log.info("✅ Gardening complete — %s", now_local())
 
 
 if __name__ == "__main__":
