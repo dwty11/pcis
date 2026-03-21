@@ -101,7 +101,7 @@ All prune actions logged to `data/prune-log.json`.
 
 ### Tests (`tests/test_pcis.py`)
 
-19 tests across 7 classes:
+19 tests across 7 classes (18 original + identity portability):
 
 | Class | What it verifies |
 |-------|-----------------|
@@ -114,3 +114,15 @@ All prune actions logged to `data/prune-log.json`.
 | `TestIdentityPortability` | Root hash is identical across GPT-4, Claude, Llama, GigaChat, and Qwen configs — model-agnostic identity is an enforced invariant, not an accident |
 
 Run with: `python -m pytest tests/ -v`
+
+---
+
+### Config & Infrastructure
+
+**`setup.sh`** — Runs `pip install -r requirements.txt`, creates `data/`, copies `demo_tree.json` into it as the starting tree.
+
+**`requirements.txt`** — Just `flask>=3.0.0`. The core modules have zero external dependencies — all vector math, hashing, and API calls use the Python standard library.
+
+**`config.example.json`** — Template with `base_dir`, `llm_api_key`, `model_name`, `demo_mode`. Copy to `config.json` before running adversarial validation.
+
+**`.github/workflows/ci.yml`** — GitHub Actions running the full test suite on Python 3.10, 3.11, and 3.12 on every push and PR to `main`.
