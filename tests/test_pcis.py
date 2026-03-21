@@ -296,6 +296,35 @@ class TestConcurrentSaveTree(unittest.TestCase):
             shutil.rmtree(tmp_dir)
 
 
+class TestIdentityPortability(unittest.TestCase):
+    """Verify that model config changes do NOT affect Merkle root hash.
+    The root hash must be determined solely by tree content — not by
+    which model processed it. This makes the hash a model-agnostic identity.
+    """
+
+    def test_root_hash_independent_of_model_config(self):
+        """Same tree content must produce identical root hash regardless of model_name in config."""
+        tree = {"branches": {}, "root_hash": ""}
+        kt.add_knowledge(tree, "identity", "PCIS gives agents persistent memory", confidence=0.9)
+        kt.add_knowledge(tree, "lessons", "Merkle integrity catches tampering", confidence=0.8)
+
+        root_hash_default = kt.compute_root_hash(tree)
+
+        # Simulate different model configs — none should affect the hash
+        for model_name in ["gpt-4", "claude-sonnet-4-6", "llama-3-70b", "gigachat-pro", "qwen3:30b"]:
+            # The config field exists in config.json but must never touch the hash pipeline
+            tree["_model_config"] = model_name  # inject a config marker
+            root_hash_with_config = kt.compute_root_hash(tree)
+            self.assertEqual(
+                root_hash_default, root_hash_with_config,
+                f"Root hash changed when model_config='{model_name}' — identity portability broken"
+            )
+
+        # Clean up injected field and verify hash still matches
+        del tree["_model_config"]
+        self.assertEqual(root_hash_default, kt.compute_root_hash(tree))
+
+
 if __name__ == "__main__":
     print("PCIS Core Test Suite\n" + "="*40)
     unittest.main(verbosity=2)
