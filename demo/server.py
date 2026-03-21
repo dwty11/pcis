@@ -18,6 +18,17 @@ DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
 DEMO_TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
 TZ_UTC = timezone.utc
 
+# demo_mode=True uses demo_tree.json; False uses data/tree.json
+def _load_demo_mode():
+    config_path = os.path.join(DEMO_DIR, "config.json")
+    try:
+        with open(config_path, "r") as f:
+            return json.load(f).get("demo_mode", True)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return True
+
+DEMO_MODE = _load_demo_mode()
+
 # Files the demo hashes on boot (its own files)
 DEMO_TRACKED_FILES = [
     "server.py",
@@ -237,7 +248,7 @@ def api_status():
         "last_gardener_run": None,
         "instance": tree.get("instance", "pcis-demo"),
         "version": tree.get("version", 1),
-        "demo_mode": True,
+        "demo_mode": DEMO_MODE,
     })
 
 

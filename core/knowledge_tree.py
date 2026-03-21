@@ -26,6 +26,7 @@ Examples:
 No external dependencies. Python 3.8+.
 """
 
+import fcntl
 import hashlib
 import json
 import os
@@ -111,11 +112,18 @@ def save_tree(tree):
     os.makedirs(os.path.dirname(TREE_FILE), exist_ok=True)
     tmp = TREE_FILE + ".tmp"
     with open(tmp, "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
         json.dump(tree, f, indent=2)
     os.replace(tmp, TREE_FILE)
 
 
 def add_knowledge(tree, branch, content, source="session", confidence=0.7):
+    if not content or not content.strip():
+        raise ValueError("leaf content cannot be empty")
+    if len(content) > 10_000:
+        raise ValueError(f"leaf content too long ({len(content)} chars, max 10000)")
+    if not branch or not branch.strip():
+        raise ValueError("branch name cannot be empty")
     if branch not in tree["branches"]:
         tree["branches"][branch] = {"hash": "", "leaves": []}
     timestamp = now_utc()

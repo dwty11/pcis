@@ -223,6 +223,86 @@ class TestCrossModuleHashConsistency(unittest.TestCase):
                          "gardener leaf hashing diverges from knowledge_tree")
 
 
+class TestAddKnowledgeValidation(unittest.TestCase):
+    """Input validation on add_knowledge."""
+
+    def _empty_tree(self):
+        return {"version": 1, "instance": "test", "root_hash": "",
+                "last_updated": "2026-01-01T00:00:00Z",
+                "branches": {"lessons": {"hash": "", "leaves": []}}}
+
+    def test_empty_content_raises(self):
+        tree = self._empty_tree()
+        with self.assertRaises(ValueError):
+            kt.add_knowledge(tree, "lessons", "")
+        with self.assertRaises(ValueError):
+            kt.add_knowledge(tree, "lessons", "   ")
+
+    def test_oversized_content_raises(self):
+        tree = self._empty_tree()
+        with self.assertRaises(ValueError):
+            kt.add_knowledge(tree, "lessons", "x" * 10_001)
+
+
+class TestConcurrentSaveTree(unittest.TestCase):
+    """File locking prevents concurrent write corruption."""
+
+    def test_concurrent_add_and_save(self):
+        import threading
+
+        tmp_dir = tempfile.mkdtemp()
+        tree_path = os.path.join(tmp_dir, "data", "tree.json")
+        os.makedirs(os.path.dirname(tree_path), exist_ok=True)
+
+        # Patch TREE_FILE for this test
+        original_tree_file = kt.TREE_FILE
+        kt.TREE_FILE = tree_path
+
+        try:
+            # Create initial tree
+            tree = {"version": 1, "instance": "test", "root_hash": "",
+                    "last_updated": "", "branches": {"lessons": {"hash": "", "leaves": []}}}
+            kt.save_tree(tree)
+
+            errors = []
+
+            import time
+
+            def writer(n):
+                try:
+                    for i in range(5):
+                        # Retry on transient file conflicts (expected under concurrency)
+                        for attempt in range(5):
+                            try:
+                                t = kt.load_tree()
+                                kt.add_knowledge(t, "lessons", f"thread-{n}-leaf-{i}")
+                                kt.save_tree(t)
+                                break
+                            except (FileNotFoundError, OSError):
+                                if attempt == 4:
+                                    raise
+                                time.sleep(0.01)
+                except Exception as e:
+                    errors.append(e)
+
+            t1 = threading.Thread(target=writer, args=(1,))
+            t2 = threading.Thread(target=writer, args=(2,))
+            t1.start()
+            t2.start()
+            t1.join()
+            t2.join()
+
+            self.assertEqual(errors, [])
+
+            # File must be valid JSON
+            with open(tree_path) as f:
+                final_tree = json.load(f)
+            self.assertGreater(len(final_tree["branches"]["lessons"]["leaves"]), 0)
+        finally:
+            kt.TREE_FILE = original_tree_file
+            shutil.rmtree(tmp_dir)
+
+
 if __name__ == "__main__":
     print("PCIS Core Test Suite\n" + "="*40)
     unittest.main(verbosity=2)

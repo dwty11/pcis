@@ -45,7 +45,7 @@ def days_since(date_str):
         for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
             try:
                 dt = datetime.strptime(date_str.replace(" UTC", ""), fmt)
-                now = datetime.now()
+                now = datetime.utcnow()
                 return (now - dt).days
             except ValueError:
                 continue
