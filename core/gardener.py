@@ -36,6 +36,48 @@ GARDEN_STAGING = os.path.join(WORKSPACE, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(WORKSPACE, "memory", "gardener-pending-notify.flag")
 OLLAMA_URL = "http://localhost:11434/api/generate"
 GARDENER_MODEL = "qwen3:14b"
+
+def ensure_ollama_warm(timeout=60, poll_interval=2):
+    """Ensure Ollama is running. Start it if not. Exit if unreachable after timeout."""
+    import urllib.request
+    import urllib.error
+    import subprocess
+    import time
+
+    tags_url = "http://localhost:11434/api/tags"
+
+    def is_up():
+        try:
+            urllib.request.urlopen(tags_url, timeout=3)
+            return True
+        except Exception:
+            return False
+
+    if is_up():
+        return  # Already warm
+
+    print("⏳ Ollama not running — starting...", flush=True)
+    try:
+        subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        print("❌ ollama binary not found — cannot start Ollama", flush=True)
+        raise SystemExit(1)
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(poll_interval)
+        if is_up():
+            print("✅ Ollama is up", flush=True)
+            return
+
+    print(f"❌ Ollama did not start within {timeout}s — aborting", flush=True)
+    raise SystemExit(1)
+
+
 TZ_MOSCOW = timezone(timedelta(hours=3))
 
 
@@ -631,6 +673,7 @@ def main():
         print(f"   Focus: {args.branch}")
     print()
 
+    ensure_ollama_warm()
     tree = load_tree()
     tree_text = format_tree_for_prompt(tree, focus_branch=args.branch)
     recent_memory = load_recent_memory(days=5)
