@@ -32,25 +32,28 @@ PRUNE_LOG = os.path.join(WORKSPACE, ".whis-prune-log.json")
 TZ_MOSCOW = timezone(timedelta(hours=3))
 
 try:
-    from knowledge_tree import compute_root_hash
+    from knowledge_tree import compute_root_hash, compute_branch_hash
 except ImportError:
+    import hashlib as _hashlib
+
+    def compute_branch_hash(leaves):
+        if not leaves:
+            return _hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
+        leaf_hashes = [l["hash"] for l in leaves]
+        combined = "|".join(sorted(leaf_hashes))
+        return _hashlib.sha256(combined.encode()).hexdigest()
+
     def compute_root_hash(tree):
         branches = tree.get("branches", {})
-        branch_hashes = []
-        for name in sorted(branches.keys()):
-            branch = branches[name]
-            branch_hashes.append(f"{name}:{branch.get('hash', 'EMPTY')}")
+        branch_hashes = [f"{n}:{branches[n].get('hash', 'EMPTY')}" for n in sorted(branches)]
         if not branch_hashes:
-            return hashlib.sha256(b"EMPTY_TREE").hexdigest()
-        level = [hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
+            return _hashlib.sha256(b"EMPTY_TREE").hexdigest()
+        level = [_hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
         while len(level) > 1:
             next_level = []
             for i in range(0, len(level), 2):
-                if i + 1 < len(level):
-                    combined = level[i] + level[i + 1]
-                else:
-                    combined = level[i] + level[i]
-                next_level.append(hashlib.sha256(combined.encode()).hexdigest())
+                combined = level[i] + (level[i+1] if i+1 < len(level) else level[i])
+                next_level.append(_hashlib.sha256(combined.encode()).hexdigest())
             level = next_level
         return level[0]
 

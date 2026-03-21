@@ -55,20 +55,42 @@ def load_tree():
         return json.load(f)
 
 
-def save_tree(tree):
-    import hashlib
+try:
+    from knowledge_tree import (
+        compute_branch_hash,
+        compute_root_hash,
+        hash_leaf as _kt_hash_leaf,
+    )
+except ImportError:
+    import hashlib as _hashlib
 
     def compute_branch_hash(leaves):
-        combined = "".join(l["hash"] for l in leaves)
-        return hashlib.sha256(combined.encode()).hexdigest()
+        if not leaves:
+            return _hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
+        leaf_hashes = [l["hash"] for l in leaves]
+        combined = "|".join(sorted(leaf_hashes))
+        return _hashlib.sha256(combined.encode()).hexdigest()
 
     def compute_root_hash(tree):
-        combined = "".join(
-            tree["branches"][b]["hash"]
-            for b in sorted(tree["branches"].keys())
-        )
-        return hashlib.sha256(combined.encode()).hexdigest()
+        branches = tree.get("branches", {})
+        branch_hashes = [f"{n}:{branches[n].get('hash', 'EMPTY')}" for n in sorted(branches)]
+        if not branch_hashes:
+            return _hashlib.sha256(b"EMPTY_TREE").hexdigest()
+        level = [_hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
+        while len(level) > 1:
+            next_level = []
+            for i in range(0, len(level), 2):
+                combined = level[i] + (level[i+1] if i+1 < len(level) else level[i])
+                next_level.append(_hashlib.sha256(combined.encode()).hexdigest())
+            level = next_level
+        return level[0]
 
+    def _kt_hash_leaf(content, branch, timestamp):
+        data = f"{branch}:{timestamp}:{content}"
+        return _hashlib.sha256(data.encode()).hexdigest()
+
+
+def save_tree(tree):
     tree["last_updated"] = now_moscow()
     for branch_name, branch in tree["branches"].items():
         branch["hash"] = compute_branch_hash(branch["leaves"])
