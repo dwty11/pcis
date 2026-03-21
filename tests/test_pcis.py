@@ -248,12 +248,11 @@ class TestConcurrentSaveTree(unittest.TestCase):
     """File locking prevents concurrent write corruption."""
 
     def test_concurrent_add_and_save(self):
-        import fcntl
         import threading
+        from knowledge_tree import tree_lock
 
         tmp_dir = tempfile.mkdtemp()
         tree_path = os.path.join(tmp_dir, "data", "tree.json")
-        lock_path = tree_path + ".lock"
         os.makedirs(os.path.dirname(tree_path), exist_ok=True)
 
         # Patch TREE_FILE for this test
@@ -269,23 +268,11 @@ class TestConcurrentSaveTree(unittest.TestCase):
             errors = []
 
             def writer(n):
-                """Each writer adds 5 leaves, locking the full read-modify-write cycle."""
+                """Each writer adds 5 leaves using tree_lock for safe concurrency."""
                 try:
                     for i in range(5):
-                        # Use the same lockfile that save_tree uses, wrapping load+add+save
-                        with open(lock_path, 'w') as lf:
-                            fcntl.flock(lf, fcntl.LOCK_EX)
-                            t = kt.load_tree()
+                        with tree_lock(path=tree_path) as t:
                             kt.add_knowledge(t, "lessons", f"thread-{n}-leaf-{i}")
-                            # Write directly (skip save_tree's own flock to avoid deadlock)
-                            t["last_updated"] = kt.now_utc()
-                            for bn in t.get("branches", {}):
-                                t["branches"][bn]["hash"] = kt.compute_branch_hash(t["branches"][bn]["leaves"])
-                            t["root_hash"] = kt.compute_root_hash(t)
-                            tmp_path = tree_path + ".tmp"
-                            with open(tmp_path, 'w', encoding='utf-8') as f:
-                                json.dump(t, f, ensure_ascii=False, indent=2)
-                            os.replace(tmp_path, tree_path)
                 except Exception as e:
                     errors.append(e)
 
