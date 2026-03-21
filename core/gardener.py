@@ -628,6 +628,9 @@ def main():
     )
 
     branch_list = ", ".join(sorted(tree.get("branches", {}).keys()))
+    # When focused on a single branch, force output to that branch only
+    if args.branch:
+        branch_list = args.branch
     prompt = GARDENER_PROMPT.format(
         tree_text=tree_text,
         recent_memory=recent_memory[:1500],  # cap memory context
