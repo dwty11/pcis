@@ -91,7 +91,7 @@ All prune actions logged to `data/prune-log.json`.
 
 **`demo/server.py`** — Flask web server exposing the knowledge tree through a REST API. Endpoints: `/api/boot` (Merkle root + file integrity), `/api/tree` (full branch structure with leaf counts), `/api/query` (keyword search scored by hits × confidence), `/api/adversarial` (COUNTER-prefixed leaves linked to their originals), `/api/adversarial-validation` (saved validation run results), `/api/status` (system health). Binds to `127.0.0.1:5555`.
 
-**`demo/adversarial_validator.py`** — Standalone script running a full adversarial validation pass using an external LLM API. Picks highest-confidence leaves, sends them for challenge, parses counter-leaves, saves the full run (with before/after Merkle roots) to JSON for the demo server to display.
+**`core/adversarial_validator.py`** — External adversarial validation agent. Picks highest-confidence leaves, sends them to an external LLM API for challenge, parses counter-leaves, and saves the full run (with before/after Merkle roots) to JSON. Complements the nightly gardener: where `gardener.py` runs locally and continuously, `adversarial_validator.py` is the external second opinion — a different model, a different perspective, no shared context with the system it is auditing.
 
 **`demo/demo_tree.json`** — Synthetic knowledge tree: 5 branches, 19 leaves, zero personal data (enforced by a test). Used to seed `data/tree.json` and drive the demo server.
 
