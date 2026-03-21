@@ -29,11 +29,17 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
 
-WORKSPACE = os.environ.get("PCIS_BASE_DIR", os.path.expanduser("BASE_DIR"))
-TREE_FILE = os.path.join(WORKSPACE, ".agent-knowledge-tree.json")
-GARDEN_LOG = os.path.join(WORKSPACE, "memory", "gardener-log.md")
-GARDEN_STAGING = os.path.join(WORKSPACE, "memory", "gardener-staging.md")
-GARDEN_NOTIFY_FLAG = os.path.join(WORKSPACE, "memory", "gardener-pending-notify.flag")
+# Ensure core/ is importable
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from knowledge_tree import (
+    compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
+)
+
+BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
+GARDEN_LOG = os.path.join(BASE_DIR, "memory", "gardener-log.md")
+GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
+GARDEN_NOTIFY_FLAG = os.path.join(BASE_DIR, "memory", "gardener-pending-notify.flag")
 OLLAMA_URL = "http://localhost:11434/api/generate"
 GARDENER_MODEL = "qwen3:14b"
 TZ_UTC = timezone(timedelta(hours=0))
@@ -56,35 +62,23 @@ def load_tree():
 
 
 def save_tree(tree):
-    import hashlib
-
-    def compute_branch_hash(leaves):
-        combined = "".join(l["hash"] for l in leaves)
-        return hashlib.sha256(combined.encode()).hexdigest()
-
-    def compute_root_hash(tree):
-        combined = "".join(
-            tree["branches"][b]["hash"]
-            for b in sorted(tree["branches"].keys())
-        )
-        return hashlib.sha256(combined.encode()).hexdigest()
-
     tree["last_updated"] = now_local()
     for branch_name, branch in tree["branches"].items():
         branch["hash"] = compute_branch_hash(branch["leaves"])
     tree["root_hash"] = compute_root_hash(tree)
-    with open(TREE_FILE, "w") as f:
+    os.makedirs(os.path.dirname(TREE_FILE), exist_ok=True)
+    tmp = TREE_FILE + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(tree, f, indent=2)
+    os.replace(tmp, TREE_FILE)
 
 
 def add_leaf(tree, branch, content, source, confidence):
-    import hashlib
-
     if branch not in tree["branches"]:
         tree["branches"][branch] = {"hash": "", "leaves": []}
 
     timestamp = now_local()
-    leaf_hash = hashlib.sha256(f"{content}{branch}{timestamp}".encode()).hexdigest()
+    leaf_hash = _kt_hash_leaf(content, branch, timestamp)
     leaf = {
         "id": leaf_hash[:12],
         "hash": leaf_hash,
@@ -100,7 +94,7 @@ def add_leaf(tree, branch, content, source, confidence):
 
 def load_recent_memory(days=5):
     """Load recent daily memory files for context."""
-    memory_dir = os.path.join(WORKSPACE, "memory")
+    memory_dir = os.path.join(BASE_DIR, "memory")
     combined = []
     for i in range(days):
         dt = datetime.now(TZ_UTC) - timedelta(days=i)
@@ -426,7 +420,7 @@ GAP_SCAN_PROMPT = (
 def gap_scan():
     """Read today's daily note, extract results, find knowledge-tree gaps."""
     date_str = today_local()
-    daily_note = os.path.join(WORKSPACE, "memory", f"{date_str}.md")
+    daily_note = os.path.join(BASE_DIR, "memory", f"{date_str}.md")
 
     print(f"🔍 Gap scan starting — {now_local()}")
     print(f"   Daily note: {daily_note}")
@@ -491,7 +485,7 @@ def gap_scan():
 
     # Check each result against knowledge tree via knowledge_search.py
     import subprocess
-    search_script = os.path.join(WORKSPACE, "knowledge_search.py")
+    search_script = os.path.join(BASE_DIR, "knowledge_search.py")
     gaps = []
 
     for result_text in results:

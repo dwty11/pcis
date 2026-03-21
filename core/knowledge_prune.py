@@ -31,28 +31,8 @@ TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
 PRUNE_LOG = os.path.join(BASE_DIR, "data", "prune-log.json")
 TZ_UTC = timezone.utc
 
-try:
-    from knowledge_tree import compute_root_hash
-except ImportError:
-    def compute_root_hash(tree):
-        branches = tree.get("branches", {})
-        branch_hashes = []
-        for name in sorted(branches.keys()):
-            branch = branches[name]
-            branch_hashes.append(f"{name}:{branch.get('hash', 'EMPTY')}")
-        if not branch_hashes:
-            return hashlib.sha256(b"EMPTY_TREE").hexdigest()
-        level = [hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
-        while len(level) > 1:
-            next_level = []
-            for i in range(0, len(level), 2):
-                if i + 1 < len(level):
-                    combined = level[i] + level[i + 1]
-                else:
-                    combined = level[i] + level[i]
-                next_level.append(hashlib.sha256(combined.encode()).hexdigest())
-            level = next_level
-        return level[0]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from knowledge_tree import compute_root_hash, compute_branch_hash
 
 
 def now_utc():
@@ -297,13 +277,7 @@ def cmd_execute(yes=False, dry_run=False):
             before = len(branch["leaves"])
             branch["leaves"] = [l for l in branch["leaves"] if l["id"] != c["id"]]
             if len(branch["leaves"]) < before:
-                import hashlib as _hashlib
-                leaf_hashes = [l["hash"] for l in branch["leaves"]]
-                if leaf_hashes:
-                    combined = "|".join(sorted(leaf_hashes))
-                    branch["hash"] = _hashlib.sha256(combined.encode()).hexdigest()
-                else:
-                    branch["hash"] = _hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
+                branch["hash"] = compute_branch_hash(branch["leaves"])
                 pruned += 1
 
     save_tree(tree)

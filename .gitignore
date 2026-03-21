@@ -1,10 +1,9 @@
+config.json
+data/
+*.log
 __pycache__/
-*.pyc
-*.pyo
-.pytest_cache/
-*.egg-info/
-dist/
-build/
 .env
-data/tree.json
-data/integrity/
+.venv/
+*.flag
+*.tmp
+*.pyc

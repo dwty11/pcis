@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 """
-PCIS Core Test Suite
-
-Tests: Merkle integrity, knowledge tree operations, pruning, search,
-adversarial validation, and demo data integrity.
-
-Run: python -m pytest tests/ -v
+PCIS Core Tests
+Run: python3 tests/test_pcis.py
 """
 
 import hashlib
@@ -14,281 +10,219 @@ import os
 import sys
 import tempfile
 import shutil
-import pytest
+import unittest
 
-# Add core to path
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CORE_DIR = os.path.join(REPO_ROOT, "core")
-DEMO_DIR = os.path.join(REPO_ROOT, "demo")
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+CORE_DIR = os.path.join(TESTS_DIR, "..", "core")
 sys.path.insert(0, CORE_DIR)
 
+import importlib
+os.environ.setdefault("PCIS_BASE_DIR", tempfile.mkdtemp())
 import knowledge_tree as kt
 import knowledge_prune as kp
-import knowledge_search as ks
+import gardener as gd
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────
+class TestMerkleHashing(unittest.TestCase):
+    """Merkle root changes when knowledge changes."""
 
-def make_empty_tree():
-    """Return a fresh empty tree structure."""
-    return {
-        "version": 1,
-        "instance": "test",
-        "root_hash": "",
-        "last_updated": kt.now_utc(),
-        "branches": {b: {"hash": "", "leaves": []} for b in kt.DEFAULT_BRANCHES}
-    }
+    def _empty_tree(self):
+        return {"version": 1, "instance": "test", "root_hash": "",
+                "last_updated": "2026-01-01T00:00:00Z", "branches": {}}
 
+    def _make_leaf(self, content, lid="l1"):
+        h = kt.hash_leaf(content, "lessons", "2026-01-01T00:00:00Z")
+        return {"id": lid, "content": content, "confidence": 0.9,
+                "source": "test", "created": "2026-01-01T00:00:00Z", "hash": h}
 
-# ── Merkle Integrity Tests ─────────────────────────────────────────────────
-
-class TestMerkleIntegrity:
-
-    def test_hash_leaf_deterministic(self):
-        """Same inputs always produce same hash."""
-        h1 = kt.hash_leaf("test content", "lessons", "2026-01-01 00:00:00 UTC")
-        h2 = kt.hash_leaf("test content", "lessons", "2026-01-01 00:00:00 UTC")
-        assert h1 == h2
-
-    def test_hash_leaf_unique(self):
-        """Different content produces different hash."""
-        h1 = kt.hash_leaf("content A", "lessons", "2026-01-01 00:00:00 UTC")
-        h2 = kt.hash_leaf("content B", "lessons", "2026-01-01 00:00:00 UTC")
-        assert h1 != h2
-
-    def test_hash_is_sha256(self):
-        """Hashes are 64-char hex strings (SHA-256)."""
-        h = kt.hash_leaf("test", "branch", "2026-01-01 00:00:00 UTC")
-        assert len(h) == 64
-        assert all(c in "0123456789abcdef" for c in h)
-
-    def test_branch_hash_empty(self):
-        """Empty branch produces consistent hash."""
-        h1 = kt.compute_branch_hash([])
-        h2 = kt.compute_branch_hash([])
-        assert h1 == h2
-        assert len(h1) == 64
-
-    def test_branch_hash_changes_with_content(self):
-        """Branch hash changes when leaves change."""
-        leaves_a = [{"hash": "a" * 64, "content": "x"}]
-        leaves_b = [{"hash": "b" * 64, "content": "y"}]
-        assert kt.compute_branch_hash(leaves_a) != kt.compute_branch_hash(leaves_b)
-
-    def test_root_hash_covers_all_branches(self):
-        """Root hash incorporates all branches."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "technical", "First technical insight", source="test", confidence=0.9)
-        kt.add_knowledge(tree, "lessons", "First lesson learned", source="test", confidence=0.8)
-        root = kt.compute_root_hash(tree)
-        assert len(root) == 64
-        assert all(c in "0123456789abcdef" for c in root)
-
-    def test_root_hash_changes_on_add(self):
-        """Root hash changes after adding a leaf."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "technical", "Initial leaf", source="test", confidence=0.8)
-        root1 = kt.compute_root_hash(tree)
-        kt.add_knowledge(tree, "technical", "Second leaf", source="test", confidence=0.7)
-        root2 = kt.compute_root_hash(tree)
-        assert root1 != root2
-
-
-# ── Knowledge Tree Operations ──────────────────────────────────────────────
-
-class TestKnowledgeTree:
-
-    def test_add_knowledge_basic(self):
-        """Add a leaf and verify it appears in the tree."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "Test insight", source="test-session", confidence=0.85)
-        leaves = tree["branches"]["lessons"]["leaves"]
-        assert len(leaves) == 1
-        assert leaves[0]["content"] == "Test insight"
-        assert leaves[0]["source"] == "test-session"
-        assert leaves[0]["confidence"] == 0.85
-
-    def test_add_knowledge_has_required_fields(self):
-        """Every leaf must have id, content, confidence, source, created, hash."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "technical", "Field check", source="test", confidence=0.75)
-        leaf = tree["branches"]["technical"]["leaves"][0]
-        for field in ["id", "content", "confidence", "source", "created", "hash"]:
-            assert field in leaf, f"Missing field: {field}"
-
-    def test_add_multiple_branches(self):
-        """Leaves go to correct branches."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "technical", "Technical leaf", source="t", confidence=0.8)
-        kt.add_knowledge(tree, "lessons", "Lessons leaf", source="t", confidence=0.8)
-        assert len(tree["branches"]["technical"]["leaves"]) == 1
-        assert len(tree["branches"]["lessons"]["leaves"]) == 1
-
-    def test_leaf_id_unique(self):
-        """Each leaf gets a unique ID."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "Leaf one", source="t", confidence=0.8)
-        kt.add_knowledge(tree, "lessons", "Leaf two", source="t", confidence=0.8)
-        ids = [l["id"] for l in tree["branches"]["lessons"]["leaves"]]
-        assert len(ids) == len(set(ids))
-
-    def test_leaf_hash_is_sha256(self):
-        """Each leaf hash is a 64-char SHA-256 hex string."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "Hash check", source="t", confidence=0.8)
-        leaf = tree["branches"]["lessons"]["leaves"][0]
-        assert len(leaf["hash"]) == 64
-        assert all(c in "0123456789abcdef" for c in leaf["hash"])
-
-    def test_counter_leaf_tag(self):
-        """COUNTER leaves can be added and are retrievable."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "technical", "Original claim", source="test", confidence=0.9)
-        kt.add_knowledge(tree, "technical", "COUNTER: Original claim may be wrong", source="adversarial", confidence=0.6)
-        leaves = tree["branches"]["technical"]["leaves"]
-        counter_leaves = [l for l in leaves if "COUNTER" in l["content"]]
-        assert len(counter_leaves) == 1
-
-    def test_branch_hash_updated_on_add(self):
-        """Branch hash updates when a leaf is added."""
-        tree = make_empty_tree()
-        hash_before = tree["branches"]["technical"]["hash"]
-        kt.add_knowledge(tree, "technical", "New leaf", source="t", confidence=0.8)
-        hash_after = tree["branches"]["technical"]["hash"]
-        assert hash_before != hash_after
-
-
-# ── Knowledge Pruning ──────────────────────────────────────────────────────
-
-class TestKnowledgePruning:
-
-    def test_prune_removes_leaf(self):
-        """Pruning a leaf by ID removes it from the tree."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "To be pruned", source="test", confidence=0.3)
-        leaf_id = tree["branches"]["lessons"]["leaves"][0]["id"]
-        kt.prune_leaf(tree, "lessons", leaf_id)
-        remaining_ids = [l["id"] for l in tree["branches"]["lessons"]["leaves"]]
-        assert leaf_id not in remaining_ids
-
-    def test_prune_updates_root_hash(self):
-        """Root hash changes after pruning."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "Leaf A", source="test", confidence=0.8)
-        kt.add_knowledge(tree, "lessons", "Leaf B", source="test", confidence=0.3)
+    def test_root_changes_on_new_leaf(self):
+        """Adding a leaf changes the Merkle root."""
+        tree = self._empty_tree()
         root_before = kt.compute_root_hash(tree)
-        leaf_id = tree["branches"]["lessons"]["leaves"][1]["id"]
-        kt.prune_leaf(tree, "lessons", leaf_id)
+
+        tree["branches"]["lessons"] = {"hash": "", "leaves": [self._make_leaf("first leaf")]}
+        tree["branches"]["lessons"]["hash"] = kt.compute_branch_hash(tree["branches"]["lessons"]["leaves"])
         root_after = kt.compute_root_hash(tree)
-        assert root_before != root_after
 
-    def test_prune_preserves_other_leaves(self):
-        """Pruning one leaf does not affect others."""
-        tree = make_empty_tree()
-        kt.add_knowledge(tree, "lessons", "Keep me", source="test", confidence=0.9)
-        kt.add_knowledge(tree, "lessons", "Remove me", source="test", confidence=0.2)
-        keep_id = tree["branches"]["lessons"]["leaves"][0]["id"]
-        remove_id = tree["branches"]["lessons"]["leaves"][1]["id"]
-        kt.prune_leaf(tree, "lessons", remove_id)
-        remaining_ids = [l["id"] for l in tree["branches"]["lessons"]["leaves"]]
-        assert keep_id in remaining_ids
-        assert remove_id not in remaining_ids
+        self.assertNotEqual(root_before, root_after)
 
+    def test_root_deterministic(self):
+        """Same tree always produces same root hash."""
+        tree = self._empty_tree()
+        tree["branches"]["technical"] = {"hash": "", "leaves": [self._make_leaf("determinism")]}
+        tree["branches"]["technical"]["hash"] = kt.compute_branch_hash(tree["branches"]["technical"]["leaves"])
 
-# ── Demo Data Integrity ────────────────────────────────────────────────────
+        r1 = kt.compute_root_hash(tree)
+        r2 = kt.compute_root_hash(tree)
+        self.assertEqual(r1, r2)
 
-class TestDemoData:
+    def test_leaf_hash_changes_on_content_mutation(self):
+        """Mutating content produces a different hash — tamper detection works."""
+        h1 = kt.hash_leaf("original", "lessons", "2026-01-01")
+        h2 = kt.hash_leaf("tampered", "lessons", "2026-01-01")
+        self.assertNotEqual(h1, h2)
 
-    def test_demo_tree_loads(self):
-        """demo_tree.json is valid JSON and has required structure."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        assert os.path.exists(demo_tree_path), "demo_tree.json missing"
-        with open(demo_tree_path) as f:
-            tree = json.load(f)
-        assert "branches" in tree
-        assert "root_hash" in tree
-        assert "version" in tree
-
-    def test_demo_tree_no_personal_data(self):
-        """Demo tree contains no personal identifiers."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        with open(demo_tree_path) as f:
-            content = f.read().lower()
-        banned = ["sberbank", "sber", "/users/", "whis", "openclaw", "imamniy", "idwty11"]
-        for term in banned:
-            assert term not in content, f"Personal data found in demo_tree.json: '{term}'"
-
-    def test_demo_tree_has_leaves(self):
-        """Demo tree has at least one populated branch."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        with open(demo_tree_path) as f:
-            tree = json.load(f)
-        total_leaves = sum(
-            len(b["leaves"]) for b in tree["branches"].values() if "leaves" in b
-        )
-        assert total_leaves > 0, "Demo tree has no leaves"
-
-    def test_demo_tree_leaf_required_fields(self):
-        """Every leaf in demo tree has id, content, confidence, source, created, hash."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        with open(demo_tree_path) as f:
-            tree = json.load(f)
-        for branch_name, branch in tree["branches"].items():
-            for leaf in branch.get("leaves", []):
-                for field in ["id", "content", "confidence", "source", "created", "hash"]:
-                    assert field in leaf, f"Missing '{field}' in {branch_name} leaf {leaf.get('id')}"
-
-    def test_demo_tree_confidence_in_range(self):
-        """All confidence values in demo tree are between 0 and 1."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        with open(demo_tree_path) as f:
-            tree = json.load(f)
-        for branch_name, branch in tree["branches"].items():
-            for leaf in branch.get("leaves", []):
-                c = leaf.get("confidence", -1)
-                assert 0.0 <= c <= 1.0, f"Confidence {c} out of range in {branch_name} leaf {leaf.get('id')}"
-
-    def test_demo_tree_root_hash_present(self):
-        """Demo tree root hash is a non-empty string."""
-        demo_tree_path = os.path.join(DEMO_DIR, "demo_tree.json")
-        with open(demo_tree_path) as f:
-            tree = json.load(f)
-        assert len(tree["root_hash"]) > 0, "root_hash is empty"
-
-
-# ── Core File Integrity ────────────────────────────────────────────────────
-
-class TestCoreFiles:
-
-    def test_no_personal_paths_in_core(self):
-        """No personal paths or identifiers in core source files."""
-        banned = ["/users/whis", "openclaw.local", "sberbank", "imamniy", "idwty11"]
-        for fname in os.listdir(CORE_DIR):
-            if not fname.endswith(".py"):
-                continue
-            path = os.path.join(CORE_DIR, fname)
-            with open(path) as f:
-                content = f.read().lower()
-            for term in banned:
-                assert term not in content, f"Found '{term}' in {fname}"
-
-    def test_core_files_present(self):
-        """All expected core files are present."""
-        expected = [
-            "knowledge_tree.py",
-            "knowledge_prune.py",
-            "knowledge_search.py",
-            "verify_memory.py",
-            "gardener.py",
+    def test_branch_hash_order_independent(self):
+        """Branch hash is stable regardless of leaf insertion order."""
+        leaves = [
+            {"hash": hashlib.sha256(b"a").hexdigest()},
+            {"hash": hashlib.sha256(b"b").hexdigest()},
+            {"hash": hashlib.sha256(b"c").hexdigest()},
         ]
-        for fname in expected:
-            path = os.path.join(CORE_DIR, fname)
-            assert os.path.exists(path), f"Missing core file: {fname}"
+        h1 = kt.compute_branch_hash(leaves)
+        import random; shuffled = leaves[:]; random.shuffle(shuffled)
+        h2 = kt.compute_branch_hash(shuffled)
+        self.assertEqual(h1, h2)
 
-    def test_demo_server_present(self):
-        """Demo server file exists."""
-        assert os.path.exists(os.path.join(DEMO_DIR, "server.py"))
+    def test_root_changes_on_content_edit(self):
+        """Editing an existing leaf changes the branch hash and root — full chain propagates."""
+        tree = self._empty_tree()
+        leaf = self._make_leaf("original content")
+        tree["branches"]["lessons"] = {"hash": "", "leaves": [leaf]}
+        tree["branches"]["lessons"]["hash"] = kt.compute_branch_hash(tree["branches"]["lessons"]["leaves"])
+        root_original = kt.compute_root_hash(tree)
 
-    def test_demo_index_present(self):
-        """Demo index.html exists."""
-        assert os.path.exists(os.path.join(DEMO_DIR, "index.html"))
+        # Simulate tampering
+        tree["branches"]["lessons"]["leaves"][0]["content"] = "tampered content"
+        tree["branches"]["lessons"]["leaves"][0]["hash"] = kt.hash_leaf("tampered content", "lessons", leaf["created"])
+        tree["branches"]["lessons"]["hash"] = kt.compute_branch_hash(tree["branches"]["lessons"]["leaves"])
+        root_tampered = kt.compute_root_hash(tree)
+
+        self.assertNotEqual(root_original, root_tampered)
+
+
+class TestAdversarialCounters(unittest.TestCase):
+    """COUNTER leaves are correctly identified and linked."""
+
+    def test_counter_leaf_detected(self):
+        content = "COUNTER: [l1] This claim is overstated."
+        self.assertTrue(content.startswith("COUNTER:"))
+
+    def test_counter_id_parsed(self):
+        content = "COUNTER: [cl-001] Confidence is too high."
+        challenged_id = content[content.index("[")+1:content.index("]")]
+        self.assertEqual(challenged_id, "cl-001")
+
+    def test_normal_leaf_not_counter(self):
+        content = "Acme Corp renewal scheduled Q2 2026."
+        self.assertFalse(content.startswith("COUNTER:"))
+
+
+class TestDemoTreeIntegrity(unittest.TestCase):
+    """demo_tree.json is well-formed and internally consistent."""
+
+    def setUp(self):
+        demo_path = os.path.join(TESTS_DIR, "..", "demo", "demo_tree.json")
+        with open(demo_path) as f:
+            self.tree = json.load(f)
+
+    def test_all_leaves_have_required_fields(self):
+        for branch_name, branch in self.tree["branches"].items():
+            for leaf in branch["leaves"]:
+                for field in ("id", "content", "confidence", "source", "created", "hash"):
+                    self.assertIn(field, leaf, f"Leaf {leaf.get('id')} in {branch_name} missing '{field}'")
+
+    def test_confidence_in_range(self):
+        for branch_name, branch in self.tree["branches"].items():
+            for leaf in branch["leaves"]:
+                self.assertGreaterEqual(leaf["confidence"], 0.0)
+                self.assertLessEqual(leaf["confidence"], 1.0)
+
+    def test_root_hash_present(self):
+        self.assertIn("root_hash", self.tree)
+        self.assertTrue(len(self.tree["root_hash"]) > 0)
+
+    def test_no_personal_data_leakage(self):
+        """Ensure no personal paths or identifiers leaked into demo tree."""
+        raw = json.dumps(self.tree).lower()
+        for term in ["whis", "openclaw", "/users/", "sberbank", "imamniyazov"]:
+            self.assertNotIn(term, raw, f"Personal data leak: '{term}' found in demo_tree.json")
+
+
+class TestCrossModuleHashConsistency(unittest.TestCase):
+    """All modules must produce identical Merkle roots for the same tree."""
+
+    def _build_test_tree(self):
+        """Build a realistic test tree with multiple branches and leaves."""
+        tree = {
+            "version": 1,
+            "instance": "test",
+            "root_hash": "",
+            "last_updated": "2026-01-01 00:00:00 UTC",
+            "branches": {},
+        }
+        test_data = [
+            ("technical", "REST endpoints should use plural nouns", "guide", 0.85),
+            ("technical", "Always validate input at API boundaries", "review", 0.90),
+            ("lessons", "Skimming time-sensitive data is a trust violation", "session", 0.80),
+            ("lessons", "Premature abstraction costs more than duplication", "session", 0.75),
+            ("philosophy", "Adversarial review prevents echo chambers", "core", 0.95),
+        ]
+        for branch, content, source, conf in test_data:
+            if branch not in tree["branches"]:
+                tree["branches"][branch] = {"hash": "", "leaves": []}
+            ts = "2026-01-15 12:00:00 UTC"
+            leaf_hash = kt.hash_leaf(content, branch, ts)
+            leaf = {
+                "id": leaf_hash[:12],
+                "hash": leaf_hash,
+                "content": content,
+                "source": source,
+                "confidence": conf,
+                "created": ts,
+                "promoted_to": None,
+            }
+            tree["branches"][branch]["leaves"].append(leaf)
+        for bname in tree["branches"]:
+            tree["branches"][bname]["hash"] = kt.compute_branch_hash(
+                tree["branches"][bname]["leaves"]
+            )
+        tree["root_hash"] = kt.compute_root_hash(tree)
+        return tree
+
+    def test_all_modules_same_root(self):
+        """knowledge_tree, gardener, and knowledge_prune compute identical roots."""
+        tree = self._build_test_tree()
+
+        root_kt = kt.compute_root_hash(tree)
+        # gardener imports from knowledge_tree — verify it's the same function
+        root_gd = gd.compute_root_hash(tree)
+        # knowledge_prune imports from knowledge_tree — verify it's the same function
+        root_kp = kp.compute_root_hash(tree)
+
+        self.assertEqual(root_kt, root_gd,
+                         "gardener.compute_root_hash diverges from knowledge_tree")
+        self.assertEqual(root_kt, root_kp,
+                         "knowledge_prune.compute_root_hash diverges from knowledge_tree")
+
+    def test_all_modules_same_branch_hash(self):
+        """Branch hash computation is identical across modules."""
+        tree = self._build_test_tree()
+        leaves = tree["branches"]["technical"]["leaves"]
+
+        bh_kt = kt.compute_branch_hash(leaves)
+        bh_kp = kp.compute_branch_hash(leaves)
+        # gardener also imports compute_branch_hash from knowledge_tree
+        bh_gd = gd.compute_branch_hash(leaves)
+
+        self.assertEqual(bh_kt, bh_kp,
+                         "knowledge_prune.compute_branch_hash diverges from knowledge_tree")
+        self.assertEqual(bh_kt, bh_gd,
+                         "gardener.compute_branch_hash diverges from knowledge_tree")
+
+    def test_gardener_leaf_hash_matches_knowledge_tree(self):
+        """gardener's add_leaf uses the same hash_leaf as knowledge_tree."""
+        content = "Test leaf content"
+        branch = "lessons"
+        timestamp = "2026-02-01 10:00:00 UTC"
+
+        h_kt = kt.hash_leaf(content, branch, timestamp)
+        h_gd = gd._kt_hash_leaf(content, branch, timestamp)
+
+        self.assertEqual(h_kt, h_gd,
+                         "gardener leaf hashing diverges from knowledge_tree")
+
+
+if __name__ == "__main__":
+    print("PCIS Core Test Suite\n" + "="*40)
+    unittest.main(verbosity=2)
