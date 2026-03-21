@@ -37,3 +37,80 @@ The result: an agent that accumulates knowledge over time, challenges its own be
 The Merkle root hash is determined solely by tree content — not by which model processed it. This is an enforced invariant (tested in `tests/test_pcis.py::TestIdentityPortability`): the same knowledge tree produces the same root hash whether the underlying LLM is GPT-4, Claude, Llama, or any other model.
 
 This means the root hash is a model-agnostic identity. An agent can switch underlying models mid-deployment — or run the same tree through multiple models simultaneously — and the cryptographic identity remains unchanged. Memory follows the agent, not the model.
+
+---
+
+## Codebase Reference
+
+### Core Modules
+
+**`core/knowledge_tree.py`** — The foundation. Everything else depends on this. It defines the data model: a tree has branches (e.g. "identity", "lessons", "technical", "relationships"), and each branch holds leaves. Each leaf carries an id, hash, content, source, confidence score, created timestamp, and promoted_to field.
+
+Four critical functions:
+- `hash_leaf` — SHA-256 from content + branch + timestamp
+- `compute_branch_hash` — sorts all leaf hashes in a branch and hashes them together
+- `compute_root_hash` — takes all branch hashes, iteratively pairs and hashes upward in a binary tree until one root remains
+- `tree_lock()` — context manager wrapping the full read-modify-write cycle under an exclusive file lock: load → mutate → write, all atomic
+
+Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees`, and a CLI for `--add`, `--show`, `--prune`, `--diff`, `--export`, `--root`. Tree persists as `data/tree.json`.
+
+---
+
+**`core/verify_memory.py`** — Integrity checking for the codebase itself, not the knowledge tree. Tracks a hardcoded list of core files, hashes each with SHA-256, and computes a Merkle-style root over all of them. On first run (`--init`), writes a manifest to `data/integrity/manifest.json`. On subsequent runs, recomputes all hashes and compares — any change is reported by filename. `--update` accepts the current state as the new baseline. `--status` returns CLEAN/CHANGED/MISSING for scripting. Run this at session start to verify your own code was not modified between sessions.
+
+---
+
+**`core/gardener.py`** — The adversarial maintenance agent. Loads the knowledge tree, formats it as readable text, and sends it to a local LLM (Qwen3:14b via Ollama) asking it to find echo chambers, generate counter-arguments, identify cross-branch connections, and flag stale leaves. The LLM responds in pipe-delimited format: `COUNTER|branch|content|confidence`, `SYNAPSE|content|confidence`, or `FLAG|leaf_id|reason`. If parsing yields zero results, it retries once.
+
+Tiered commit system:
+- Counter-leaves targeting operational branches (`technical`, `lessons`) → auto-committed
+- Counter-leaves targeting constitutional branches (`identity`, `philosophy`) → staged for human review
+- Synapses (cross-branch connections) → always staged
+
+A separate `--gap-scan` mode reads daily memory notes, extracts key facts via LLM, then checks each against the tree via semantic search — anything below similarity 0.6 is flagged as a gap. Output: `gardener-log.md`, `gardener-staging.md`, and a notify flag file. Designed as a nightly cron job.
+
+---
+
+**`core/knowledge_search.py`** — Semantic search over the knowledge tree. Uses a local embedding model (`nomic-embed-text`, 768 dimensions) via Ollama. `--reindex` walks every leaf, generates an embedding by sending `[branch] content (source: source)` to Ollama's `/api/embeddings` endpoint, and stores results in `data/search-index.json`. Search embeds the query, computes cosine similarity against every stored vector, and returns top-k results. `incremental_index` adds a single leaf without a full rebuild. `search_for_briefing` returns pre-formatted results for session briefing injection. All vector math and API calls implemented from scratch — no external libraries beyond `urllib` and `math`.
+
+---
+
+**`core/knowledge_prune.py`** — Active forgetting. Analyzes the tree for leaves that should be removed or reviewed:
+- `--stale` — leaves older than N days (default 90)
+- `--low-confidence` — leaves below a threshold
+- `--branch-health` — per-branch metrics: average confidence, spread, oldest leaf age; warns about echo chambers (confidence too uniform or too high)
+- `--auto-flag` — rule-based candidates: very low confidence (<0.5), old + low confidence (>180 days, <0.7), or empty content
+- `--execute --yes` — removes flagged candidates under `tree_lock()`
+- `--review` — interactive walkthrough: keep, prune, or refresh confidence on each candidate
+
+All prune actions logged to `data/prune-log.json`.
+
+---
+
+### Demo Modules
+
+**`demo/server.py`** — Flask web server exposing the knowledge tree through a REST API. Endpoints: `/api/boot` (Merkle root + file integrity), `/api/tree` (full branch structure with leaf counts), `/api/query` (keyword search scored by hits × confidence), `/api/adversarial` (COUNTER-prefixed leaves linked to their originals), `/api/adversarial-validation` (saved validation run results), `/api/status` (system health). Binds to `127.0.0.1:5555`.
+
+**`demo/adversarial_validator.py`** — Standalone script running a full adversarial validation pass using an external LLM API. Picks highest-confidence leaves, sends them for challenge, parses counter-leaves, saves the full run (with before/after Merkle roots) to JSON for the demo server to display.
+
+**`demo/demo_tree.json`** — Synthetic knowledge tree: 5 branches, 19 leaves, zero personal data (enforced by a test). Used to seed `data/tree.json` and drive the demo server.
+
+**`demo/index.html`** — Single-file frontend. Five tabs: Boot (live Merkle verification), Knowledge Tree (branch browser), Query (keyword search), Adversarial (counter-leaves with originals), External LLM Validation. Dark theme, vanilla JS, no framework.
+
+---
+
+### Tests (`tests/test_pcis.py`)
+
+19 tests across 7 classes:
+
+| Class | What it verifies |
+|-------|-----------------|
+| `TestMerkleHashing` | Root hash changes when knowledge changes; tamper detection |
+| `TestLeafHashing` | Hash determinism, order independence, field sensitivity |
+| `TestDemoTreeIntegrity` | Demo tree loads, has correct structure, contains no personal data |
+| `TestCrossModuleHashConsistency` | `gardener.py`, `knowledge_prune.py`, and `knowledge_tree.py` produce identical roots, branch hashes, and leaf hashes for the same data |
+| `TestAddKnowledgeValidation` | Empty content and oversized content raise `ValueError` |
+| `TestConcurrentSaveTree` | Two threads adding 5 leaves each under `tree_lock()` — final tree contains exactly 10 leaves, no data loss |
+| `TestIdentityPortability` | Root hash is identical across GPT-4, Claude, Llama, GigaChat, and Qwen configs — model-agnostic identity is an enforced invariant, not an accident |
+
+Run with: `python -m pytest tests/ -v`
