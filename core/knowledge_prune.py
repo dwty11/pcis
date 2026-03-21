@@ -32,7 +32,7 @@ PRUNE_LOG = os.path.join(BASE_DIR, "data", "prune-log.json")
 TZ_UTC = timezone.utc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from knowledge_tree import compute_root_hash, compute_branch_hash
+from knowledge_tree import compute_root_hash, compute_branch_hash, save_tree
 
 
 def now_utc():
@@ -45,7 +45,7 @@ def days_since(date_str):
         for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
             try:
                 dt = datetime.strptime(date_str.replace(" UTC", ""), fmt)
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc).replace(tzinfo=None)
                 return (now - dt).days
             except ValueError:
                 continue
@@ -65,14 +65,6 @@ def load_tree():
             print(f"Error: knowledge tree is corrupted ({e}). Fix or remove {TREE_FILE} manually.")
             sys.exit(1)
 
-
-def save_tree(tree):
-    tree["last_updated"] = now_utc()
-    tree["root_hash"] = compute_root_hash(tree)
-    tmp = TREE_FILE + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(tree, f, indent=2)
-    os.replace(tmp, TREE_FILE)
 
 
 def load_prune_log():

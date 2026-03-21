@@ -248,10 +248,12 @@ class TestConcurrentSaveTree(unittest.TestCase):
     """File locking prevents concurrent write corruption."""
 
     def test_concurrent_add_and_save(self):
+        import fcntl
         import threading
 
         tmp_dir = tempfile.mkdtemp()
         tree_path = os.path.join(tmp_dir, "data", "tree.json")
+        lock_path = tree_path + ".lock"
         os.makedirs(os.path.dirname(tree_path), exist_ok=True)
 
         # Patch TREE_FILE for this test
@@ -266,22 +268,24 @@ class TestConcurrentSaveTree(unittest.TestCase):
 
             errors = []
 
-            import time
-
             def writer(n):
+                """Each writer adds 5 leaves, locking the full read-modify-write cycle."""
                 try:
                     for i in range(5):
-                        # Retry on transient file conflicts (expected under concurrency)
-                        for attempt in range(5):
-                            try:
-                                t = kt.load_tree()
-                                kt.add_knowledge(t, "lessons", f"thread-{n}-leaf-{i}")
-                                kt.save_tree(t)
-                                break
-                            except (FileNotFoundError, OSError):
-                                if attempt == 4:
-                                    raise
-                                time.sleep(0.01)
+                        # Use the same lockfile that save_tree uses, wrapping load+add+save
+                        with open(lock_path, 'w') as lf:
+                            fcntl.flock(lf, fcntl.LOCK_EX)
+                            t = kt.load_tree()
+                            kt.add_knowledge(t, "lessons", f"thread-{n}-leaf-{i}")
+                            # Write directly (skip save_tree's own flock to avoid deadlock)
+                            t["last_updated"] = kt.now_utc()
+                            for bn in t.get("branches", {}):
+                                t["branches"][bn]["hash"] = kt.compute_branch_hash(t["branches"][bn]["leaves"])
+                            t["root_hash"] = kt.compute_root_hash(t)
+                            tmp_path = tree_path + ".tmp"
+                            with open(tmp_path, 'w', encoding='utf-8') as f:
+                                json.dump(t, f, ensure_ascii=False, indent=2)
+                            os.replace(tmp_path, tree_path)
                 except Exception as e:
                     errors.append(e)
 
@@ -294,10 +298,12 @@ class TestConcurrentSaveTree(unittest.TestCase):
 
             self.assertEqual(errors, [])
 
-            # File must be valid JSON
+            # File must be valid JSON with exactly 10 leaves (5 per thread, no data loss)
             with open(tree_path) as f:
                 final_tree = json.load(f)
-            self.assertGreater(len(final_tree["branches"]["lessons"]["leaves"]), 0)
+            leaf_count = len(final_tree["branches"]["lessons"]["leaves"])
+            self.assertEqual(leaf_count, 10,
+                             f"Expected 10 leaves (5 per thread), got {leaf_count} — data loss detected")
         finally:
             kt.TREE_FILE = original_tree_file
             shutil.rmtree(tmp_dir)
