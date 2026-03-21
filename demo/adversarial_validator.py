@@ -9,13 +9,17 @@ import hashlib
 import json
 import os
 import uuid
-import urllib3
 from datetime import datetime, timezone, timedelta
 
 import requests
 
-# Suppress InsecureRequestWarning for self-signed cert
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import warnings
+
+# SSL verification — override with PCIS_SSL_VERIFY=false only for self-signed certs
+_SSL_VERIFY = os.environ.get("PCIS_SSL_VERIFY", "true").lower() != "false"
+if not _SSL_VERIFY:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    warnings.warn("PCIS_SSL_VERIFY=false: SSL certificate verification disabled. Do not use in production.", RuntimeWarning, stacklevel=1)
 
 DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
 TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
@@ -40,7 +44,7 @@ def get_access_token(api_key):
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json",
     }
-    resp = requests.post(url, headers=headers, data="scope=LLM_API_SCOPE", verify=False, timeout=30)
+    resp = requests.post(url, headers=headers, data="scope=LLM_API_SCOPE", verify=_SSL_VERIFY, timeout=30)
     resp.raise_for_status()
     return resp.json()["access_token"]
 
@@ -68,7 +72,7 @@ def send_to_llm(token, leaf_content, retries=2):
     last_err = None
     for attempt in range(retries + 1):
         try:
-            resp = requests.post(url, headers=headers, json=body, verify=False, timeout=90)
+            resp = requests.post(url, headers=headers, json=body, verify=_SSL_VERIFY, timeout=90)
             resp.raise_for_status()
             return resp.json()["choices"][0]["message"]["content"]
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:

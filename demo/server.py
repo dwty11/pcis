@@ -23,7 +23,6 @@ DEMO_TRACKED_FILES = [
     "server.py",
     "demo_tree.json",
     "index.html",
-    "gigachat_adversarial.py",
 ]
 
 
@@ -246,4 +245,4 @@ if __name__ == "__main__":
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
     print(f"  http://localhost:5555\n")
-    app.run(host="0.0.0.0", port=5555, debug=False)
+    app.run(host="127.0.0.1", port=5555, debug=False)
