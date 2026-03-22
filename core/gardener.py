@@ -432,7 +432,7 @@ def apply_staging(tree):
         count += 1
 
     if count:
-        save_tree(tree)
+        save_tree(tree, TREE_FILE)
         os.remove(GARDEN_STAGING)
         if os.path.exists(GARDEN_NOTIFY_FLAG):
             os.remove(GARDEN_NOTIFY_FLAG)
@@ -790,7 +790,7 @@ def main():
         committed_counters = committed_written
 
         if committed_counters:
-            save_tree(tree)
+            save_tree(tree, TREE_FILE)
             print("   💾 Tree saved.")
 
         if staged_synapses or staged_counters:
