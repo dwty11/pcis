@@ -24,12 +24,11 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-WORKSPACE = os.environ.get("WHIS_WORKSPACE", os.path.expanduser("~/.openclaw/workspace"))
-TREE_FILE = os.path.join(WORKSPACE, ".whis-knowledge-tree.json")
-PRUNE_LOG = os.path.join(WORKSPACE, ".whis-prune-log.json")
-TZ_MOSCOW = timezone(timedelta(hours=3))
+WORKSPACE = os.environ.get("PCIS_WORKSPACE", os.path.expanduser("~/.pcis"))
+TREE_FILE = os.path.join(WORKSPACE, "knowledge-tree.json")
+PRUNE_LOG = os.path.join(WORKSPACE, "prune-log.json")
 
 try:
     from knowledge_tree import compute_root_hash, compute_branch_hash
@@ -58,17 +57,17 @@ except ImportError:
         return level[0]
 
 
-def now_moscow():
-    return datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3")
+def now_utc():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
 def days_since(date_str):
     """Calculate days since a date string."""
     try:
         # Handle various date formats
-        for fmt in ["%Y-%m-%d %H:%M:%S GMT+3", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
+        for fmt in ["%Y-%m-%d %H:%M:%S UTC", "%Y-%m-%d %H:%M:%S GMT+3", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
             try:
-                dt = datetime.strptime(date_str.replace(" GMT+3", ""), fmt.replace(" GMT+3", ""))
+                dt = datetime.strptime(date_str.replace(" UTC", "").replace(" GMT+3", ""), fmt.replace(" UTC", "").replace(" GMT+3", ""))
                 now = datetime.now()
                 return (now - dt).days
             except ValueError:
@@ -91,7 +90,7 @@ def load_tree():
 
 
 def save_tree(tree):
-    tree["last_updated"] = now_moscow()
+    tree["last_updated"] = now_utc()
     tree["root_hash"] = compute_root_hash(tree)
     tmp = TREE_FILE + ".tmp"
     with open(tmp, "w") as f:
@@ -353,7 +352,7 @@ def cmd_execute(yes=False, dry_run=False):
 
     log = load_prune_log()
     log["sessions"].append({
-        "timestamp": now_moscow(),
+        "timestamp": now_utc(),
         "pruned": pruned,
         "refreshed": 0,
         "kept": 0,
@@ -419,7 +418,7 @@ def cmd_review(yes=False, dry_run=False):
                 new_conf = input("  New confidence (0.0-1.0): ").strip()
                 try:
                     leaf["confidence"] = float(new_conf)
-                    leaf["last_refreshed"] = now_moscow()
+                    leaf["last_refreshed"] = now_utc()
                     actions["refreshed"] += 1
                     print(f"  → REFRESHED to {new_conf}\n")
                 except ValueError:
@@ -446,7 +445,7 @@ def cmd_review(yes=False, dry_run=False):
         # Log the session
         log = load_prune_log()
         log["sessions"].append({
-            "timestamp": now_moscow(),
+            "timestamp": now_utc(),
             "pruned": actions["pruned"],
             "refreshed": actions["refreshed"],
             "kept": actions["kept"],
