@@ -38,13 +38,21 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 GARDENER_MODEL = "qwen3:14b"
 
 def ensure_ollama_warm(timeout=60, poll_interval=2):
-    """Ensure Ollama is running. Start it if not. Exit if unreachable after timeout."""
+    """Ensure Ollama is running AND the model is loaded into memory.
+
+    Server up != model ready. /api/tags returning 200 means Ollama is running,
+    but the model may not be in VRAM. A cold inference call on first use can take
+    90-150s, exceeding cron timeouts. This function forces a real inference call
+    to pre-load the model before any actual work starts.
+    """
     import urllib.request
     import urllib.error
     import subprocess
     import time
+    import json as _json
 
     tags_url = "http://localhost:11434/api/tags"
+    model = GARDENER_MODEL
 
     def is_up():
         try:
@@ -53,29 +61,48 @@ def ensure_ollama_warm(timeout=60, poll_interval=2):
         except Exception:
             return False
 
-    if is_up():
-        return  # Already warm
-
-    print("⏳ Ollama not running — starting...", flush=True)
-    try:
-        subprocess.Popen(
-            ["ollama", "serve"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+    def warm_model(m):
+        """Send a lightweight inference call to force model into VRAM."""
+        payload = _json.dumps({"model": m, "prompt": "hi", "stream": False}).encode()
+        req = urllib.request.Request(
+            "http://localhost:11434/api/generate",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
         )
-    except FileNotFoundError:
-        print("❌ ollama binary not found — cannot start Ollama", flush=True)
-        raise SystemExit(1)
+        try:
+            with urllib.request.urlopen(req, timeout=150) as resp:
+                resp.read()
+            print(f"[ensure_ollama_warm] Model {m} loaded ✅", flush=True)
+            return True
+        except Exception as e:
+            print(f"[ensure_ollama_warm] Model warm failed: {e}", flush=True)
+            return False
 
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        time.sleep(poll_interval)
-        if is_up():
-            print("✅ Ollama is up", flush=True)
-            return
+    if not is_up():
+        print("⏳ Ollama not running — starting...", flush=True)
+        try:
+            subprocess.Popen(
+                ["ollama", "serve"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            print("❌ ollama binary not found — cannot start Ollama", flush=True)
+            raise SystemExit(1)
 
-    print(f"❌ Ollama did not start within {timeout}s — aborting", flush=True)
-    raise SystemExit(1)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            time.sleep(poll_interval)
+            if is_up():
+                print("✅ Ollama server is up", flush=True)
+                break
+        else:
+            print(f"❌ Ollama did not start within {timeout}s — aborting", flush=True)
+            raise SystemExit(1)
+
+    # Server is up — force model into memory
+    warm_model(model)  # non-fatal if slow; Ollama is up, inference will eventually work
 
 
 TZ_MOSCOW = timezone(timedelta(hours=3))
