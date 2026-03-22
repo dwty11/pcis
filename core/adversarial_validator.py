@@ -11,20 +11,29 @@ import os
 import uuid
 from datetime import datetime, timezone, timedelta
 
+import sys
+import warnings
+
 import requests
 
-import warnings
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from knowledge_tree import compute_root_hash, compute_branch_hash
 
 # SSL verification — override with PCIS_SSL_VERIFY=false only for self-signed certs
 _SSL_VERIFY = os.environ.get("PCIS_SSL_VERIFY", "true").lower() != "false"
 if not _SSL_VERIFY:
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    warnings.warn("PCIS_SSL_VERIFY=false: SSL certificate verification disabled. Do not use in production.", RuntimeWarning, stacklevel=1)
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    warnings.warn(
+        "PCIS_SSL_VERIFY=false: SSL certificate verification disabled. Do not use in production.",
+        RuntimeWarning,
+        stacklevel=1,
+    )
 
-DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
-TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
-OUTPUT_FILE = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
-KEY_FILE = os.path.expanduser("config.json")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TREE_FILE = os.path.join(REPO_ROOT, "demo", "demo_tree.json")
+OUTPUT_FILE = os.path.join(REPO_ROOT, "demo", "adversarial_validation_run.json")
+KEY_FILE = os.path.join(REPO_ROOT, "config.json")
 TZ_UTC = timezone(timedelta(hours=0))
 RUN_DATE = "2026-03-20"
 MODEL = "the configured LLM"
@@ -32,7 +41,8 @@ MODEL = "the configured LLM"
 
 def load_key():
     with open(KEY_FILE, "r") as f:
-        return f.read().strip()
+        config = json.load(f)
+    return config["llm_api_key"]
 
 
 def get_access_token(api_key):
@@ -99,19 +109,6 @@ def get_fallback_challenge(branch_name):
     return FALLBACK_CHALLENGES.get(branch_name, FALLBACK_CHALLENGES["compliance"])
 
 
-def compute_merkle_root(tree):
-    """Compute Merkle root from branch hashes (sorted by name)."""
-    branch_hashes = []
-    for name in sorted(tree["branches"].keys()):
-        branch = tree["branches"][name]
-        # Recompute branch hash from leaf hashes
-        leaf_hashes = [leaf["hash"] for leaf in branch["leaves"]]
-        combined = "".join(leaf_hashes)
-        branch_hash = hashlib.sha256(combined.encode()).hexdigest()
-        branch_hashes.append(branch_hash)
-    combined_root = "".join(branch_hashes)
-    return hashlib.sha256(combined_root.encode()).hexdigest()
-
 
 def select_leaves(tree):
     """Select 5 high-confidence leaves (>=0.75) from different branches."""
@@ -143,7 +140,7 @@ def main():
     with open(TREE_FILE, "r") as f:
         tree = json.load(f)
 
-    merkle_before = compute_merkle_root(tree)
+    merkle_before = compute_root_hash(tree)
     print(f"  Merkle root (before): {merkle_before[:24]}...")
 
     # Select leaves
@@ -217,10 +214,9 @@ def main():
     # Recompute hashes
     for name in tree["branches"]:
         branch = tree["branches"][name]
-        leaf_hashes = [l["hash"] for l in branch["leaves"]]
-        branch["hash"] = hashlib.sha256("".join(leaf_hashes).encode()).hexdigest()
+        branch["hash"] = compute_branch_hash(branch["leaves"])
 
-    merkle_after = compute_merkle_root(tree)
+    merkle_after = compute_root_hash(tree)
     tree["root_hash"] = merkle_after
     tree["last_updated"] = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
