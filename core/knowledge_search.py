@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-knowledge_search.py — Semantic Search Over Whis's Knowledge Tree
+knowledge_search.py — Semantic Search Over the Knowledge Tree
 
 Searches the knowledge tree by MEANING, not just keywords.
-Uses a local embedding model via Ollama — free, private, no vendor lock-in.
+Uses a local embedding model via Ollama -- free, private, no vendor lock-in.
 
 Usage:
     python3 knowledge_search.py "what did I learn about identity?"
     python3 knowledge_search.py "cost lessons" --top 5
-    python3 knowledge_search.py "Egyptian soul" --branch philosophy
+    python3 knowledge_search.py "architectural decisions" --branch technical
     python3 knowledge_search.py --reindex              # rebuild all embeddings
     python3 knowledge_search.py --stats                 # show index stats
     python3 knowledge_search.py --model nomic-embed-text  # change embedding model
@@ -21,7 +21,7 @@ How it works:
     1. Every knowledge leaf gets embedded into a vector (768 dimensions)
     2. Vectors stored in a local JSON file alongside the tree
     3. When you search, your query gets embedded and compared to all leaves
-    4. Results ranked by cosine similarity — meaning, not keywords
+    4. Results ranked by cosine similarity -- meaning, not keywords
     5. All local. All free. All portable.
 
 Embedding model: nomic-embed-text (default)
@@ -30,7 +30,7 @@ Embedding model: nomic-embed-text (default)
     - Runs on Ollama, no API keys needed
     - Swap to any Ollama embedding model without rewriting code
 
-No external dependencies. Python 3.8+ only.
+No external dependencies beyond Ollama. Python 3.8+ only.
 """
 
 import json
@@ -39,19 +39,21 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
-# ─── Configuration ───────────────────────────────────────────────
+# --- Configuration -------------------------------------------------------
 
-WORKSPACE = os.environ.get("PCIS_WORKSPACE", os.path.expanduser("~/.pcis"))
-TREE_FILE = os.path.join(WORKSPACE, "knowledge-tree.json")
-INDEX_FILE = os.path.join(WORKSPACE, "search-index.json")
+BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
+INDEX_FILE = os.path.join(BASE_DIR, "data", "search-index.json")
 
-# Default embedding model — pull with: ollama pull nomic-embed-text
+# Default embedding model -- pull with: ollama pull nomic-embed-text
 EMBED_MODEL = os.environ.get("PCIS_EMBED_MODEL", "nomic-embed-text")
 
+TZ_UTC = timezone.utc
 
-# ─── Ollama Embeddings ──────────────────────────────────────────
+
+# --- Ollama Embeddings ---------------------------------------------------
 
 def _ollama_post(path, payload, timeout=30):
     """POST JSON to Ollama and return parsed response, or None on error."""
@@ -104,7 +106,7 @@ def check_model_available(model=None):
     return any(model in m for m in models)
 
 
-# ─── Vector Operations ──────────────────────────────────────────
+# --- Vector Operations ---------------------------------------------------
 
 def cosine_similarity(vec_a, vec_b):
     """Cosine similarity between two vectors. Returns -1 to 1."""
@@ -121,7 +123,7 @@ def cosine_similarity(vec_a, vec_b):
     return dot_product / (magnitude_a * magnitude_b)
 
 
-# ─── Index Management ───────────────────────────────────────────
+# --- Index Management ----------------------------------------------------
 
 def load_index():
     """Load the search index from disk."""
@@ -151,6 +153,7 @@ def load_index():
 
 def save_index(index):
     """Save the search index to disk."""
+    os.makedirs(os.path.dirname(INDEX_FILE), exist_ok=True)
     with open(INDEX_FILE, "w") as f:
         json.dump(index, f)
 
@@ -172,7 +175,7 @@ def load_tree():
 def reindex(model=None):
     """Rebuild the entire search index. Run after adding many leaves."""
     model = model or EMBED_MODEL
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     print(f"Reindexing knowledge tree with {model}...")
 
@@ -198,7 +201,6 @@ def reindex(model=None):
         for leaf in branch.get("leaves", []):
             total_leaves += 1
 
-            # Build rich text for embedding: branch + content + source
             embed_text = f"[{branch_name}] {leaf['content']}"
             if leaf.get("source"):
                 embed_text += f" (source: {leaf['source']})"
@@ -252,7 +254,7 @@ def incremental_index(leaf_id, branch_name, content, source="", confidence=0.7):
         "content": content,
         "source": source,
         "confidence": confidence,
-        "created": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "created": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "vector": vec,
     }
     index["leaf_count"] = len(index["embeddings"])
@@ -264,7 +266,7 @@ def incremental_index(leaf_id, branch_name, content, source="", confidence=0.7):
     return True
 
 
-# ─── Search ─────────────────────────────────────────────────────
+# --- Search ---------------------------------------------------------------
 
 def search(query, top_k=3, branch_filter=None, min_confidence=0.0, min_score=0.4):
     """
@@ -278,16 +280,13 @@ def search(query, top_k=3, branch_filter=None, min_confidence=0.0, min_score=0.4
         print("Search index is empty. Run: python3 knowledge_search.py --reindex")
         return []
 
-    # Embed the query
     query_vec = get_embedding(query)
     if not query_vec:
         print("Failed to embed query. Is Ollama running?")
         return []
 
-    # Score all leaves
     results = []
     for leaf_id, leaf_data in index["embeddings"].items():
-        # Apply filters
         if branch_filter and leaf_data["branch"] != branch_filter:
             continue
         if leaf_data.get("confidence", 0) < min_confidence:
@@ -296,16 +295,14 @@ def search(query, top_k=3, branch_filter=None, min_confidence=0.0, min_score=0.4
         similarity = cosine_similarity(query_vec, leaf_data["vector"])
         results.append((similarity, leaf_id, leaf_data))
 
-    # Sort by similarity, highest first
     results.sort(key=lambda x: x[0], reverse=True)
 
-    # Filter by minimum similarity score — drop noise even if it's the best available
     results = [(s, lid, ld) for s, lid, ld in results if s >= min_score]
 
     return results[:top_k]
 
 
-# ─── CLI Commands ────────────────────────────────────────────────
+# --- CLI Commands ---------------------------------------------------------
 
 def cmd_search(args):
     """Search the knowledge tree."""
@@ -313,7 +310,6 @@ def cmd_search(args):
         print("Usage: knowledge_search.py <query> [--top N] [--branch NAME] [--min-confidence 0.N]")
         sys.exit(1)
 
-    # Parse arguments
     query_parts = []
     top_k = 3
     branch_filter = None
@@ -358,7 +354,6 @@ def cmd_search(args):
         source = leaf_data.get("source", "")
         created = leaf_data.get("created", "")
 
-        # Similarity bar
         bar_len = int(score * 20)
         bar = "#" * bar_len + "." * (20 - bar_len)
 
@@ -384,7 +379,6 @@ def cmd_stats():
     print(f"  Last reindex: {index.get('last_reindex', '?')}")
     print(f"  Index file:   {INDEX_FILE}")
 
-    # Count by branch
     branch_counts = {}
     for leaf_data in index["embeddings"].values():
         branch = leaf_data.get("branch", "unknown")
@@ -394,7 +388,6 @@ def cmd_stats():
     for branch in sorted(branch_counts.keys()):
         print(f"    {branch:20s}  {branch_counts[branch]:3d} leaves")
 
-    # Estimate index size
     size_bytes = os.path.getsize(INDEX_FILE) if os.path.exists(INDEX_FILE) else 0
     size_mb = size_bytes / (1024 * 1024)
     print(f"\n  Index size: {size_mb:.1f} MB")
@@ -409,12 +402,12 @@ def cmd_reindex(args):
     reindex(model)
 
 
-# ─── Integration Helper ─────────────────────────────────────────
+# --- Integration Helper ---------------------------------------------------
 
 def search_for_briefing(query, top_k=5):
     """
-    Called by whis_preload.py to get relevant knowledge for a session briefing.
-    Returns formatted text ready to inject into BRIEFING.md.
+    Called by external tools to get relevant knowledge for a session briefing.
+    Returns formatted text ready to inject into a briefing document.
     """
     results = search(query, top_k)
 
@@ -423,7 +416,7 @@ def search_for_briefing(query, top_k=5):
 
     lines = ["## Relevant Knowledge (semantic search)"]
     for score, leaf_id, leaf_data in results:
-        if score < 0.5:  # skip low-relevance results
+        if score < 0.5:
             continue
         branch = leaf_data.get("branch", "?")
         content = leaf_data.get("content", "")
@@ -434,13 +427,13 @@ def search_for_briefing(query, top_k=5):
             f"(relevance: {score:.2f}, confidence: {conf}, source: {source})"
         )
 
-    if len(lines) == 1:  # only header, no results above threshold
+    if len(lines) == 1:
         return ""
 
     return "\n".join(lines)
 
 
-# ─── Entry Point ─────────────────────────────────────────────────
+# --- Entry Point -----------------------------------------------------------
 
 if __name__ == "__main__":
     args = sys.argv[1:]
