@@ -39,18 +39,16 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 # ─── Configuration ───────────────────────────────────────────────
 
-WORKSPACE = os.environ.get("WHIS_WORKSPACE", os.path.expanduser("~/.openclaw/workspace"))
-TREE_FILE = os.path.join(WORKSPACE, ".whis-knowledge-tree.json")
-INDEX_FILE = os.path.join(WORKSPACE, ".whis-search-index.json")
+WORKSPACE = os.environ.get("PCIS_WORKSPACE", os.path.expanduser("~/.pcis"))
+TREE_FILE = os.path.join(WORKSPACE, "knowledge-tree.json")
+INDEX_FILE = os.path.join(WORKSPACE, "search-index.json")
 
 # Default embedding model — pull with: ollama pull nomic-embed-text
-EMBED_MODEL = os.environ.get("WHIS_EMBED_MODEL", "nomic-embed-text")
-
-TZ_MOSCOW = timezone(timedelta(hours=3))
+EMBED_MODEL = os.environ.get("PCIS_EMBED_MODEL", "nomic-embed-text")
 
 
 # ─── Ollama Embeddings ──────────────────────────────────────────
@@ -174,7 +172,7 @@ def load_tree():
 def reindex(model=None):
     """Rebuild the entire search index. Run after adding many leaves."""
     model = model or EMBED_MODEL
-    now = datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     print(f"Reindexing knowledge tree with {model}...")
 
@@ -254,7 +252,7 @@ def incremental_index(leaf_id, branch_name, content, source="", confidence=0.7):
         "content": content,
         "source": source,
         "confidence": confidence,
-        "created": datetime.now(TZ_MOSCOW).strftime("%Y-%m-%d %H:%M:%S GMT+3"),
+        "created": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "vector": vec,
     }
     index["leaf_count"] = len(index["embeddings"])
