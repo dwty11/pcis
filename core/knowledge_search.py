@@ -268,7 +268,7 @@ def incremental_index(leaf_id, branch_name, content, source="", confidence=0.7):
 
 # ─── Search ─────────────────────────────────────────────────────
 
-def search(query, top_k=3, branch_filter=None, min_confidence=0.0):
+def search(query, top_k=3, branch_filter=None, min_confidence=0.0, min_score=0.4):
     """
     Search the knowledge tree by meaning.
 
@@ -300,6 +300,9 @@ def search(query, top_k=3, branch_filter=None, min_confidence=0.0):
 
     # Sort by similarity, highest first
     results.sort(key=lambda x: x[0], reverse=True)
+
+    # Filter by minimum similarity score — drop noise even if it's the best available
+    results = [(s, lid, ld) for s, lid, ld in results if s >= min_score]
 
     return results[:top_k]
 
