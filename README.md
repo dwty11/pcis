@@ -27,6 +27,22 @@ Open `http://localhost:5555` — five tabs showing the full architecture live.
 
 ---
 
+## Quick Start with Docker
+
+```bash
+docker compose up
+```
+
+Open `http://localhost:5555`
+
+On first run, pull the embedding model for semantic search:
+
+```bash
+docker compose exec ollama ollama pull nomic-embed-text
+```
+
+---
+
 ## See It in Action
 
 **Boot — Merkle integrity check, computed in real time:**

@@ -293,7 +293,8 @@ def api_status():
 
 
 if __name__ == "__main__":
+    host = "0.0.0.0" if os.environ.get("PCIS_DOCKER") else "127.0.0.1"
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
     print(f"  http://localhost:5555\n")
-    app.run(host="127.0.0.1", port=5555, debug=False)
+    app.run(host=host, port=5555, debug=False)
