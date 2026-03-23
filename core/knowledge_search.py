@@ -50,6 +50,9 @@ INDEX_FILE = os.path.join(BASE_DIR, "data", "search-index.json")
 # Default embedding model -- pull with: ollama pull nomic-embed-text
 EMBED_MODEL = os.environ.get("PCIS_EMBED_MODEL", "nomic-embed-text")
 
+# Ollama base URL — override for Docker/remote setups (e.g. http://ollama:11434)
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+
 TZ_UTC = timezone.utc
 
 
@@ -59,7 +62,7 @@ def _ollama_post(path, payload, timeout=30):
     """POST JSON to Ollama and return parsed response, or None on error."""
     data = json.dumps(payload).encode()
     req = urllib.request.Request(
-        f"http://localhost:11434{path}",
+        f"{OLLAMA_HOST}{path}",
         data=data,
         headers={"Content-Type": "application/json"},
     )
@@ -76,7 +79,7 @@ def _ollama_post(path, payload, timeout=30):
 
 def _ollama_get(path, timeout=5):
     """GET JSON from Ollama and return parsed response, or None on error."""
-    req = urllib.request.Request(f"http://localhost:11434{path}")
+    req = urllib.request.Request(f"{OLLAMA_HOST}{path}")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read())

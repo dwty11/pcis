@@ -1,0 +1,20 @@
+services:
+  pcis:
+    build: .
+    ports:
+      - "5555:5555"
+    environment:
+      - PCIS_DOCKER=1
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
