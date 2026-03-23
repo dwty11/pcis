@@ -1,183 +1,202 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "ed14be391358f9d107f0e36af78bca7886c0d51ba89693fe420c8392bc93c446",
-  "last_updated": "2026-03-20T00:00:00Z",
+  "root_hash": "b27841119419e2ae6978da636ec662d2616ce68d6a1ccdbf327a07a46dba2f81",
+  "last_updated": "",
   "branches": {
     "clients": {
-      "hash": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+      "hash": "39341f26312604fcf94f7c850e8bfb25c779a3b5e01bc068cab9387fe13e137e",
       "leaves": [
         {
-          "id": "cl-001",
+          "id": "b73cb993ad0e",
+          "hash": "b73cb993ad0e93482781c83ccbcf4b0433652961476ef92532d017cdd9459e13",
           "content": "Acme Corp — enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
-          "confidence": 0.88,
           "source": "session-2025-09-15",
-          "created": "2025-09-15T10:00:00Z",
-          "hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+          "confidence": 0.88,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "cl-002",
+          "id": "b00a551888e6",
+          "hash": "b00a551888e663a54cf47bc9419edc8d123042e8af9538a53a1fff13c7a54b52",
           "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive — requested benchmark report before renewal meeting.",
-          "confidence": 0.82,
           "source": "session-2026-03-10",
-          "created": "2026-03-10T14:30:00Z",
-          "hash": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7"
+          "confidence": 0.82,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "cl-003",
+          "id": "68605f527bb5",
+          "hash": "68605f527bb59ad867af6d65f721d3a13d1902679dba8e38ab64038674d0e3f7",
           "content": "Brightfield Analytics — mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering — price sensitive.",
-          "confidence": 0.75,
           "source": "session-2026-01-20",
-          "created": "2026-01-20T09:15:00Z",
-          "hash": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+          "confidence": 0.75,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "cl-004",
-          "content": "COUNTER: [cl-001] Confidence in Acme Corp renewal is based on two meetings. Statistically insufficient for a high-confidence renewal forecast. Recommend reducing confidence to 0.65 until benchmark report is delivered and reviewed.",
-          "confidence": 0.8,
+          "id": "62abc53db20a",
+          "hash": "62abc53db20a9a810e7bfd3263d6b828fd9b3b131b671f0be5987bd7400699ed",
+          "content": "COUNTER: [b73cb993ad0e] Confidence in Acme Corp renewal is based on two meetings. Statistically insufficient for a high-confidence renewal forecast. Recommend reducing confidence to 0.65 until benchmark report is delivered and reviewed.",
           "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9"
+          "confidence": 0.8,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         }
       ]
     },
     "products": {
-      "hash": "c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7",
+      "hash": "adae809eb95172a322642e0d189a1dc912d3ce88108856a4b897f0b35c3a64c0",
       "leaves": [
         {
-          "id": "pr-001",
+          "id": "1d36f1616626",
+          "hash": "1d36f161662642b8e9629115eba451344e662bd4698355f35ebb360ab210b57c",
           "content": "Core API v2.3: latency p99 236ms at 300 concurrent agents, memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Confidence valid for current architecture — recalibrate after any infrastructure change.",
-          "confidence": 0.92,
           "source": "benchmark-2026-03-12",
-          "created": "2026-03-12T11:00:00Z",
-          "hash": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+          "confidence": 0.92,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "pr-002",
+          "id": "3c5594c198e4",
+          "hash": "3c5594c198e4344a98be920e353794ee978ac624d2c35051c036875b91764c01",
           "content": "Knowledge tree query: keyword search returns results in <50ms for trees up to 10,000 leaves. Semantic search (embeddings) not yet implemented — roadmap item Q3 2026.",
-          "confidence": 0.85,
           "source": "session-2026-02-28",
-          "created": "2026-02-28T16:00:00Z",
-          "hash": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1"
-        },
-        {
-          "id": "pr-003",
-          "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot.",
-          "confidence": 0.88,
-          "source": "session-2026-03-01",
-          "created": "2026-03-01T10:00:00Z",
-          "hash": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2"
-        },
-        {
-          "id": "pr-004",
-          "content": "COUNTER: [pr-001] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
           "confidence": 0.85,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
+        },
+        {
+          "id": "c21c5d857e30",
+          "hash": "c21c5d857e3073abad893a149e7cc63f4c9feb22aa157bd727c527cc7a037879",
+          "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot.",
+          "source": "session-2026-03-01",
+          "confidence": 0.88,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
+        },
+        {
+          "id": "d6c551445e91",
+          "hash": "d6c551445e91416b26a0572d9d31134b744f6516d82931fa4eff83cac4aeb4b4",
+          "content": "COUNTER: [1d36f1616626] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
           "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3"
+          "confidence": 0.85,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         }
       ]
     },
     "compliance": {
-      "hash": "d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+      "hash": "b1e9bc72da3c0bd4bbb03834f0d4c4b2afe5c447bddbef809b5bc1472e566538",
       "leaves": [
         {
-          "id": "co-001",
+          "id": "6c1d120c878a",
+          "hash": "6c1d120c878a8acae9ed20db04d80ef7fbd6cd827e2118bb85fc76692732d565",
           "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default — no data leaves the deployment boundary.",
+          "source": "architecture-review-2026-02-15",
           "confidence": 0.9,
-          "source": "architecture-review-2026-02-15",
-          "created": "2026-02-15T09:00:00Z",
-          "hash": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4"
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "co-002",
+          "id": "71eb7255c24e",
+          "hash": "71eb7255c24eb0fd290e31a4162c132963364287ce0bd1466c9eb9d07768fc5f",
           "content": "Audit trail: every knowledge tree entry contains SHA-256 hash of content, session timestamp, and source reference. Merkle root changes on every update. Full tamper-evident history available by replaying root hash sequence.",
-          "confidence": 0.95,
           "source": "architecture-review-2026-02-15",
-          "created": "2026-02-15T09:30:00Z",
-          "hash": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5"
+          "confidence": 0.95,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "co-003",
-          "content": "COUNTER: [co-001] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger — recommend automated test that intercepts all outbound network calls on each release.",
-          "confidence": 0.82,
+          "id": "11d0ec8996df",
+          "hash": "11d0ec8996dfb23d7c915dd949d76ab56aaf72beab9677251269c65328e083ae",
+          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger — recommend automated test that intercepts all outbound network calls on each release.",
           "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6"
+          "confidence": 0.82,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         }
       ]
     },
     "risk": {
-      "hash": "e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9",
+      "hash": "5afa5b2406e8dc5b79ff723d238a4ef18370eb091e477bf631cc839915416a9f",
       "leaves": [
         {
-          "id": "ri-001",
+          "id": "275b5bc0ba93",
+          "hash": "275b5bc0ba936746db824dc5a1f3dcb6b61a8cf23b678f64ba5a5f735482b2b5",
           "content": "Acme Corp renewal risk: benchmark report not yet delivered. If report shows degraded performance vs. original demo, renewal probability drops significantly. Mitigation: schedule internal test run this week.",
-          "confidence": 0.78,
           "source": "session-2026-03-10",
-          "created": "2026-03-10T15:00:00Z",
-          "hash": "f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7"
+          "confidence": 0.78,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "ri-002",
+          "id": "54cc0d2517a7",
+          "hash": "54cc0d2517a78326044af904eeeea778dc77fa12b24a8a1f1feb411b9576c824",
           "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely — raw capability comparison alone will not win this account.",
-          "confidence": 0.72,
           "source": "session-2026-01-20",
-          "created": "2026-01-20T10:00:00Z",
-          "hash": "a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8"
+          "confidence": 0.72,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "ri-003",
-          "content": "COUNTER: [ri-002] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' — this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
-          "confidence": 0.75,
+          "id": "01e2435862c6",
+          "hash": "01e2435862c6fb8a3d97ce1193ec2e9ed3a20eaf16611f098d442425cc6e38e9",
+          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' — this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
           "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9"
+          "confidence": 0.75,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         }
       ]
     },
     "lessons": {
-      "hash": "f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0",
+      "hash": "d8b71fb3e107d20308411014e03bc541bb550d6141a7177fc79eddb36b1094a0",
       "leaves": [
         {
-          "id": "le-001",
+          "id": "248c720c4e3a",
+          "hash": "248c720c4e3a2f6549a82b0a4458572e23cfc7e6cdfcd850861b11981fade10b",
           "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment — do not skip it or pre-load results.",
-          "confidence": 0.85,
           "source": "session-2026-03-15",
-          "created": "2026-03-15T18:00:00Z",
-          "hash": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0"
+          "confidence": 0.85,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "le-002",
+          "id": "c22d36fc0bf6",
+          "hash": "c22d36fc0bf69c7a04717230e3c2051e1f64bd0271c507461311889516c9b6f0",
           "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters — it goes in the tree immediately.",
-          "confidence": 0.95,
           "source": "session-2026-03-04",
-          "created": "2026-03-04T20:00:00Z",
-          "hash": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+          "confidence": 0.95,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "le-003",
+          "id": "267107a688c8",
+          "hash": "267107a688c895994d91f8db0dde3b7e4c8b678037340a6011f64f5e5ab86871",
           "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' — having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
-          "confidence": 0.88,
           "source": "session-2026-03-17",
-          "created": "2026-03-17T14:00:00Z",
-          "hash": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+          "confidence": 0.88,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "le-004",
-          "content": "COUNTER: [le-001] 'Live demo always beats slides' is a pattern from a small sample of presentations. Some audiences (highly technical, time-constrained) prefer a structured slide deck they can reference later. Recommendation: lead with demo, have slides available for follow-up. Do not assume demo-first is universally optimal.",
+          "id": "716e5efee22a",
+          "hash": "716e5efee22a9c452792d373be4f98cbb4e5da38f4a89b1c17ad468ee5717f63",
+          "content": "COUNTER: [248c720c4e3a] 'Live demo always beats slides' is a pattern from a small sample of presentations. Some audiences (highly technical, time-constrained) prefer a structured slide deck they can reference later. Recommendation: lead with demo, have slides available for follow-up. Do not assume demo-first is universally optimal.",
+          "source": "adversarial-2026-03-20",
           "confidence": 0.78,
-          "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3"
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         },
         {
-          "id": "le-005",
-          "content": "COUNTER: [le-002] The 'commit immediately' rule is correct but incomplete. Committing every result without curation leads to tree bloat. The discipline is: commit significant results immediately AND prune low-confidence or superseded leaves at the end of each session. Both halves are required.",
-          "confidence": 0.82,
+          "id": "180b23eff72e",
+          "hash": "180b23eff72e8f14c39d954f76375eb2ab92749b8093b3276e6eaff2597e23f2",
+          "content": "COUNTER: [c22d36fc0bf6] The 'commit immediately' rule is correct but incomplete. Committing every result without curation leads to tree bloat. The discipline is: commit significant results immediately AND prune low-confidence or superseded leaves at the end of each session. Both halves are required.",
           "source": "adversarial-2026-03-20",
-          "created": "2026-03-20T00:00:00Z",
-          "hash": "a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4"
+          "confidence": 0.82,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null
         }
       ]
     }
