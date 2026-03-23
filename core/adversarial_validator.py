@@ -340,6 +340,11 @@ def main():
             print(f"         Whitespace response — skipping.")
             continue
         content = f"COUNTER: [{leaf['id']}] {response}"
+        # TODO: This hash uses SHA256(content) only, but knowledge_tree.hash_leaf()
+        # uses SHA256(f"{branch}:{timestamp}:{content}"). These will produce different
+        # hashes for the same leaf content. Must align with hash_leaf() before
+        # validator output is ever integrated into the live tree, or Merkle
+        # verification will fail.
         content_hash = hashlib.sha256(content.encode()).hexdigest()
         now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 

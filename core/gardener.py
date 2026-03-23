@@ -41,7 +41,7 @@ log = logging.getLogger("pcis.gardener")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
-    save_tree, add_knowledge as _kt_add_knowledge, tree_lock,
+    save_tree, add_knowledge as _kt_add_knowledge, tree_lock, now_utc,
 )
 from knowledge_search import get_embedding, cosine_similarity
 
@@ -786,14 +786,14 @@ def main():
                             c["content"], fresh_tree
                         )
                         if is_dup:
-                            leaf_hash = _kt_hash_leaf(c["content"])[:12]
+                            leaf_hash = _kt_hash_leaf(c["content"], branch, now_utc())[:12]
                             log.info(
                                 "DEDUP SKIP: [%s] too similar to [%s] (score: %.2f)",
                                 leaf_hash, dup_id, dup_score,
                             )
                             continue
                     except Exception as e:
-                        leaf_hash = _kt_hash_leaf(c["content"])[:12]
+                        leaf_hash = _kt_hash_leaf(c["content"], branch, now_utc())[:12]
                         log.warning(
                             "DEDUP WARNING: embedding unavailable, skipping "
                             "dedup check for [%s]: %s", leaf_hash, e,
