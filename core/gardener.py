@@ -50,7 +50,8 @@ TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
 GARDEN_LOG = os.path.join(BASE_DIR, "memory", "gardener-log.md")
 GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(BASE_DIR, "memory", "gardener-pending-notify.flag")
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_URL = f"{OLLAMA_HOST}/api/generate"
 GARDENER_MODEL = "qwen3:14b"
 TZ_UTC = timezone(timedelta(hours=0))
 
@@ -67,7 +68,7 @@ def ensure_ollama_warm(timeout=60, poll_interval=2):
     import time
     import json as _json
 
-    tags_url = "http://localhost:11434/api/tags"
+    tags_url = f"{OLLAMA_HOST}/api/tags"
     model = GARDENER_MODEL
 
     def is_up():
@@ -81,7 +82,7 @@ def ensure_ollama_warm(timeout=60, poll_interval=2):
         """Send a lightweight inference call to force model into VRAM."""
         payload = _json.dumps({"model": m, "prompt": "hi", "stream": False}).encode()
         req = urllib.request.Request(
-            "http://localhost:11434/api/generate",
+            OLLAMA_URL,
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST"
