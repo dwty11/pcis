@@ -383,7 +383,7 @@ def write_staging_file(synapses, flags, staged_counters=None):
 
 
 def apply_staging():
-    """Commit all staged synapses from the staging file to the tree."""
+    """Commit all staged items (synapses, counter-leaves, gaps) from the staging file."""
     if not os.path.exists(GARDEN_STAGING):
         log.info("No staging file found.")
         return 0
@@ -392,24 +392,65 @@ def apply_staging():
         content = f.read()
 
     import re
+
+    # Extract counter-leaf blocks: ### COUNTER [N] branch=X conf=X.XX\n<content>
+    counter_blocks = re.findall(
+        r'### COUNTER \[\d+\] branch=(\S+) conf=([0-9.]+)\n(.*?)(?=\n###|\n##|\Z)',
+        content, re.DOTALL,
+    )
+
+    # Extract gap blocks: ### GAP [N] branch=X conf=X.XX source=...\n<content>
+    gap_blocks = re.findall(
+        r'### GAP \[\d+\] branch=(\S+) conf=([0-9.]+) source=\S+\n(.*?)(?=\n###|\n##|\Z)',
+        content, re.DOTALL,
+    )
+
     # Extract synapse blocks: ### [N] conf=X.XX\n<content>
-    blocks = re.findall(r'### \[\d+\] conf=([0-9.]+)\n(.*?)(?=\n###|\n##|\Z)', content, re.DOTALL)
-    if not blocks:
-        log.info("No synapses found in staging file.")
+    synapse_blocks = re.findall(
+        r'### \[\d+\] conf=([0-9.]+)\n(.*?)(?=\n###|\n##|\Z)',
+        content, re.DOTALL,
+    )
+
+    if not counter_blocks and not synapse_blocks and not gap_blocks:
+        log.info("No staged items found in staging file.")
         return 0
 
     source = f"gardener-staged-{today_local()}"
     count = 0
     with tree_lock() as tree:
-        for conf_str, synapse_content in blocks:
-            synapse_content = synapse_content.strip()
-            if not synapse_content:
+        for branch, conf_str, body in counter_blocks:
+            body = body.strip()
+            if not body:
                 continue
             try:
                 conf = float(conf_str)
             except ValueError:
                 conf = 0.65
-            leaf_id = add_leaf(tree, "philosophy", f"SYNAPSE: {synapse_content}", source, conf)
+            leaf_id = add_leaf(tree, branch, body, source, conf)
+            log.info("⚔️  Applied counter-leaf [%s] to %s", leaf_id, branch)
+            count += 1
+
+        for branch, conf_str, body in gap_blocks:
+            body = body.strip()
+            if not body:
+                continue
+            try:
+                conf = float(conf_str)
+            except ValueError:
+                conf = 0.80
+            leaf_id = add_leaf(tree, branch, body, source, conf)
+            log.info("🔍 Applied gap [%s] to %s", leaf_id, branch)
+            count += 1
+
+        for conf_str, body in synapse_blocks:
+            body = body.strip()
+            if not body:
+                continue
+            try:
+                conf = float(conf_str)
+            except ValueError:
+                conf = 0.65
+            leaf_id = add_leaf(tree, "philosophy", f"SYNAPSE: {body}", source, conf)
             log.info("🔗 Applied synapse [%s] to philosophy", leaf_id)
             count += 1
 
@@ -417,7 +458,7 @@ def apply_staging():
         os.remove(GARDEN_STAGING)
         if os.path.exists(GARDEN_NOTIFY_FLAG):
             os.remove(GARDEN_NOTIFY_FLAG)
-        log.info("✅ Tree saved. Staging cleared. (%d synapses applied)", count)
+        log.info("✅ Tree saved. Staging cleared. (%d item(s) applied)", count)
     return count
 
 
@@ -614,7 +655,7 @@ def gap_scan():
 
     lines.append(f"## Gap Scan — {date_str}")
     for i, gap in enumerate(gaps):
-        lines.append(f"\n### [{i+1}] conf=0.80 source={source}")
+        lines.append(f"\n### GAP [{i+1}] branch=lessons conf=0.80 source={source}")
         lines.append(gap)
 
     with open(GARDEN_STAGING, "w") as f:
