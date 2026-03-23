@@ -43,6 +43,7 @@ from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
     save_tree, add_knowledge as _kt_add_knowledge, tree_lock,
 )
+from knowledge_search import get_embedding, cosine_similarity
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
@@ -145,6 +146,36 @@ def add_leaf(tree, branch, content, source, confidence):
         log.warning("⚠️  Skipping invalid leaf for [%s]: %s — content: %s",
                     branch, e, content[:100])
         return None
+
+
+DEDUP_THRESHOLD = 0.82
+
+
+def is_duplicate_counter(content, tree):
+    """Check if a COUNTER leaf is semantically too similar to an existing one.
+
+    Returns (is_dup, existing_id, score) if duplicate, (False, None, 0.0) otherwise.
+    Raises on embedding failure so the caller can apply the fallback policy.
+    """
+    new_vec = get_embedding(content)
+    if new_vec is None:
+        raise RuntimeError("get_embedding returned None for new content")
+
+    for branch_data in tree["branches"].values():
+        for leaf in branch_data.get("leaves", []):
+            if not leaf["content"].startswith("COUNTER:"):
+                continue
+            try:
+                existing_vec = get_embedding(leaf["content"])
+            except Exception:
+                continue
+            if existing_vec is None:
+                continue
+            score = cosine_similarity(new_vec, existing_vec)
+            if score >= DEDUP_THRESHOLD:
+                return True, leaf["id"], score
+
+    return False, None, 0.0
 
 
 def load_recent_memory(days=5):
@@ -744,12 +775,32 @@ def main():
             with tree_lock() as fresh_tree:
                 for c in committed_counters:
                     branch = c["branch"]
-                    if branch in fresh_tree["branches"]:
-                        leaf_id = add_leaf(fresh_tree, branch, c["content"], source, c["confidence"])
-                        log.info("✅ Added counter [%s] to %s", leaf_id, branch)
-                        committed_written.append({**c, "leaf_id": leaf_id})
-                    else:
+                    if branch not in fresh_tree["branches"]:
                         log.warning("⚠️  Unknown branch '%s' — skipped", branch)
+                        continue
+
+                    # Semantic dedup gate: skip near-duplicate COUNTERs
+                    try:
+                        is_dup, dup_id, dup_score = is_duplicate_counter(
+                            c["content"], fresh_tree
+                        )
+                        if is_dup:
+                            leaf_hash = _kt_hash_leaf(c["content"])[:12]
+                            log.info(
+                                "DEDUP SKIP: [%s] too similar to [%s] (score: %.2f)",
+                                leaf_hash, dup_id, dup_score,
+                            )
+                            continue
+                    except Exception as e:
+                        leaf_hash = _kt_hash_leaf(c["content"])[:12]
+                        log.warning(
+                            "DEDUP WARNING: embedding unavailable, skipping "
+                            "dedup check for [%s]: %s", leaf_hash, e,
+                        )
+
+                    leaf_id = add_leaf(fresh_tree, branch, c["content"], source, c["confidence"])
+                    log.info("✅ Added counter [%s] to %s", leaf_id, branch)
+                    committed_written.append({**c, "leaf_id": leaf_id})
             log.info("💾 Tree saved.")
         committed_counters = committed_written
 
