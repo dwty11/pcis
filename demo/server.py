@@ -7,15 +7,27 @@ Boot integrity check hashes the demo's own files — no external workspace requi
 
 import hashlib
 import json
+import logging
 import os
 import re
+import sys
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
+
+# Point knowledge_search at the demo tree before importing it.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import core.knowledge_search as knowledge_search
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
 DEMO_TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
+
+# Override knowledge_search paths to use the demo tree and its own index.
+knowledge_search.TREE_FILE = DEMO_TREE_FILE
+knowledge_search.INDEX_FILE = os.path.join(DEMO_DIR, "demo_search_index.json")
 TZ_UTC = timezone.utc
 
 # demo_mode=True uses demo_tree.json; False uses data/tree.json
@@ -126,36 +138,64 @@ def api_tree():
 
 @app.route("/api/query", methods=["POST"])
 def api_query():
-    """Keyword search across the knowledge tree. Returns top 3 matches."""
+    """Semantic search across the knowledge tree using Ollama embeddings.
+
+    Requires one-time setup: ollama pull nomic-embed-text
+    Falls back to keyword search if Ollama is unavailable.
+    """
     data = request.get_json()
     query = data.get("query", "").lower().strip()
     if not query:
         return jsonify({"results": [], "query": ""})
 
     tree = load_tree()
-    keywords = query.split()
 
-    scored = []
-    for branch_name, branch in tree["branches"].items():
+    # Build a lookup from leaf id -> hash (not stored in the search index).
+    hash_lookup = {}
+    for branch in tree["branches"].values():
         for leaf in branch["leaves"]:
-            content_lower = leaf["content"].lower()
-            source_lower = leaf["source"].lower()
-            hits = sum(1 for kw in keywords if kw in content_lower or kw in source_lower)
-            if hits > 0:
-                score = hits * leaf["confidence"]
-                scored.append({
-                    "branch": branch_name,
-                    "content": leaf["content"],
-                    "confidence": leaf["confidence"],
-                    "hash": leaf["hash"],
-                    "source": leaf["source"],
-                    "created": leaf["created"],
-                    "id": leaf["id"],
-                    "score": round(score, 3),
-                })
+            hash_lookup[leaf["id"]] = leaf.get("hash", "")
 
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    return jsonify({"results": scored[:3], "query": query, "total_matches": len(scored)})
+    try:
+        raw = knowledge_search.search(query, top_k=3)
+        scored = []
+        for score, leaf_id, leaf_data in raw:
+            scored.append({
+                "branch": leaf_data["branch"],
+                "content": leaf_data["content"],
+                "confidence": leaf_data.get("confidence", 0.7),
+                "hash": hash_lookup.get(leaf_id, ""),
+                "source": leaf_data.get("source", ""),
+                "created": leaf_data.get("created", ""),
+                "id": leaf_id,
+                "score": round(score, 3),
+            })
+    except Exception as e:
+        # Ollama not running or model not pulled — fall back to keyword search.
+        logger.warning("Semantic search failed (%s), falling back to keyword search.", e)
+        keywords = query.split()
+        scored = []
+        for branch_name, branch in tree["branches"].items():
+            for leaf in branch["leaves"]:
+                content_lower = leaf["content"].lower()
+                source_lower = leaf["source"].lower()
+                hits = sum(1 for kw in keywords if kw in content_lower or kw in source_lower)
+                if hits > 0:
+                    score = hits * leaf["confidence"]
+                    scored.append({
+                        "branch": branch_name,
+                        "content": leaf["content"],
+                        "confidence": leaf["confidence"],
+                        "hash": leaf["hash"],
+                        "source": leaf["source"],
+                        "created": leaf["created"],
+                        "id": leaf["id"],
+                        "score": round(score, 3),
+                    })
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        scored = scored[:3]
+
+    return jsonify({"results": scored, "query": query, "total_matches": len(scored)})
 
 
 @app.route("/api/adversarial")
