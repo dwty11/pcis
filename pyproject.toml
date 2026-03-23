@@ -41,12 +41,9 @@ Homepage = "https://github.com/dwty11/pcis"
 Repository = "https://github.com/dwty11/pcis"
 Issues = "https://github.com/dwty11/pcis/issues"
 
-[project.scripts]
-pcis = "pcis.cli:main"
-
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pcis*"]
+include = ["pcis*", "core*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.json"]
