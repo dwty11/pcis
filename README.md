@@ -196,4 +196,4 @@ Converts to Apache 2.0 on 2030-03-20.
 Commercial inquiries: idwty@proton.me  
 See [LICENSE](LICENSE) for full terms.
 
-Registered as a Computer Program (Программа для ЭВМ) with Rospatent. Application No. 7069955475, filed 2026-03-21.
+Registered as a Computer Program (Программа для ЭВМ) with Rospatent. Registration No. 2026617854, registered 2026-03-20.
