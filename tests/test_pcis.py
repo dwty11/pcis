@@ -325,6 +325,76 @@ class TestIdentityPortability(unittest.TestCase):
         self.assertEqual(root_hash_default, kt.compute_root_hash(tree))
 
 
+class TestGardenerDedupGate(unittest.TestCase):
+    """Semantic dedup gate for COUNTER leaves in gardener."""
+
+    def _tree_with_counter(self, counter_content="COUNTER: [abc123] old challenge"):
+        tree = {
+            "version": 1, "instance": "test", "root_hash": "",
+            "last_updated": "2026-01-01T00:00:00Z",
+            "branches": {"technical": {"hash": "", "leaves": []}},
+        }
+        ts = "2026-01-15 12:00:00 UTC"
+        h = kt.hash_leaf(counter_content, "technical", ts)
+        tree["branches"]["technical"]["leaves"].append({
+            "id": h[:12], "hash": h, "content": counter_content,
+            "source": "test", "confidence": 0.65, "created": ts,
+            "promoted_to": None,
+        })
+        return tree
+
+    def test_near_duplicate_counter_skipped(self):
+        """A COUNTER whose embedding is >= 0.82 similar to an existing one is skipped."""
+        from unittest.mock import patch
+
+        fixed_vec = [1.0] * 768
+        tree = self._tree_with_counter()
+
+        with patch("gardener.get_embedding", return_value=fixed_vec):
+            is_dup, dup_id, score = gd.is_duplicate_counter(
+                "COUNTER: [xyz789] nearly identical challenge", tree
+            )
+
+        self.assertTrue(is_dup)
+        self.assertIsNotNone(dup_id)
+        self.assertGreaterEqual(score, 0.82)
+
+    def test_distinct_counter_committed(self):
+        """A COUNTER with low similarity passes the dedup gate."""
+        from unittest.mock import patch
+
+        call_count = [0]
+
+        def mock_embed(text):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return [1.0] + [0.0] * 767  # new candidate
+            return [0.0] + [1.0] + [0.0] * 766  # existing leaf (orthogonal)
+
+        tree = self._tree_with_counter()
+
+        with patch("gardener.get_embedding", side_effect=mock_embed):
+            is_dup, dup_id, score = gd.is_duplicate_counter(
+                "COUNTER: [xyz789] completely different challenge", tree
+            )
+
+        self.assertFalse(is_dup)
+        self.assertIsNone(dup_id)
+        self.assertLess(score, 0.82)
+
+    def test_embedding_failure_triggers_fallback(self):
+        """When embedding fails, is_duplicate_counter raises so caller can fallback."""
+        from unittest.mock import patch
+
+        tree = self._tree_with_counter()
+
+        with patch("gardener.get_embedding", side_effect=RuntimeError("Ollama down")):
+            with self.assertRaises(RuntimeError):
+                gd.is_duplicate_counter(
+                    "COUNTER: [xyz789] some challenge", tree
+                )
+
+
 if __name__ == "__main__":
     print("PCIS Core Test Suite\n" + "="*40)
     unittest.main(verbosity=2)
