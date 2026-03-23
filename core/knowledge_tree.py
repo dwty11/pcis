@@ -81,6 +81,23 @@ def compute_root_hash(tree):
     return level[0]
 
 
+def verify_tree_integrity(tree):
+    """Recompute every hash from content up. Returns (ok, errors)."""
+    errors = []
+    for bname, branch in tree.get("branches", {}).items():
+        for leaf in branch.get("leaves", []):
+            expected = hash_leaf(leaf["content"], bname, leaf["created"])
+            if expected != leaf["hash"]:
+                errors.append(f"leaf {leaf['id']} in {bname}: content-hash mismatch")
+        expected_bh = compute_branch_hash(branch["leaves"])
+        if expected_bh != branch["hash"]:
+            errors.append(f"branch {bname}: hash mismatch")
+    expected_root = compute_root_hash(tree)
+    if expected_root != tree.get("root_hash", ""):
+        errors.append("root hash mismatch")
+    return len(errors) == 0, errors
+
+
 def load_tree(path=None):
     path = path or TREE_FILE
     if os.path.exists(path):

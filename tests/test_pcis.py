@@ -395,6 +395,31 @@ class TestGardenerDedupGate(unittest.TestCase):
                 )
 
 
+class TestVerifyTreeIntegrity(unittest.TestCase):
+    """verify_tree_integrity detects content tampering even when hash fields are untouched."""
+
+    def test_content_tamper_detected(self):
+        """Mutating leaf content without updating hashes must be caught."""
+        tree = {"version": 1, "instance": "test", "root_hash": "",
+                "last_updated": "", "branches": {}}
+        kt.add_knowledge(tree, "lessons", "original content", "test", 0.9)
+        # Finalize hashes
+        tree["branches"]["lessons"]["hash"] = kt.compute_branch_hash(
+            tree["branches"]["lessons"]["leaves"])
+        tree["root_hash"] = kt.compute_root_hash(tree)
+
+        # Sanity: untampered tree verifies
+        ok, errors = kt.verify_tree_integrity(tree)
+        self.assertTrue(ok, f"Clean tree failed verification: {errors}")
+
+        # Tamper content without touching any hash fields
+        tree["branches"]["lessons"]["leaves"][0]["content"] = "tampered content"
+
+        ok, errors = kt.verify_tree_integrity(tree)
+        self.assertFalse(ok, "Tampered tree was not detected")
+        self.assertTrue(any("content-hash mismatch" in e for e in errors))
+
+
 if __name__ == "__main__":
     print("PCIS Core Test Suite\n" + "="*40)
     unittest.main(verbosity=2)
