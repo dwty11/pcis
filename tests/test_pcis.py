@@ -243,6 +243,16 @@ class TestAddKnowledgeValidation(unittest.TestCase):
         with self.assertRaises(ValueError):
             kt.add_knowledge(tree, "lessons", "x" * 10_001)
 
+    def test_confidence_out_of_range_raises(self):
+        tree = self._empty_tree()
+        with self.assertRaises(ValueError):
+            kt.add_knowledge(tree, "lessons", "valid content", confidence=-0.1)
+        with self.assertRaises(ValueError):
+            kt.add_knowledge(tree, "lessons", "valid content", confidence=1.01)
+        # Boundaries should be accepted
+        kt.add_knowledge(tree, "lessons", "zero conf", confidence=0.0)
+        kt.add_knowledge(tree, "lessons", "full conf", confidence=1.0)
+
 
 class TestConcurrentSaveTree(unittest.TestCase):
     """File locking prevents concurrent write corruption."""
