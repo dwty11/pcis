@@ -3,25 +3,39 @@
 External LLM Validation — PCIS Demo
 Sends high-confidence leaves to the configured LLM for adversarial challenge.
 All processing stays within the closed perimeter.
+
+Supported providers (config.json → llm_provider):
+  - "anthropic" — Anthropic Messages API (requires llm_api_key or ANTHROPIC_API_KEY)
+  - "openai"    — OpenAI-compatible Chat Completions (requires llm_api_key or OPENAI_API_KEY)
+  - "ollama"    — Local Ollama (default, no key required)
 """
 
 import hashlib
 import json
+import logging
 import os
-import uuid
-from datetime import datetime, timezone, timedelta
-
 import sys
+import time
+import urllib.error
+import urllib.request
+import uuid
 import warnings
-
-import requests
+from datetime import datetime, timezone, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import compute_root_hash, compute_branch_hash
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger("pcis.adversarial_validator")
+
 # SSL verification — override with PCIS_SSL_VERIFY=false only for self-signed certs
 _SSL_VERIFY = os.environ.get("PCIS_SSL_VERIFY", "true").lower() != "false"
 if not _SSL_VERIFY:
+    import ssl as _ssl
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     warnings.warn(
@@ -33,64 +47,170 @@ if not _SSL_VERIFY:
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TREE_FILE = os.path.join(REPO_ROOT, "demo", "demo_tree.json")
 OUTPUT_FILE = os.path.join(REPO_ROOT, "demo", "adversarial_validation_run.json")
-KEY_FILE = os.path.join(REPO_ROOT, "config.json")
+CONFIG_FILE = os.path.join(REPO_ROOT, "config.json")
 TZ_UTC = timezone(timedelta(hours=0))
-RUN_DATE = "2026-03-20"
-MODEL = "the configured LLM"
+RUN_DATE = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+# Provider configs
+PROVIDER_DEFAULTS = {
+    "anthropic": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "model": "claude-sonnet-4-20250514",
+        "env_key": "ANTHROPIC_API_KEY",
+    },
+    "openai": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4o-mini",
+        "env_key": "OPENAI_API_KEY",
+    },
+    "ollama": {
+        "url": "http://localhost:11434/api/chat",
+        "model": "qwen3:14b",
+        "env_key": None,
+    },
+}
+
+ADVERSARIAL_PROMPT = (
+    "You are a critical analyst reviewing an AI knowledge base entry.\n\n"
+    "Entry content: {content}\n"
+    "Confidence score: {confidence}\n\n"
+    "Your task: Generate a rigorous counter-argument or critical validation of this belief. "
+    "Consider:\n"
+    "- Is the confidence score justified by the evidence?\n"
+    "- What assumptions are being made that could be wrong?\n"
+    "- What important counter-arguments or edge cases are missing?\n"
+    "- Could this belief become stale or context-dependent?\n\n"
+    "Reply with ONE concise paragraph containing your strongest counter-argument "
+    "or validation critique. Be specific and adversarial — your job is to find weaknesses, "
+    "not to confirm."
+)
 
 
-def load_key():
-    with open(KEY_FILE, "r") as f:
-        config = json.load(f)
-    return config["llm_api_key"]
+def load_config():
+    """Load config.json if it exists, return dict."""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("Failed to read config.json: %s — using defaults", e)
+    return {}
 
 
-def get_access_token(api_key):
-    """Get LLM OAuth token."""
-    url = "LLM_AUTH_ENDPOINT"
-    headers = {
-        "Authorization": f"Basic {api_key}",
-        "RqUID": str(uuid.uuid4()),
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-    }
-    resp = requests.post(url, headers=headers, data="scope=LLM_API_SCOPE", verify=_SSL_VERIFY, timeout=30)
-    resp.raise_for_status()
-    return resp.json()["access_token"]
+def get_provider_config(config):
+    """Determine provider, model, api_key, and url from config + env."""
+    provider = config.get("llm_provider", "ollama")
+    if provider not in PROVIDER_DEFAULTS:
+        log.warning("Unknown llm_provider '%s' — falling back to ollama", provider)
+        provider = "ollama"
+
+    defaults = PROVIDER_DEFAULTS[provider]
+    model = config.get("llm_model", defaults["model"])
+    url = config.get("llm_url", defaults["url"])
+
+    # API key: config.json → env var
+    api_key = config.get("llm_api_key", "")
+    if not api_key and defaults["env_key"]:
+        api_key = os.environ.get(defaults["env_key"], "")
+
+    return provider, model, url, api_key
 
 
-def send_to_llm(token, leaf_content, retries=2):
-    """Send adversarial prompt to configured LLM with retry logic."""
-    url = "LLM_ENDPOINT"
-    prompt = (
-        "You are a critical analyst reviewing an AI knowledge base entry.\n\n"
-        f"Entry: {leaf_content}\n\n"
-        "Identify weaknesses in this entry: where might it be inaccurate, overconfident, "
-        "or missing an important counter-argument? Reply in one concise paragraph."
+def _call_anthropic(url, api_key, model, prompt, timeout=90):
+    """Call Anthropic Messages API."""
+    body = json.dumps({
+        "model": model,
+        "max_tokens": 512,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+    }).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
     )
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    body = {
-        "model": MODEL,
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        result = json.loads(resp.read().decode())
+    # Anthropic response: {"content": [{"type": "text", "text": "..."}]}
+    return result["content"][0]["text"]
+
+
+def _call_openai(url, api_key, model, prompt, timeout=90):
+    """Call OpenAI-compatible Chat Completions API."""
+    body = json.dumps({
+        "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7,
         "max_tokens": 512,
+    }).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        result = json.loads(resp.read().decode())
+    return result["choices"][0]["message"]["content"]
+
+
+def _call_ollama(url, model, prompt, timeout=180):
+    """Call Ollama local chat API."""
+    body = json.dumps({
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+        "options": {"temperature": 0.7, "num_predict": 512},
+    }).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        result = json.loads(resp.read().decode())
+    return result.get("message", {}).get("content", "").strip()
+
+
+def send_to_llm(provider, url, api_key, model, leaf_content, leaf_confidence=0.0, retries=2):
+    """Send adversarial prompt to the configured LLM with retry + exponential backoff.
+
+    Returns the LLM response text, or raises the last exception after retries exhausted.
+    """
+    prompt = ADVERSARIAL_PROMPT.format(content=leaf_content, confidence=leaf_confidence)
+
+    dispatch = {
+        "anthropic": lambda: _call_anthropic(url, api_key, model, prompt),
+        "openai": lambda: _call_openai(url, api_key, model, prompt),
+        "ollama": lambda: _call_ollama(url, model, prompt),
     }
+    call_fn = dispatch.get(provider)
+    if call_fn is None:
+        raise ValueError(f"Unknown provider: {provider}")
+
     last_err = None
     for attempt in range(retries + 1):
         try:
-            resp = requests.post(url, headers=headers, json=body, verify=_SSL_VERIFY, timeout=90)
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            return call_fn()
+        except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError) as e:
             last_err = e
             if attempt < retries:
-                import time
-                time.sleep(3)
-                continue
+                backoff = 2 ** attempt  # 1s, 2s
+                log.warning("LLM call attempt %d failed (%s) — retrying in %ds",
+                            attempt + 1, e, backoff)
+                time.sleep(backoff)
+            continue
     raise last_err
 
 
@@ -108,6 +228,26 @@ def get_fallback_challenge(branch_name):
     """Return a pre-generated adversarial challenge for demo purposes."""
     return FALLBACK_CHALLENGES.get(branch_name, FALLBACK_CHALLENGES["compliance"])
 
+
+# Keep legacy interface for backwards compatibility
+def load_key():
+    """Load API key from config.json or environment."""
+    config = load_config()
+    provider, _, _, api_key = get_provider_config(config)
+    if api_key:
+        return api_key
+    # Fallback: try env vars directly
+    for env_var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
+        val = os.environ.get(env_var, "")
+        if val:
+            return val
+    return ""
+
+
+def get_access_token(api_key):
+    """Legacy stub — real providers use API keys directly, not OAuth tokens.
+    Returns the api_key as-is for backwards compatibility."""
+    return api_key
 
 
 def select_leaves(tree):
@@ -130,9 +270,12 @@ def select_leaves(tree):
 
 
 def main():
+    config = load_config()
+    provider, model, url, api_key = get_provider_config(config)
+
     print("=" * 60)
     print("  External LLM Validation — PCIS")
-    print(f"  Model: {MODEL}  |  Date: {RUN_DATE}")
+    print(f"  Provider: {provider}  |  Model: {model}  |  Date: {RUN_DATE}")
     print("=" * 60)
     print()
 
@@ -148,33 +291,35 @@ def main():
     print(f"  Selected {len(selected)} leaves from branches: {', '.join(s[0] for s in selected)}")
     print()
 
-    # Auth
-    print("  Authenticating with LLM API...")
-    api_key = load_key()
+    # Check API key for cloud providers
     use_fallback = False
-    try:
-        token = get_access_token(api_key)
-        print("  Token acquired.\n")
-    except Exception as e:
-        print(f"  Auth failed: {e}")
+    if provider in ("anthropic", "openai") and not api_key:
+        env_name = PROVIDER_DEFAULTS[provider]["env_key"]
+        print(f"  No API key found (config.json or ${env_name}).")
         print("  Using fallback mode (pre-generated challenges).\n")
-        token = None
         use_fallback = True
+    elif provider == "ollama":
+        print(f"  Using local Ollama ({model}).\n")
+    else:
+        print(f"  API key loaded for {provider}.\n")
 
     # Challenge each leaf
     counters = []
     for i, (branch_name, leaf) in enumerate(selected, 1):
-        print(f"  [{i}/5] Challenging leaf {leaf['id']} ({branch_name})...")
+        print(f"  [{i}/{len(selected)}] Challenging leaf {leaf['id']} ({branch_name})...")
         print(f"         \"{leaf['content'][:80]}...\"")
 
         if not use_fallback:
             try:
-                response = send_to_llm(token, leaf["content"])
+                response = send_to_llm(
+                    provider, url, api_key, model,
+                    leaf["content"], leaf.get("confidence", 0.0),
+                )
                 print(f"         Response received ({len(response)} chars)")
             except Exception as e:
+                log.error("LLM call failed for leaf %s: %s", leaf["id"], e)
                 print(f"         API call failed: {e}")
                 print(f"         Falling back to pre-generated challenge.")
-                use_fallback = True
                 response = get_fallback_challenge(branch_name)
         else:
             response = get_fallback_challenge(branch_name)
@@ -229,7 +374,8 @@ def main():
     # Save validation run
     run_data = {
         "run_date": RUN_DATE,
-        "model": MODEL,
+        "provider": provider,
+        "model": model,
         "entries_challenged": len(counters),
         "merkle_root_before": merkle_before,
         "merkle_root_after": merkle_after,
@@ -249,4 +395,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
