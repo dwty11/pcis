@@ -376,7 +376,9 @@ def cmd_review(yes=False, dry_run=False):
 
     if actions["pruned"] > 0 or actions["refreshed"] > 0:
         with tree_lock() as locked_tree:
-            locked_tree.update(tree)
+            for branch_name, branch in tree.get("branches", {}).items():
+                if branch_name in locked_tree.get("branches", {}):
+                    locked_tree["branches"][branch_name] = branch
 
         prune_log = load_prune_log()
         prune_log["sessions"].append({
