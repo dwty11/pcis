@@ -43,7 +43,7 @@ from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
     save_tree, add_knowledge as _kt_add_knowledge, tree_lock, now_utc,
 )
-from knowledge_search import get_embedding, cosine_similarity
+from knowledge_search import get_embedding, cosine_similarity, search as _ks_search
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
@@ -572,27 +572,18 @@ def gap_scan():
 
     log.info("📋 Extracted %d result(s) from daily note", len(results))
 
-    # Check each result against knowledge tree via knowledge_search.py
-    import subprocess
-    search_script = os.path.join(BASE_DIR, "knowledge_search.py")
+    # Check each result against knowledge tree via semantic search
     gaps = []
 
     for result_text in results:
         if not isinstance(result_text, str) or not result_text.strip():
             continue
         try:
-            proc = subprocess.run(
-                [sys.executable, search_script, result_text, "--top", "1"],
-                capture_output=True, text=True, timeout=30
-            )
-            output = proc.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            hits = _ks_search(result_text, top_k=1)
+            top_score = hits[0][0] if hits else 0.0
+        except Exception as e:
             log.warning("⚠️  Search failed for '%s': %s", result_text[:60], e)
             continue
-
-        # Parse top score from search output — format: [##########..........] 0.XXX
-        score_match = re.search(r'\]\s+([0-9.]+)', output)
-        top_score = float(score_match.group(1)) if score_match else 0.0
 
         if top_score < 0.6:
             gaps.append(result_text)
