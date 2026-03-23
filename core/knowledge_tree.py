@@ -170,6 +170,8 @@ def add_knowledge(tree, branch, content, source="session", confidence=0.7):
         raise ValueError(f"leaf content too long ({len(content)} chars, max 10000)")
     if not branch or not branch.strip():
         raise ValueError("branch name cannot be empty")
+    if not isinstance(confidence, (int, float)) or confidence < 0.0 or confidence > 1.0:
+        raise ValueError(f"confidence must be between 0.0 and 1.0, got {confidence}")
     if branch not in tree["branches"]:
         tree["branches"][branch] = {"hash": "", "leaves": []}
     timestamp = now_utc()
