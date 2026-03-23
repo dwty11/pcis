@@ -23,6 +23,7 @@ No external dependencies. Python 3.8+.
 import hashlib
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 
@@ -154,12 +155,11 @@ def cmd_branch_health():
     """Check health metrics per branch. Healthy branches have mixed confidence."""
     tree = load_tree()
 
-    import re as _re
     challenged_ids = set()
     for b in tree.get("branches", {}).values():
         for leaf in b.get("leaves", []):
             content = leaf.get("content", "")
-            for m in _re.finditer(r"COUNTER: \[([a-f0-9]+)\]", content):
+            for m in re.finditer(r"COUNTER: \[([a-f0-9]+)\]", content):
                 challenged_ids.add(m.group(1))
 
     print("\nBranch Health Report:\n")
