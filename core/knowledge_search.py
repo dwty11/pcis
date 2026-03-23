@@ -155,10 +155,12 @@ def load_index():
 
 
 def save_index(index):
-    """Save the search index to disk."""
+    """Save the search index to disk atomically."""
     os.makedirs(os.path.dirname(INDEX_FILE), exist_ok=True)
-    with open(INDEX_FILE, "w") as f:
+    tmp_path = INDEX_FILE + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(index, f)
+    os.replace(tmp_path, INDEX_FILE)
 
 
 def load_tree():
