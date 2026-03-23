@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcis"
+version = "1.0.0"
+description = "Persistent Cognitive Identity Systems — cryptographically verifiable long-term memory for AI agents"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "dwty11", email = "idwty@proton.me" }
+]
+keywords = ["ai", "agents", "memory", "knowledge-graph", "identity", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests>=2.28.0",
+]
+
+[project.optional-dependencies]
+demo = [
+    "flask>=3.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/dwty11/pcis"
+Repository = "https://github.com/dwty11/pcis"
+Issues = "https://github.com/dwty11/pcis/issues"
+
+[project.scripts]
+pcis = "pcis.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pcis*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
