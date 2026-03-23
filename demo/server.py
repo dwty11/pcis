@@ -17,7 +17,7 @@ from flask import Flask, jsonify, request, send_file
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import core.knowledge_search as knowledge_search
-from core.knowledge_tree import compute_root_hash
+from core.knowledge_tree import verify_tree_integrity
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +66,8 @@ def api_boot():
     try:
         tree = load_tree()
 
-        # Primary check: recompute Merkle root from tree contents
-        computed_root = compute_root_hash(tree)
-        stored_root = tree.get("root_hash", "")
-        tree_ok = computed_root == stored_root
+        # Primary check: recompute every hash from leaf content up
+        tree_ok, integrity_errors = verify_tree_integrity(tree)
 
         # Secondary check: file checksums
         file_checks = []
@@ -86,16 +84,18 @@ def api_boot():
 
         status = "CLEAN" if tree_ok else "MODIFIED"
 
-        return jsonify({
+        resp = {
             "status": status,
-            "merkle_root": computed_root,
-            "stored_root": stored_root,
+            "merkle_root": tree.get("root_hash", ""),
             "tree_integrity": "VERIFIED" if tree_ok else "MISMATCH",
             "timestamp": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "changed": 0 if tree_ok else 1,
             "missing": 0 if files_ok else sum(1 for f in file_checks if f["status"] == "MISSING"),
             "file_checks": file_checks,
-        })
+        }
+        if integrity_errors:
+            resp["integrity_errors"] = integrity_errors
+        return jsonify(resp)
     except Exception as e:
         return jsonify({"status": "ERROR", "error": str(e)}), 500
 
