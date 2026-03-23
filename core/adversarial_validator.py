@@ -23,7 +23,7 @@ import warnings
 from datetime import datetime, timezone, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from knowledge_tree import compute_root_hash, compute_branch_hash
+from knowledge_tree import compute_root_hash, compute_branch_hash, hash_leaf
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,8 +36,11 @@ log = logging.getLogger("pcis.adversarial_validator")
 _SSL_VERIFY = os.environ.get("PCIS_SSL_VERIFY", "true").lower() != "false"
 if not _SSL_VERIFY:
     import ssl as _ssl
-    import urllib3
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    try:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except ImportError:
+        pass  # urllib3 not installed; SSL warning suppression unavailable
     warnings.warn(
         "PCIS_SSL_VERIFY=false: SSL certificate verification disabled. Do not use in production.",
         RuntimeWarning,
@@ -340,13 +343,8 @@ def main():
             print(f"         Whitespace response — skipping.")
             continue
         content = f"COUNTER: [{leaf['id']}] {response}"
-        # TODO: This hash uses SHA256(content) only, but knowledge_tree.hash_leaf()
-        # uses SHA256(f"{branch}:{timestamp}:{content}"). These will produce different
-        # hashes for the same leaf content. Must align with hash_leaf() before
-        # validator output is ever integrated into the live tree, or Merkle
-        # verification will fail.
-        content_hash = hashlib.sha256(content.encode()).hexdigest()
         now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+        content_hash = hash_leaf(content, branch_name, now)
 
         counter_leaf = {
             "id": content_hash[:12],
