@@ -24,6 +24,7 @@ Model: qwen3:14b (free, local)
 import json
 import logging
 import os
+import re
 import sys
 import argparse
 import urllib.request
@@ -242,7 +243,6 @@ def call_ollama(prompt, model=GARDENER_MODEL):
 
 def extract_confidence(text, default=0.65):
     """Extract confidence from inline 'Conf=0.X' or 'conf=0.X' pattern."""
-    import re
     m = re.search(r'[Cc]onf[=:\s]+([0-9.]+)', text)
     if m:
         try:
@@ -254,13 +254,11 @@ def extract_confidence(text, default=0.65):
 
 def strip_conf(text):
     """Remove inline confidence annotation from content."""
-    import re
     return re.sub(r'\s*[Cc]onf[=:\s]+[0-9.]+\.?\s*$', '', text).strip()
 
 
 def clean_leaf_id(raw):
     """Remove brackets and whitespace from leaf ids like [[abc123]] or [abc123]."""
-    import re
     return re.sub(r'[\[\]\s]', '', raw)
 
 
@@ -390,8 +388,6 @@ def apply_staging():
 
     with open(GARDEN_STAGING) as f:
         content = f.read()
-
-    import re
 
     # Extract counter-leaf blocks: ### COUNTER [N] branch=X conf=X.XX\n<content>
     counter_blocks = re.findall(
@@ -572,7 +568,6 @@ def gap_scan():
     response = call_ollama(prompt)
 
     # Parse JSON list from response — handle markdown fences and fallbacks
-    import re
     results = None
     json_match = re.search(r'\[.*\]', response, re.DOTALL)
     if json_match:
@@ -707,12 +702,11 @@ def main():
     recent_memory = load_recent_memory(days=5)
 
     # Collect already-challenged leaf IDs to prevent nightly repetition
-    import re as _re
     already_challenged = set()
     for branch_data in tree["branches"].values():
         for leaf in branch_data.get("leaves", []):
             content = leaf.get("content", "")
-            m = _re.match(r"COUNTER: \[([a-f0-9]+)\]", content)
+            m = re.match(r"COUNTER: \[([a-f0-9]+)\]", content)
             if m:
                 already_challenged.add(m.group(1))
     already_challenged_text = (
