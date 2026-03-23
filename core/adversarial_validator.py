@@ -204,6 +204,9 @@ def send_to_llm(provider, url, api_key, model, leaf_content, leaf_confidence=0.0
         try:
             return call_fn()
         except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError) as e:
+            # Don't retry auth/permission failures — they won't resolve on retry
+            if isinstance(e, urllib.error.HTTPError) and e.code in (401, 403):
+                raise
             last_err = e
             if attempt < retries:
                 backoff = 2 ** attempt  # 1s, 2s
@@ -323,10 +326,16 @@ def main():
                 response = get_fallback_challenge(branch_name)
         else:
             response = get_fallback_challenge(branch_name)
+
+        # Skip empty responses — an empty COUNTER leaf is noise in the tree
+        if not response or not response.strip():
+            log.warning("Empty response for leaf %s — skipping COUNTER leaf", leaf["id"])
+            print(f"         Empty response — skipping.")
+            continue
             print(f"         Fallback challenge ({len(response)} chars)")
 
         # Build COUNTER leaf
-        content = f"COUNTER: {response}"
+        content = f"COUNTER: [{leaf['id']}] {response}"
         content_hash = hashlib.sha256(content.encode()).hexdigest()
         now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 

@@ -116,10 +116,18 @@ Runs: adversarial pass + gap-scan + pruning review. Recommended as a nightly cro
 ## Run Adversarial Validation
 
 ```bash
-python core/adversarial_validator.py --tree data/tree.json --output data/validation_run.json
+python core/adversarial_validator.py
 ```
 
-Requires an LLM API key. Set it in `config.json` (copy from `config.example.json`).
+The validator supports three providers — set `llm_provider` in `config.json`:
+
+| Provider | `llm_provider` | API key |
+|----------|---------------|---------|
+| Anthropic | `"anthropic"` | `llm_api_key` in config.json or `ANTHROPIC_API_KEY` env var |
+| OpenAI | `"openai"` | `llm_api_key` in config.json or `OPENAI_API_KEY` env var |
+| Ollama (local, default) | `"ollama"` | No key required — runs against `http://localhost:11434` |
+
+If no provider is configured, defaults to Ollama. Falls back to pre-generated challenges if no API key is found.
 
 ---
 
@@ -128,8 +136,9 @@ Requires an LLM API key. Set it in `config.json` (copy from `config.example.json
 ```json
 {
   "base_dir": ".",
+  "llm_provider": "anthropic",
   "llm_api_key": "your-key-here",
-  "model_name": "your-model-name",
+  "llm_model": "claude-sonnet-4-20250514",
   "demo_mode": false
 }
 ```
