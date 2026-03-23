@@ -332,9 +332,13 @@ def main():
             log.warning("Empty response for leaf %s — skipping COUNTER leaf", leaf["id"])
             print(f"         Empty response — skipping.")
             continue
-            print(f"         Fallback challenge ({len(response)} chars)")
 
-        # Build COUNTER leaf
+        # Build COUNTER leaf — also guard against whitespace-only body
+        response = response.strip()
+        if not response:
+            log.warning("Whitespace-only response for leaf %s — skipping COUNTER leaf", leaf["id"])
+            print(f"         Whitespace response — skipping.")
+            continue
         content = f"COUNTER: [{leaf['id']}] {response}"
         content_hash = hashlib.sha256(content.encode()).hexdigest()
         now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -365,20 +369,15 @@ def main():
         print(f"         COUNTER leaf: {counter_leaf['id']}")
         print()
 
-    # Recompute hashes
-    for name in tree["branches"]:
-        branch = tree["branches"][name]
+    # Compute final Merkle root (for reporting only — demo_tree.json is NOT modified)
+    # The demo tree is a curated static showcase; only adversarial_validation_run.json is written.
+    temp_tree = json.loads(json.dumps(tree))  # deep copy
+    for name in temp_tree["branches"]:
+        branch = temp_tree["branches"][name]
         branch["hash"] = compute_branch_hash(branch["leaves"])
-
-    merkle_after = compute_root_hash(tree)
-    tree["root_hash"] = merkle_after
-    tree["last_updated"] = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-
-    # Save updated tree
-    with open(TREE_FILE, "w") as f:
-        json.dump(tree, f, ensure_ascii=False, indent=2)
+    merkle_after = compute_root_hash(temp_tree)
     print(f"  Merkle root (after):  {merkle_after[:24]}...")
-    print(f"  Updated demo_tree.json")
+    print(f"  demo_tree.json unchanged (read-only for validator)")
 
     # Save validation run
     run_data = {
