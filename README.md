@@ -113,7 +113,7 @@ The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero per
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.10+ (Linux or macOS)
 - pip
 - An LLM API key (for adversarial validation; optional for demo mode)
 
