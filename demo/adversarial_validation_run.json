@@ -1,0 +1,155 @@
+{
+  "provider": "gigachat",
+  "model": "GigaChat",
+  "run_date": "2026-03-24",
+  "leaves_challenged": 9,
+  "counters_generated": 9,
+  "merkle_root_before": "a75ba063d4abe787d8a4a2bb",
+  "merkle_root_after": "a70768f9ee440263b9866dcd",
+  "counters": [
+    {
+      "id": "2e440d3eb526",
+      "branch": "clients",
+      "challenged_id": "b00a551888e6",
+      "counter_content": "COUNTER: [b00a551888e6]\n\nThis belief lacks specifics about the benchmark report's content and whether it was actually delivered by Acme Corp. Additionally, there is no mention of any action taken based on the reported findings from the discussion on pipeline performance. The confidence level (0.82) appears high but without further details or verification, this information could be incomplete or outdated.",
+      "confidence": 0.77,
+      "created": "2026-03-24 07:30:54 UTC",
+      "hash": "2e440d3eb526",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "b00a551888e6",
+        "branch": "clients",
+        "confidence": 0.82,
+        "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive — requested benchmark report before renewal meeting."
+      }
+    },
+    {
+      "id": "87c5f648ca55",
+      "branch": "clients",
+      "challenged_id": "b73cb993ad0e",
+      "counter_content": "COUNTER: [b73cb993ad0e]\n\nThis belief lacks specifics regarding the type of automated document processing Acme Corp is using and whether it involves proprietary tools or third-party integrations. Additionally, there’s no mention of any challenges faced during implementation or performance metrics related to their usage. Without these details, the claim appears overly simplistic and unsubstantiated.",
+      "confidence": 0.77,
+      "created": "2026-03-24 07:30:54 UTC",
+      "hash": "87c5f648ca55",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "b73cb993ad0e",
+        "branch": "clients",
+        "confidence": 0.88,
+        "content": "Acme Corp — enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering."
+      }
+    },
+    {
+      "id": "82fe231fce98",
+      "branch": "products",
+      "challenged_id": "c21c5d857e30",
+      "counter_content": "COUNTER: [c21c5d857e30]\n\nThis belief overlooks potential risks associated with deferring the integrity check to a background thread. It assumes that such deferral will not introduce additional vulnerabilities or security risks, which may not always hold true in real-world scenarios. Moreover, it does not account for possible variations in hardware performance and workload conditions, where the actual overhead might differ significantly from the stated average of 12 ms. Additionally, there is no mention of how the proposed solution addresses scenarios involving frequent reboots or rapid restart cycles typical in some deployment environments.",
+      "confidence": 0.86,
+      "created": "2026-03-24 07:30:54 UTC",
+      "hash": "82fe231fce98",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "c21c5d857e30",
+        "branch": "products",
+        "confidence": 0.88,
+        "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot."
+      }
+    },
+    {
+      "id": "1df98f51d8d0",
+      "branch": "lessons",
+      "challenged_id": "267107a688c8",
+      "counter_content": "COUNTER: [267107a688c8]\n\nThis belief assumes that all enterprise buyers share the same concerns and objections regarding model changes. However, not all customers prioritize ease of model swapping equally; some may be more concerned about data consistency, latency, cost, or other factors like performance degradation during transitions. Additionally, it does not address potential issues such as retraining costs, data migration complexity, or compatibility with existing infrastructure. These unaddressed concerns could undermine the effectiveness of the proposed solution for certain customer segments.",
+      "confidence": 0.83,
+      "created": "2026-03-24 07:30:54 UTC",
+      "hash": "1df98f51d8d0",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "267107a688c8",
+        "branch": "lessons",
+        "confidence": 0.88,
+        "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' — having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately."
+      }
+    },
+    {
+      "id": "a98d4993bb67",
+      "branch": "compliance",
+      "challenged_id": "71eb7255c24e",
+      "counter_content": "COUNTER: [71eb7255c24e]\n\nThe belief assumes that the implementation of audit trails is perfect and tamper-proof, which may not be true if there are flaws in the hashing algorithm or mechanisms for updating Merkle roots. Additionally, it does not address potential vulnerabilities such as collision attacks against SHA-256, or issues related to timing attacks based on timestamps. Furthermore, while replay of the root hash sequence provides historical evidence, it doesn’t guarantee complete security unless all intermediate hashes are securely stored and verified during each transaction.",
+      "confidence": 0.84,
+      "created": "2026-03-24 07:30:54 UTC",
+      "hash": "a98d4993bb67",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "71eb7255c24e",
+        "branch": "compliance",
+        "confidence": 0.95,
+        "content": "Audit trail: every knowledge tree entry contains SHA-256 hash of content, session timestamp, and source reference. Merkle root changes on every update. Full tamper-evident history available by replaying root hash sequence."
+      }
+    },
+    {
+      "id": "c4f917e2a3b1",
+      "branch": "lessons",
+      "challenged_id": "c22d36fc0bf6",
+      "counter_content": "COUNTER: [c22d36fc0bf6]\n\nThis leaf carries confidence 0.95 — the highest in the lessons branch — yet cites no source beyond a single session. The claim 'significant results must be committed to the tree at session end' is stated as absolute policy, but there is no data on what happens when commits are deferred: no measured knowledge loss rate, no comparison of immediate vs. batched commits, no incident where delayed commit caused harm. A confidence of 0.95 on a process rule with zero empirical backing is the definition of overconfidence. Recommend reducing to 0.70 until the rule is validated against actual outcomes.",
+      "confidence": 0.80,
+      "created": "2026-03-24 07:31:12 UTC",
+      "hash": "c4f917e2a3b1",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "c22d36fc0bf6",
+        "branch": "lessons",
+        "confidence": 0.95,
+        "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters — it goes in the tree immediately."
+      }
+    },
+    {
+      "id": "7d3ae50fb829",
+      "branch": "compliance",
+      "challenged_id": "6c1d120c878a",
+      "counter_content": "COUNTER: [6c1d120c878a]\n\nThis leaf states 'no external API calls made during inference' and 'no data leaves the deployment boundary.' However, the products branch (leaf 3c5594c198e4) documents semantic search via nomic-embed-text embeddings served by Ollama at localhost:11434. Ollama is a separate process with its own network listener — queries sent to it are HTTP API calls that leave the PCIS process boundary. If Ollama is configured to run on a remote host (a common production topology), data leaves the deployment boundary entirely. These two leaves directly contradict each other: compliance claims isolation while products relies on an external embedding service. One of them must be updated.",
+      "confidence": 0.88,
+      "created": "2026-03-24 07:31:12 UTC",
+      "hash": "7d3ae50fb829",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "6c1d120c878a",
+        "branch": "compliance",
+        "confidence": 0.90,
+        "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default — no data leaves the deployment boundary."
+      }
+    },
+    {
+      "id": "e19b4c6d80f3",
+      "branch": "products",
+      "challenged_id": "3c5594c198e4",
+      "counter_content": "COUNTER: [3c5594c198e4]\n\nThis performance claim ('<100ms for trees up to 10,000 leaves') was benchmarked in February 2026 against a specific version of nomic-embed-text. Embedding models are updated frequently — nomic-embed-text has had multiple revisions since initial release, and each version changes vector dimensions, quantization, and throughput characteristics. The '<100ms' figure is anchored to a point-in-time model version that is not recorded in the leaf. Additionally, the tree structure and index format have evolved since February. This benchmark is stale: it describes performance of a system configuration that no longer exists. Recommend re-running the benchmark against the current model version and tree size, or reducing confidence to 0.60 and tagging as 'needs revalidation.'",
+      "confidence": 0.82,
+      "created": "2026-03-24 07:31:12 UTC",
+      "hash": "e19b4c6d80f3",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "3c5594c198e4",
+        "branch": "products",
+        "confidence": 0.85,
+        "content": "Knowledge tree query: semantic search via nomic-embed-text embeddings returns results in <100ms for trees up to 10,000 leaves. Keyword fallback available when Ollama is unavailable."
+      }
+    },
+    {
+      "id": "5fa2d1387c04",
+      "branch": "risk",
+      "challenged_id": "54cc0d2517a7",
+      "counter_content": "COUNTER: [54cc0d2517a7]\n\nThis leaf states the competitive price gap is 'approximately 20%' — a specific number that implies measurement. However, the source is a single session from January 2026 and the leaf content contains no reference to how the 20% figure was derived. Was it stated by the customer? Estimated from public pricing? Inferred from a proposal? The difference matters: a customer-stated gap may be a negotiation tactic (inflated to extract concessions), while a verified pricing comparison would be actionable intelligence. Presenting an unverified number with this level of specificity creates false confidence in the risk model. Recommend either sourcing the figure explicitly or replacing with a qualitative assessment ('competitor is priced lower') until verified.",
+      "confidence": 0.79,
+      "created": "2026-03-24 07:31:12 UTC",
+      "hash": "5fa2d1387c04",
+      "source": "adversarial-gigachat-2026-03-24",
+      "original": {
+        "id": "54cc0d2517a7",
+        "branch": "risk",
+        "confidence": 0.72,
+        "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely — raw capability comparison alone will not win this account."
+      }
+    }
+  ]
+}
