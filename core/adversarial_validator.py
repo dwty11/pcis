@@ -19,7 +19,6 @@ import sys
 import time
 import urllib.error
 import urllib.request
-import uuid
 import warnings
 from datetime import datetime, timezone, timedelta
 
@@ -35,8 +34,12 @@ log = logging.getLogger("pcis.adversarial_validator")
 
 # SSL verification — override with PCIS_SSL_VERIFY=false only for self-signed certs
 _SSL_VERIFY = os.environ.get("PCIS_SSL_VERIFY", "true").lower() != "false"
+_SSL_CONTEXT = None
 if not _SSL_VERIFY:
     import ssl as _ssl
+    _SSL_CONTEXT = _ssl.create_default_context()
+    _SSL_CONTEXT.check_hostname = False
+    _SSL_CONTEXT.verify_mode = _ssl.CERT_NONE
     try:
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -144,41 +147,17 @@ def _call_anthropic(url, api_key, model, prompt, timeout=90):
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CONTEXT) as resp:
         result = json.loads(resp.read().decode())
     # Anthropic response: {"content": [{"type": "text", "text": "..."}]}
     return result["content"][0]["text"]
 
 
-def _call_openai(url, api_key, model, prompt, timeout=90):
-    """Call OpenAI-compatible Chat Completions API."""
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7,
-        "max_tokens": 512,
-    }).encode()
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        result = json.loads(resp.read().decode())
-    return result["choices"][0]["message"]["content"]
+def _call_openai(url, model, prompt, timeout=90, api_key=None):
+    """Call OpenAI-compatible Chat Completions API.
 
-
-def _call_gigachat(url, model, prompt, timeout=90):
-    """Call GigaChat via local OpenAI-compatible adapter on port 7860.
-
-    Uses the same request schema as _call_openai. No Authorization header
-    is needed here — the adapter handles OAuth (GIGACHAT_KEY) internally
-    via its own environment.
+    Pass api_key=None for local adapters that handle auth internally
+    (e.g. GigaChat adapter on localhost:7860 — OAuth handled by the adapter).
     """
     body = json.dumps({
         "model": model,
@@ -186,16 +165,14 @@ def _call_gigachat(url, model, prompt, timeout=90):
         "temperature": 0.7,
         "max_tokens": 512,
     }).encode()
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CONTEXT) as resp:
         result = json.loads(resp.read().decode())
     return result["choices"][0]["message"]["content"]
 
@@ -214,7 +191,7 @@ def _call_ollama(url, model, prompt, timeout=180):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CONTEXT) as resp:
         result = json.loads(resp.read().decode())
     return result.get("message", {}).get("content", "").strip()
 
@@ -228,8 +205,8 @@ def send_to_llm(provider, url, api_key, model, leaf_content, leaf_confidence=0.0
 
     dispatch = {
         "anthropic": lambda: _call_anthropic(url, api_key, model, prompt),
-        "openai": lambda: _call_openai(url, api_key, model, prompt),
-        "gigachat": lambda: _call_gigachat(url, model, prompt),
+        "openai": lambda: _call_openai(url, model, prompt, api_key=api_key),
+        "gigachat": lambda: _call_openai(url, model, prompt),  # adapter handles auth internally
         "ollama": lambda: _call_ollama(url, model, prompt),
     }
     call_fn = dispatch.get(provider)
