@@ -1,38 +1,41 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "a75ba063d4abe787d8a4a2bb7c93d4af6341724da6475f64d397de5557e276e6",
+  "root_hash": "595aaca2b6fcd5162a3fa6bc6d7fee631035b8eebb833a5fbdd9ae492814c3ef",
   "last_updated": "",
   "branches": {
     "clients": {
-      "hash": "39341f26312604fcf94f7c850e8bfb25c779a3b5e01bc068cab9387fe13e137e",
+      "hash": "13f84acd9d0e177c605ffc9d4379c913affef5e6bbfeb6d273f77c2efcabcda4",
       "leaves": [
         {
           "id": "b73cb993ad0e",
           "hash": "b73cb993ad0e93482781c83ccbcf4b0433652961476ef92532d017cdd9459e13",
-          "content": "Acme Corp \u2014 enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
+          "content": "Acme Corp — enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
           "source": "session-2025-09-15",
           "confidence": 0.88,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "b00a551888e6",
           "hash": "b00a551888e663a54cf47bc9419edc8d123042e8af9538a53a1fff13c7a54b52",
-          "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive \u2014 requested benchmark report before renewal meeting.",
+          "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive — requested benchmark report before renewal meeting.",
           "source": "session-2026-03-10",
           "confidence": 0.82,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "68605f527bb5",
           "hash": "68605f527bb59ad867af6d65f721d3a13d1902679dba8e38ab64038674d0e3f7",
-          "content": "Brightfield Analytics \u2014 mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering \u2014 price sensitive.",
+          "content": "Brightfield Analytics — mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering — price sensitive.",
           "source": "session-2026-01-20",
           "confidence": 0.75,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "62abc53db20a",
@@ -41,62 +44,73 @@
           "source": "adversarial-2026-03-20",
           "confidence": 0.8,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
-        }
-      ]
-    },
-    "products": {
-      "hash": "0d5bf52345c631a4e6ef55c0a6cc1c91d68a6900866a6b0a3bb7e42b5bf7ed9e",
-      "leaves": [
-        {
-          "id": "f8b9e375c48e",
-          "hash": "f8b9e375c48e33d5f33e27449ccfa8498876dc0c1ff68af9d3dd3c4c2a4f708a",
-          "content": "Core API v2.3: Merkle integrity verification p99 236ms (300-agent async simulation), memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Not end-to-end LLM response latency. Confidence valid for current architecture \u2014 recalibrate after any infrastructure change.",
-          "source": "benchmark-2026-03-12",
-          "confidence": 0.92,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": true
         },
         {
-          "id": "3c5594c198e4",
-          "hash": "caa25eeada1d3d7c2584300b3049ac0746ff5c79adafcdbcad43f4c36b59f7a7",
-          "content": "Knowledge tree query: semantic search via nomic-embed-text embeddings returns results in <100ms for trees up to 10,000 leaves. Keyword fallback available when Ollama is unavailable.",
-          "source": "session-2026-02-28",
-          "confidence": 0.85,
+          "id": "a4f1c7e83b21",
+          "hash": "54e9c68c9ed0c67ad5615cc4bc7de707dd19ae7c312273bdb09098d213cca342",
+          "content": "Meridian Health Systems — healthcare vertical, onboarded Jan 2026. Primary use case: clinical trial document classification. Strict HIPAA requirements drove custom data residency config. 24-month contract.",
+          "source": "session-2026-01-08",
+          "confidence": 0.91,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
-          "id": "c21c5d857e30",
-          "hash": "c21c5d857e3073abad893a149e7cc63f4c9feb22aa157bd727c527cc7a037879",
-          "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot.",
-          "source": "session-2026-03-01",
-          "confidence": 0.88,
+          "id": "d92e5f0a7c34",
+          "hash": "9a7b4b5f6d2c2b3debcdf40d9ba7cd1cd2fbc3758bbc9aa57c7fcd0a3eee6f6e",
+          "content": "Meridian Health: completed Phase 1 integration — 3,200 documents processed in first 30 days. Zero data-residency violations flagged. Expanding to radiology department Q2 2026.",
+          "source": "session-2026-02-12",
+          "confidence": 0.87,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
-          "id": "486b8c8bb45d",
-          "hash": "486b8c8bb45d6dfa6e4f7546d987f797d283be2e954c2704f87b1efe6dbce5b5",
-          "content": "COUNTER: [f8b9e375c48e] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.85,
+          "id": "e7c3b9d12f08",
+          "hash": "c6d52bfd9cf91f857e2bbfa967f2c2a5e55b24435025def4b073da1e2ea17b8a",
+          "content": "Pinnacle Financial Group — enterprise fintech client, onboarded Nov 2025. Use case: regulatory filing extraction and cross-referencing. High-touch account requiring weekly sync calls.",
+          "source": "session-2025-11-14",
+          "confidence": 0.84,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "f1a2d8c54e67",
+          "hash": "f4e8b4026a66559b84c85b0f93d5b12db05204bef775a85656e16c1e38a5061b",
+          "content": "TerraForge Industrial — manufacturing sector pilot. Evaluating PCIS for supply chain documentation and vendor compliance tracking. Decision expected by end of Q1 2026.",
+          "source": "session-2026-02-20",
+          "confidence": 0.68,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c8b4e6f21a93",
+          "hash": "d7a5b62090db86bebe49a6f779ce74dadd9e883dfd481c185ce604b33c434abf",
+          "content": "Brightfield Analytics: renewed for 12 months at 8% discount after competitive evaluation. Decisive factor was Merkle audit trail — competitor lacked tamper-evident logging.",
+          "source": "session-2026-03-18",
+          "confidence": 0.9,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
         }
       ]
     },
     "compliance": {
-      "hash": "b1e9bc72da3c0bd4bbb03834f0d4c4b2afe5c447bddbef809b5bc1472e566538",
+      "hash": "2d6c6cecdb934ea6d30af8bdaf77934fc3ce4152cab100e0d5197917fe53bbe4",
       "leaves": [
         {
           "id": "6c1d120c878a",
           "hash": "6c1d120c878a8acae9ed20db04d80ef7fbd6cd827e2118bb85fc76692732d565",
-          "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default \u2014 no data leaves the deployment boundary.",
+          "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default — no data leaves the deployment boundary.",
           "source": "architecture-review-2026-02-15",
           "confidence": 0.9,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "71eb7255c24e",
@@ -105,80 +119,113 @@
           "source": "architecture-review-2026-02-15",
           "confidence": 0.95,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "11d0ec8996df",
           "hash": "11d0ec8996dfb23d7c915dd949d76ab56aaf72beab9677251269c65328e083ae",
-          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger \u2014 recommend automated test that intercepts all outbound network calls on each release.",
+          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger — recommend automated test that intercepts all outbound network calls on each release.",
           "source": "adversarial-2026-03-20",
           "confidence": 0.82,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
-        }
-      ]
-    },
-    "risk": {
-      "hash": "5afa5b2406e8dc5b79ff723d238a4ef18370eb091e477bf631cc839915416a9f",
-      "leaves": [
-        {
-          "id": "275b5bc0ba93",
-          "hash": "275b5bc0ba936746db824dc5a1f3dcb6b61a8cf23b678f64ba5a5f735482b2b5",
-          "content": "Acme Corp renewal risk: benchmark report not yet delivered. If report shows degraded performance vs. original demo, renewal probability drops significantly. Mitigation: schedule internal test run this week.",
-          "source": "session-2026-03-10",
-          "confidence": 0.78,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": true
         },
         {
-          "id": "54cc0d2517a7",
-          "hash": "54cc0d2517a78326044af904eeeea778dc77fa12b24a8a1f1feb411b9576c824",
-          "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely \u2014 raw capability comparison alone will not win this account.",
-          "source": "session-2026-01-20",
+          "id": "a3e7f12bc945",
+          "hash": "5db33a237eca363c0d6d326f12ee9f6256d407e4220d333528e89735609954bb",
+          "content": "SOC 2 Type II audit scheduled for Q2 2026. Pre-audit checklist completed — 14 of 16 controls verified. Remaining gaps: formal incident response runbook and third-party penetration test.",
+          "source": "audit-2026-01",
+          "confidence": 0.88,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b8d4c1e067f2",
+          "hash": "e2779c6e082f409112caf68fc3b834367b7489fb63dad21e0f75dbc156766ffd",
+          "content": "GDPR Article 17 compliance: right-to-erasure implemented via leaf pruning with Merkle recomputation. Deletion is cryptographically verifiable — pruned leaf hash absent from subsequent root.",
+          "source": "architecture-review-2026-02-15",
+          "confidence": 0.93,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c5f9a2d318b7",
+          "hash": "5b58cc33b004dc2304794dd452577c1c1d1d20b77f11017f94cbe5f05dfaef05",
+          "content": "ISO 27001 gap analysis complete. Primary finding: need formalized access control matrix for knowledge tree write operations. Read access is unrestricted by design; write access requires session authentication.",
+          "source": "audit-2026-02",
+          "confidence": 0.86,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d1e8b7c42a06",
+          "hash": "bb32d74e7836e79321d53ce8cb00fcc4e1589949b527a633840f945860e99e4c",
+          "content": "Data retention policy: knowledge tree leaves retained indefinitely unless explicitly pruned. Counter-leaves and low-confidence entries flagged for quarterly review. No automatic expiration to preserve institutional memory.",
+          "source": "policy-review-2026-03-01",
+          "confidence": 0.91,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e4a6d3f15c89",
+          "hash": "7ef61175e6d2e5a77fd8b1601b8206d8d3aceeda2b424d83fd21a049aab025c6",
+          "content": "Healthcare client deployments must pass HIPAA BAA requirements before go-live. Checklist includes: encryption at rest (AES-256), audit logging enabled, no PHI in leaf content without de-identification.",
+          "source": "compliance-review-2026-01-15",
+          "confidence": 0.94,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "f7b2c8e49d13",
+          "hash": "07003af4c1f2450a1af2ffc5ece8c8627a6ea5acc39ea5fb9d7467c51eda38f0",
+          "content": "FedRAMP Moderate authorization pathway under evaluation for government sector clients. Estimated 8-month timeline. Blocker: need dedicated GovCloud deployment infrastructure.",
+          "source": "strategy-2026-03-05",
           "confidence": 0.72,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
-        },
-        {
-          "id": "01e2435862c6",
-          "hash": "01e2435862c6fb8a3d97ce1193ec2e9ed3a20eaf16611f098d442425cc6e38e9",
-          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' \u2014 this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.75,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         }
       ]
     },
     "lessons": {
-      "hash": "d8b71fb3e107d20308411014e03bc541bb550d6141a7177fc79eddb36b1094a0",
+      "hash": "991dda351e3bea782e7cf92c7e90408767a6379e5d5b83daf3c2283b36a8c5da",
       "leaves": [
         {
           "id": "248c720c4e3a",
           "hash": "248c720c4e3a2f6549a82b0a4458572e23cfc7e6cdfcd850861b11981fade10b",
-          "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment \u2014 do not skip it or pre-load results.",
+          "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment — do not skip it or pre-load results.",
           "source": "session-2026-03-15",
           "confidence": 0.85,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "c22d36fc0bf6",
           "hash": "c22d36fc0bf69c7a04717230e3c2051e1f64bd0271c507461311889516c9b6f0",
-          "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters \u2014 it goes in the tree immediately.",
+          "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters — it goes in the tree immediately.",
           "source": "session-2026-03-04",
           "confidence": 0.95,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "267107a688c8",
           "hash": "267107a688c895994d91f8db0dde3b7e4c8b678037340a6011f64f5e5ab86871",
-          "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' \u2014 having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
+          "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' — having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
           "source": "session-2026-03-17",
           "confidence": 0.88,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
         },
         {
           "id": "716e5efee22a",
@@ -187,7 +234,8 @@
           "source": "adversarial-2026-03-20",
           "confidence": 0.78,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": true
         },
         {
           "id": "180b23eff72e",
@@ -196,7 +244,238 @@
           "source": "adversarial-2026-03-20",
           "confidence": 0.82,
           "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a1d7e4b29c36",
+          "hash": "09efb1a8cbac9099dffc1362e398d6d54af5d2efd283ca6c10efd3bb85da92e1",
+          "content": "Onboarding new clients: always run the adversarial gardener on their first knowledge branch within 48 hours. Early counter-leaves set the expectation that the system challenges its own beliefs — this builds trust faster than perfection.",
+          "source": "session-2026-02-22",
+          "confidence": 0.89,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b3c8f1a52d49",
+          "hash": "6c6ab8aad775c09951adaa8679da9987371997888613fe94710eca1fcce6c400",
+          "content": "Production incident 2026-02-08: tree file corruption from concurrent writes during load test. Root cause was missing file lock. Fixed by adding fcntl.LOCK_EX to save_tree. Lesson: always assume multi-process access even in 'single-user' deployments.",
+          "source": "postmortem-2026-02",
+          "confidence": 0.96,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d5e2a7c84f13",
+          "hash": "1b8e1e15e4a0f45b85b8e5d5d874979a99c012f9b17ca021ab71f11c074e0daf",
+          "content": "Embedding model cold-start adds 4-6 seconds to first semantic search query. Pre-pulling the model in setup.sh reduced perceived latency to zero for demos. Always warm the model cache before any live presentation.",
+          "source": "session-2026-03-08",
+          "confidence": 0.87,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e9f4b6d21a78",
+          "hash": "ba59683c1743f90ce624a3e2ea9dd847e23168cf3faa7c63b2457b13aaa96d25",
+          "content": "Client-facing tree exports should omit counter-leaves by default. Counter-leaves are internal epistemic hygiene — exposing them to clients without context creates confusion about system confidence.",
+          "source": "session-2026-03-12",
+          "confidence": 0.83,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "products": {
+      "hash": "4c815e4139da946ea04a785653e035c882deb531355b9b4fdd584a83ce674532",
+      "leaves": [
+        {
+          "id": "f8b9e375c48e",
+          "hash": "f8b9e375c48e33d5f33e27449ccfa8498876dc0c1ff68af9d3dd3c4c2a4f708a",
+          "content": "Core API v2.3: Merkle integrity verification p99 236ms (300-agent async simulation), memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Not end-to-end LLM response latency. Confidence valid for current architecture — recalibrate after any infrastructure change.",
+          "source": "benchmark-2026-03-12",
+          "confidence": 0.92,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "3c5594c198e4",
+          "hash": "caa25eeada1d3d7c2584300b3049ac0746ff5c79adafcdbcad43f4c36b59f7a7",
+          "content": "Knowledge tree query: semantic search via nomic-embed-text embeddings returns results in <100ms for trees up to 10,000 leaves. Keyword fallback available when Ollama is unavailable.",
+          "source": "session-2026-02-28",
+          "confidence": 0.85,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c21c5d857e30",
+          "hash": "c21c5d857e3073abad893a149e7cc63f4c9feb22aa157bd727c527cc7a037879",
+          "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot.",
+          "source": "session-2026-03-01",
+          "confidence": 0.88,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "486b8c8bb45d",
+          "hash": "486b8c8bb45d6dfa6e4f7546d987f797d283be2e954c2704f87b1efe6dbce5b5",
+          "content": "COUNTER: [f8b9e375c48e] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
+          "source": "adversarial-2026-03-20",
+          "confidence": 0.85,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a7d3e1f48c20",
+          "hash": "af87cff110c9d088f8f53190e274b2de3edf5118f9edde4b062abd578a4cbe81",
+          "content": "VR visualization module: Three.js-based 3D rendering of knowledge tree. Branch nodes rendered as orbital clusters, leaves as interactive spheres color-coded by confidence. Supports up to 500 leaves at 60fps on M-series hardware.",
+          "source": "benchmark-2026-03-18",
+          "confidence": 0.89,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b2c9f5a61d37",
+          "hash": "8e9874510d710d66121c49cc8f6180b5849a8cdbab5fc6b2444a533b37d48576",
+          "content": "Tree diff engine: cross-instance comparison completes in O(n log n) for balanced trees. Tested with two 5,000-leaf instances — full diff computed in 180ms including network serialization overhead.",
+          "source": "benchmark-2026-03-10",
+          "confidence": 0.86,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c6e8a4b72f15",
+          "hash": "656fc4451f956abd27110d99f31d6ed376008e2c256a8373e2a3ee31a1fdc228",
+          "content": "Plugin architecture: knowledge tree accepts custom branch types via JSON schema validation. Third-party integrations (Jira, Linear, Confluence) import external artifacts as read-only leaves with provenance tracking.",
+          "source": "architecture-review-2026-02-20",
+          "confidence": 0.81,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d4f1b9c83e28",
+          "hash": "ca51c57acbeca70689b7dc5b0477136b9ba95889408a3b8289c210393e4bb30f",
+          "content": "Embedding index rebuild: full reindex of 10,000 leaves completes in 47 seconds on 8-core machine. Incremental indexing adds <200ms per new leaf. Index file size grows linearly at approximately 1.2 KB per leaf.",
+          "source": "benchmark-2026-03-14",
+          "confidence": 0.9,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e5a2c7d94f31",
+          "hash": "8e2e24134c51dcbaaea5e43538a68e56d9828d9aa8421fde70461afc9aa931f1",
+          "content": "Roadmap Q3 2026: federated tree sync protocol for multi-site deployments. Design goal is eventual consistency with conflict resolution via timestamp + confidence weighting. Prototype targets two-node setup.",
+          "source": "strategy-2026-03-20",
+          "confidence": 0.73,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "risk": {
+      "hash": "1077381c20be8ead1f1de6a543a4fd659a3aa5d6516711974a7d0c34305fddca",
+      "leaves": [
+        {
+          "id": "275b5bc0ba93",
+          "hash": "275b5bc0ba936746db824dc5a1f3dcb6b61a8cf23b678f64ba5a5f735482b2b5",
+          "content": "Acme Corp renewal risk: benchmark report not yet delivered. If report shows degraded performance vs. original demo, renewal probability drops significantly. Mitigation: schedule internal test run this week.",
+          "source": "session-2026-03-10",
+          "confidence": 0.78,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "54cc0d2517a7",
+          "hash": "54cc0d2517a78326044af904eeeea778dc77fa12b24a8a1f1feb411b9576c824",
+          "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely — raw capability comparison alone will not win this account.",
+          "source": "session-2026-01-20",
+          "confidence": 0.72,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "01e2435862c6",
+          "hash": "01e2435862c6fb8a3d97ce1193ec2e9ed3a20eaf16611f098d442425cc6e38e9",
+          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' — this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
+          "source": "adversarial-2026-03-20",
+          "confidence": 0.75,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a8c2e5f31b47",
+          "hash": "ab003eec06ac8c6bc113f72ea20a351ca6ff94722f7bf98a556a7665edfeb320",
+          "content": "Single-point-of-failure risk: knowledge tree currently stored as single JSON file on local disk. Disk failure or accidental deletion results in total data loss. Mitigation: implement automated nightly backup to encrypted S3 bucket.",
+          "source": "risk-review-2026-02-15",
+          "confidence": 0.93,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b9d4f6a72c58",
+          "hash": "5e66e12a0ad712ac00d2c2d85727e181c0723ac5cf77c4cb1aec37ce037202f6",
+          "content": "Model dependency risk: nomic-embed-text model hosted via Ollama could be deprecated or have breaking changes. Mitigation: pin model version in setup.sh and maintain fallback to keyword search.",
+          "source": "risk-review-2026-03-01",
+          "confidence": 0.84,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c1e7a3b84d69",
+          "hash": "cef9b6d2948a9d00cd238c27c005d0a55a84b39d181028ee1f4d3b69229defbf",
+          "content": "Scalability ceiling: current JSON-file-based storage will degrade beyond ~50,000 leaves. Estimated threshold based on file I/O benchmarks. Migration path to SQLite or embedded DB should be designed before any client exceeds 20,000 leaves.",
+          "source": "benchmark-2026-03-14",
+          "confidence": 0.87,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d3f8b2c95e71",
+          "hash": "159a93e8658579b5c171c5470ad3e8118cf8980d894fac41f68cebf765c6a8b6",
+          "content": "Regulatory risk: upcoming EU AI Act (effective Aug 2026) may classify knowledge tree systems as 'limited risk AI'. Requires transparency obligations — users must be informed when interacting with AI-curated knowledge. Legal review initiated.",
+          "source": "compliance-review-2026-03-05",
+          "confidence": 0.76,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e6a4d1f07b83",
+          "hash": "91be2143534367b179220f840125a37653e7553b52b1262fa8a1a8a2b08373ae",
+          "content": "Meridian Health onboarding risk: HIPAA compliance validation not yet independently audited. Self-assessment passed but client's legal team may require third-party attestation before Phase 2 expansion.",
+          "source": "session-2026-02-18",
+          "confidence": 0.81,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "f2b5c8d16a94",
+          "hash": "c9c55eb175f07558d61585a0ee23db0d3e045fce1dd76bf750fca367d014a6ff",
+          "content": "Open question: adversarial gardener's counter-leaf generation could be gamed by crafting leaf content that triggers false positives. No exploit demonstrated yet, but the attack surface exists. Recommend fuzzing the gardener with adversarial inputs.",
+          "source": "risk-review-2026-03-15",
+          "confidence": 0.69,
+          "created": "2026-03-23 12:49:23 UTC",
+          "promoted_to": null,
+          "is_counter": false
         }
       ]
     }
