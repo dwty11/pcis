@@ -47,12 +47,15 @@ from knowledge_tree import (
 from knowledge_search import get_embedding, cosine_similarity, search as _ks_search
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
+TREE_FILE = os.environ.get("PCIS_TREE_FILE", os.path.join(BASE_DIR, "data", "tree.json"))
 GARDEN_LOG = os.path.join(BASE_DIR, "memory", "gardener-log.md")
 GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(BASE_DIR, "memory", "gardener-pending-notify.flag")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_URL = f"{OLLAMA_HOST}/api/generate"
+MLX_HOST = os.environ.get("PCIS_MLX_HOST", "http://localhost:8080")
+MLX_MODEL = "mlx-community/gpt-oss-20b-MXFP4-Q8"
+_USE_MLX = os.environ.get("PCIS_GARDENER_MODEL", "").startswith("mlx") or os.environ.get("PCIS_USE_MLX", "").lower() == "true"
 GARDENER_MODEL = os.environ.get("PCIS_GARDENER_MODEL", "qwen3:14b")
 TZ_UTC = timezone(timedelta(hours=0))
 
@@ -239,6 +242,64 @@ def call_ollama(prompt, model=GARDENER_MODEL):
     except urllib.error.URLError as e:
         log.error("❌ Ollama unreachable: %s", e)
         sys.exit(1)
+
+
+def _strip_mlx_channel_tokens(text):
+    """Extract content from gpt-oss-20b multi-channel response.
+
+    The model uses analysis (reasoning) then final (answer) channels:
+      <|channel|>analysis<|message|>...thinking...<|end|>
+      <|start|>assistant<|channel|>final<|message|>ACTUAL OUTPUT
+
+    We extract the 'final' channel content. Falls back to stripping all
+    channel tokens if no final channel is present.
+    """
+    # Try to extract 'final' channel content (the actual answer)
+    final_match = re.search(r'<\|channel\|>final<\|message\|>(.*?)(?:<\|end\|>|$)', text, re.DOTALL)
+    if final_match:
+        return final_match.group(1).strip()
+    # Fallback: strip all special tokens and return what's left
+    text = re.sub(r'<\|[^|]+\|>', '', text)
+    return text.strip()
+
+
+def call_mlx(prompt):
+    """Call local MLX server (gpt-oss-20b) via OpenAI-compat chat completions API.
+
+    Uses chat/completions format. Strips channel tokens from output before returning.
+    Falls back to Ollama on failure.
+    """
+    body = json.dumps({
+        "model": MLX_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 4000,   # needs room for analysis channel + final channel
+        "temperature": 0.7,
+        # No stop tokens — model needs to complete analysis before reaching final channel
+    }).encode()
+    req = urllib.request.Request(
+        f"{MLX_HOST}/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            result = json.loads(resp.read().decode())
+            raw = result["choices"][0]["message"]["content"]
+            cleaned = _strip_mlx_channel_tokens(raw)
+            log.debug("MLX raw: %s", repr(raw[:100]))
+            log.debug("MLX cleaned: %s", repr(cleaned[:100]))
+            return cleaned
+    except Exception as e:
+        log.warning("⚠️  MLX call failed (%s) — falling back to Ollama", e)
+        return call_ollama(prompt)
+
+
+def call_llm(prompt):
+    """Route LLM call to MLX or Ollama based on PCIS_USE_MLX env flag."""
+    if _USE_MLX:
+        return call_mlx(prompt)
+    return call_ollama(prompt)
 
 
 def extract_confidence(text, default=0.65):
@@ -538,8 +599,8 @@ def gap_scan():
 
     # Ask LLM to extract significant results
     prompt = f"{GAP_SCAN_PROMPT}\n\n---\n\n{note_content}"
-    log.info("🧠 Calling Qwen3:14b to extract results...")
-    response = call_ollama(prompt)
+    log.info("🧠 Calling LLM to extract results...")
+    response = call_llm(prompt)
 
     # Parse JSON list from response — handle markdown fences and fallbacks
     results = None
@@ -710,8 +771,9 @@ def main():
         branch_list=branch_list
     )
 
-    log.info("🧠 Calling Qwen3:14b for adversarial review...")
-    response = call_ollama(prompt)
+    model_label = "gpt-oss-20b (MLX)" if _USE_MLX else "Qwen3:14b"
+    log.info("🧠 Calling %s for adversarial review...", model_label)
+    response = call_llm(prompt)
 
     if args.verbose:
         log.info("=== RAW LLM OUTPUT ===")
@@ -723,7 +785,7 @@ def main():
     # Retry once if parse produces zero results
     if not (counters or synapses or flags):
         log.warning("⚠️  Parse produced 0 results on first attempt — retrying...")
-        response = call_ollama(prompt)
+        response = call_llm(prompt)
         if args.verbose:
             log.info("=== RAW LLM OUTPUT (retry) ===")
             log.info("%s", response)
