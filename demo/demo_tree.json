@@ -1,7 +1,7 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "b27841119419e2ae6978da636ec662d2616ce68d6a1ccdbf327a07a46dba2f81",
+  "root_hash": "e0252953a3721554cefa7be55002cb760da71b3a02a9fd220cb02bc095e0ddf2",
   "last_updated": "",
   "branches": {
     "clients": {
@@ -46,7 +46,7 @@
       ]
     },
     "products": {
-      "hash": "adae809eb95172a322642e0d189a1dc912d3ce88108856a4b897f0b35c3a64c0",
+      "hash": "6aa0b2652877f96d88e80c7f4e8ef0e888e5041025bfdbd26b800b6ff84076bc",
       "leaves": [
         {
           "id": "1d36f1616626",
@@ -59,8 +59,8 @@
         },
         {
           "id": "3c5594c198e4",
-          "hash": "3c5594c198e4344a98be920e353794ee978ac624d2c35051c036875b91764c01",
-          "content": "Knowledge tree query: keyword search returns results in <50ms for trees up to 10,000 leaves. Semantic search (embeddings) not yet implemented — roadmap item Q3 2026.",
+          "hash": "caa25eeada1d3d7c2584300b3049ac0746ff5c79adafcdbcad43f4c36b59f7a7",
+          "content": "Knowledge tree query: semantic search via nomic-embed-text embeddings returns results in <100ms for trees up to 10,000 leaves. Keyword fallback available when Ollama is unavailable.",
           "source": "session-2026-02-28",
           "confidence": 0.85,
           "created": "2026-03-23 12:49:23 UTC",
