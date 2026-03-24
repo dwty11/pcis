@@ -7,6 +7,7 @@ All processing stays within the closed perimeter.
 Supported providers (config.json → llm_provider):
   - "anthropic" — Anthropic Messages API (requires llm_api_key or ANTHROPIC_API_KEY)
   - "openai"    — OpenAI-compatible Chat Completions (requires llm_api_key or OPENAI_API_KEY)
+  - "gigachat"  — GigaChat via local OpenAI-compat adapter (requires GIGACHAT_KEY for health check)
   - "ollama"    — Local Ollama (default, no key required)
 """
 
@@ -65,6 +66,11 @@ PROVIDER_DEFAULTS = {
         "url": "https://api.openai.com/v1/chat/completions",
         "model": "gpt-4o-mini",
         "env_key": "OPENAI_API_KEY",
+    },
+    "gigachat": {
+        "url": "http://localhost:7860/v1/chat/completions",
+        "model": "GigaChat-Pro",
+        "env_key": "GIGACHAT_KEY",
     },
     "ollama": {
         "url": "http://localhost:11434/api/chat",
@@ -167,6 +173,33 @@ def _call_openai(url, api_key, model, prompt, timeout=90):
     return result["choices"][0]["message"]["content"]
 
 
+def _call_gigachat(url, model, prompt, timeout=90):
+    """Call GigaChat via local OpenAI-compatible adapter on port 7860.
+
+    Uses the same request schema as _call_openai. No Authorization header
+    is needed here — the adapter handles OAuth (GIGACHAT_KEY) internally
+    via its own environment.
+    """
+    body = json.dumps({
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 512,
+    }).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        result = json.loads(resp.read().decode())
+    return result["choices"][0]["message"]["content"]
+
+
 def _call_ollama(url, model, prompt, timeout=180):
     """Call Ollama local chat API."""
     body = json.dumps({
@@ -196,6 +229,7 @@ def send_to_llm(provider, url, api_key, model, leaf_content, leaf_confidence=0.0
     dispatch = {
         "anthropic": lambda: _call_anthropic(url, api_key, model, prompt),
         "openai": lambda: _call_openai(url, api_key, model, prompt),
+        "gigachat": lambda: _call_gigachat(url, model, prompt),
         "ollama": lambda: _call_ollama(url, model, prompt),
     }
     call_fn = dispatch.get(provider)
@@ -299,7 +333,7 @@ def main():
 
     # Check API key for cloud providers
     use_fallback = False
-    if provider in ("anthropic", "openai") and not api_key:
+    if provider in ("anthropic", "openai", "gigachat") and not api_key:
         env_name = PROVIDER_DEFAULTS[provider]["env_key"]
         print(f"  No API key found (config.json or ${env_name}).")
         print("  Using fallback mode (pre-generated challenges).\n")
