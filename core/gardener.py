@@ -53,7 +53,7 @@ GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(BASE_DIR, "memory", "gardener-pending-notify.flag")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_URL = f"{OLLAMA_HOST}/api/generate"
-GARDENER_MODEL = "qwen3:14b"
+GARDENER_MODEL = os.environ.get("PCIS_GARDENER_MODEL", "qwen3:14b")
 TZ_UTC = timezone(timedelta(hours=0))
 
 
