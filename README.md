@@ -241,7 +241,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
 ## Known Limitations
 
-- **Leaf ID collision risk at scale** — leaf IDs are the first 12 hex characters of the leaf hash (48 bits of entropy). Collision probability becomes non-negligible above ~16 million leaves. Suitable for single-agent and small team deployments; multi-agent shared trees at scale should await the v2.0 ID scheme.
+- **Leaf ID format transition** — new leaves use UUID4 (128-bit) IDs for collision safety at scale. Existing trees with legacy 12-char hex IDs load and display correctly; no migration required.
 
 ---
 
