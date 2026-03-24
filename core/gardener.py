@@ -621,21 +621,24 @@ def gap_scan():
 
     gaps = []
 
-    for result_text in results:
-        if not isinstance(result_text, str) or not result_text.strip():
-            continue
-        try:
-            hits = _ks_search(result_text, top_k=1)
-            top_score = hits[0][0] if hits else 0.0
-        except Exception as e:
-            log.warning("⚠️  Search failed for '%s': %s", result_text[:60], e)
-            continue
+    try:
+        for result_text in results:
+            if not isinstance(result_text, str) or not result_text.strip():
+                continue
+            try:
+                hits = _ks_search(result_text, top_k=1)
+                top_score = hits[0][0] if hits else 0.0
+            except Exception as e:
+                log.warning("⚠️  Search failed for '%s': %s", result_text[:60], e)
+                continue
 
-        if top_score < 0.6:
-            gaps.append(result_text)
-            log.info("GAP (best=%.3f): %s", top_score, result_text[:100])
-        else:
-            log.info("COVERED (%.3f): %s", top_score, result_text[:100])
+            if top_score < 0.6:
+                gaps.append(result_text)
+                log.info("GAP (best=%.3f): %s", top_score, result_text[:100])
+            else:
+                log.info("COVERED (%.3f): %s", top_score, result_text[:100])
+    finally:
+        _ks_mod.INDEX_FILE = _orig_index  # always restore, even if search raises
 
     log.info("📊 Summary: %d gap(s) / %d result(s)", len(gaps), len(results))
 
