@@ -31,6 +31,7 @@ import hashlib
 import json
 import os
 import sys
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 
@@ -176,8 +177,9 @@ def add_knowledge(tree, branch, content, source="session", confidence=0.7):
         tree["branches"][branch] = {"hash": "", "leaves": []}
     timestamp = now_utc()
     leaf_hash = hash_leaf(content, branch, timestamp)
+    leaf_id = str(uuid.uuid4())
     leaf = {
-        "id": leaf_hash[:12],
+        "id": leaf_id,
         "hash": leaf_hash,
         "content": content,
         "source": source,
@@ -189,7 +191,7 @@ def add_knowledge(tree, branch, content, source="session", confidence=0.7):
     tree["branches"][branch]["hash"] = compute_branch_hash(
         tree["branches"][branch]["leaves"]
     )
-    return leaf_hash[:12]
+    return leaf_id
 
 
 def prune_leaf(tree, branch, leaf_id):
