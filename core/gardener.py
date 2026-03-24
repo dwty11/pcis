@@ -609,6 +609,16 @@ def gap_scan():
     log.info("📋 Extracted %d result(s) from daily note", len(results))
 
     # Check each result against knowledge tree via semantic search
+    # knowledge_search INDEX_FILE is resolved at import time using PCIS_BASE_DIR.
+    # If PCIS_BASE_DIR points to a memory workspace (not the pcis installation),
+    # override the module's INDEX_FILE to use the installation's own index.
+    import knowledge_search as _ks_mod
+    _install_index = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "search-index.json")
+    _orig_index = _ks_mod.INDEX_FILE
+    if not os.path.exists(_ks_mod.INDEX_FILE) and os.path.exists(_install_index):
+        log.info("🔧 Using installation index: %s", _install_index)
+        _ks_mod.INDEX_FILE = _install_index
+
     gaps = []
 
     for result_text in results:
