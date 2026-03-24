@@ -1,7 +1,7 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "e0252953a3721554cefa7be55002cb760da71b3a02a9fd220cb02bc095e0ddf2",
+  "root_hash": "a75ba063d4abe787d8a4a2bb7c93d4af6341724da6475f64d397de5557e276e6",
   "last_updated": "",
   "branches": {
     "clients": {
@@ -10,7 +10,7 @@
         {
           "id": "b73cb993ad0e",
           "hash": "b73cb993ad0e93482781c83ccbcf4b0433652961476ef92532d017cdd9459e13",
-          "content": "Acme Corp — enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
+          "content": "Acme Corp \u2014 enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
           "source": "session-2025-09-15",
           "confidence": 0.88,
           "created": "2026-03-23 12:49:23 UTC",
@@ -19,7 +19,7 @@
         {
           "id": "b00a551888e6",
           "hash": "b00a551888e663a54cf47bc9419edc8d123042e8af9538a53a1fff13c7a54b52",
-          "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive — requested benchmark report before renewal meeting.",
+          "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive \u2014 requested benchmark report before renewal meeting.",
           "source": "session-2026-03-10",
           "confidence": 0.82,
           "created": "2026-03-23 12:49:23 UTC",
@@ -28,7 +28,7 @@
         {
           "id": "68605f527bb5",
           "hash": "68605f527bb59ad867af6d65f721d3a13d1902679dba8e38ab64038674d0e3f7",
-          "content": "Brightfield Analytics — mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering — price sensitive.",
+          "content": "Brightfield Analytics \u2014 mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering \u2014 price sensitive.",
           "source": "session-2026-01-20",
           "confidence": 0.75,
           "created": "2026-03-23 12:49:23 UTC",
@@ -46,12 +46,12 @@
       ]
     },
     "products": {
-      "hash": "6aa0b2652877f96d88e80c7f4e8ef0e888e5041025bfdbd26b800b6ff84076bc",
+      "hash": "0d5bf52345c631a4e6ef55c0a6cc1c91d68a6900866a6b0a3bb7e42b5bf7ed9e",
       "leaves": [
         {
-          "id": "1d36f1616626",
-          "hash": "1d36f161662642b8e9629115eba451344e662bd4698355f35ebb360ab210b57c",
-          "content": "Core API v2.3: latency p99 236ms at 300 concurrent agents, memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Confidence valid for current architecture — recalibrate after any infrastructure change.",
+          "id": "f8b9e375c48e",
+          "hash": "f8b9e375c48e33d5f33e27449ccfa8498876dc0c1ff68af9d3dd3c4c2a4f708a",
+          "content": "Core API v2.3: Merkle integrity verification p99 236ms (300-agent async simulation), memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Not end-to-end LLM response latency. Confidence valid for current architecture \u2014 recalibrate after any infrastructure change.",
           "source": "benchmark-2026-03-12",
           "confidence": 0.92,
           "created": "2026-03-23 12:49:23 UTC",
@@ -76,9 +76,9 @@
           "promoted_to": null
         },
         {
-          "id": "d6c551445e91",
-          "hash": "d6c551445e91416b26a0572d9d31134b744f6516d82931fa4eff83cac4aeb4b4",
-          "content": "COUNTER: [1d36f1616626] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
+          "id": "486b8c8bb45d",
+          "hash": "486b8c8bb45d6dfa6e4f7546d987f797d283be2e954c2704f87b1efe6dbce5b5",
+          "content": "COUNTER: [f8b9e375c48e] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
           "source": "adversarial-2026-03-20",
           "confidence": 0.85,
           "created": "2026-03-23 12:49:23 UTC",
@@ -92,7 +92,7 @@
         {
           "id": "6c1d120c878a",
           "hash": "6c1d120c878a8acae9ed20db04d80ef7fbd6cd827e2118bb85fc76692732d565",
-          "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default — no data leaves the deployment boundary.",
+          "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default \u2014 no data leaves the deployment boundary.",
           "source": "architecture-review-2026-02-15",
           "confidence": 0.9,
           "created": "2026-03-23 12:49:23 UTC",
@@ -110,7 +110,7 @@
         {
           "id": "11d0ec8996df",
           "hash": "11d0ec8996dfb23d7c915dd949d76ab56aaf72beab9677251269c65328e083ae",
-          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger — recommend automated test that intercepts all outbound network calls on each release.",
+          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger \u2014 recommend automated test that intercepts all outbound network calls on each release.",
           "source": "adversarial-2026-03-20",
           "confidence": 0.82,
           "created": "2026-03-23 12:49:23 UTC",
@@ -133,7 +133,7 @@
         {
           "id": "54cc0d2517a7",
           "hash": "54cc0d2517a78326044af904eeeea778dc77fa12b24a8a1f1feb411b9576c824",
-          "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely — raw capability comparison alone will not win this account.",
+          "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely \u2014 raw capability comparison alone will not win this account.",
           "source": "session-2026-01-20",
           "confidence": 0.72,
           "created": "2026-03-23 12:49:23 UTC",
@@ -142,7 +142,7 @@
         {
           "id": "01e2435862c6",
           "hash": "01e2435862c6fb8a3d97ce1193ec2e9ed3a20eaf16611f098d442425cc6e38e9",
-          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' — this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
+          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' \u2014 this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
           "source": "adversarial-2026-03-20",
           "confidence": 0.75,
           "created": "2026-03-23 12:49:23 UTC",
@@ -156,7 +156,7 @@
         {
           "id": "248c720c4e3a",
           "hash": "248c720c4e3a2f6549a82b0a4458572e23cfc7e6cdfcd850861b11981fade10b",
-          "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment — do not skip it or pre-load results.",
+          "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment \u2014 do not skip it or pre-load results.",
           "source": "session-2026-03-15",
           "confidence": 0.85,
           "created": "2026-03-23 12:49:23 UTC",
@@ -165,7 +165,7 @@
         {
           "id": "c22d36fc0bf6",
           "hash": "c22d36fc0bf69c7a04717230e3c2051e1f64bd0271c507461311889516c9b6f0",
-          "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters — it goes in the tree immediately.",
+          "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters \u2014 it goes in the tree immediately.",
           "source": "session-2026-03-04",
           "confidence": 0.95,
           "created": "2026-03-23 12:49:23 UTC",
@@ -174,7 +174,7 @@
         {
           "id": "267107a688c8",
           "hash": "267107a688c895994d91f8db0dde3b7e4c8b678037340a6011f64f5e5ab86871",
-          "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' — having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
+          "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' \u2014 having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
           "source": "session-2026-03-17",
           "confidence": 0.88,
           "created": "2026-03-23 12:49:23 UTC",

@@ -60,7 +60,7 @@ Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees
 
 ---
 
-**`core/gardener.py`** — The adversarial maintenance agent. Loads the knowledge tree, formats it as readable text, and sends it to a local LLM (Qwen3:14b via Ollama) asking it to find echo chambers, generate counter-arguments, identify cross-branch connections, and flag stale leaves. The LLM responds in pipe-delimited format: `COUNTER|branch|content|confidence`, `SYNAPSE|content|confidence`, or `FLAG|leaf_id|reason`. If parsing yields zero results, it retries once.
+**`core/gardener.py`** — The adversarial maintenance agent. Loads the knowledge tree, formats it as readable text, and sends it to a local LLM (Qwen3:14b via Ollama) asking it to find echo chambers, generate counter-arguments, identify cross-branch connections, and flag stale leaves. The LLM responds in pipe-delimited format (`COUNTER|branch|content|confidence`, `SYNAPSE|content|confidence`, `FLAG|leaf_id|reason`); staged items are written as JSONL for reliable parsing. If parsing yields zero results, it retries once.
 
 Tiered commit system:
 - Counter-leaves targeting operational branches (`technical`, `lessons`) → auto-committed
