@@ -43,6 +43,63 @@ docker compose exec ollama ollama pull nomic-embed-text
 
 ---
 
+## Make It Yours in 5 Minutes
+
+The demo runs on synthetic data. Here's how to build a real knowledge tree.
+
+**Add knowledge:**
+
+```bash
+python3 core/knowledge_tree.py --add technical "Our API timeout is 30 seconds" --confidence 0.85
+python3 core/knowledge_tree.py --add lessons "Never deploy on Fridays" --confidence 0.95 --source "postmortem-2026-01"
+python3 core/knowledge_tree.py --add technical "Postgres performs better than MySQL for our workload" --confidence 0.7
+```
+
+**See your tree:**
+
+```bash
+python3 core/knowledge_tree.py --show
+```
+
+**Verify integrity — this is the Merkle root, computed from every leaf:**
+
+```bash
+python3 core/knowledge_tree.py --root
+```
+
+**Search by meaning** (requires [Ollama](https://ollama.com) + `ollama pull nomic-embed-text`):
+
+```bash
+python3 core/knowledge_search.py --reindex
+python3 core/knowledge_search.py "what do we know about performance?"
+```
+
+**Challenge your own beliefs:**
+
+```bash
+python3 core/gardener.py --dry-run
+```
+
+The gardener reads your tree, finds overconfident leaves, and generates counter-arguments. `--dry-run` shows what it would do without writing anything.
+
+**Prove tamper detection works:**
+
+Open `data/tree.json` in a text editor. Change one character in any leaf. Save. Then run:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'core')
+from knowledge_tree import load_tree, verify_tree_integrity
+ok, errors = verify_tree_integrity(load_tree())
+print('PASS' if ok else 'FAIL')
+for e in errors: print(e)
+"
+```
+
+It fails. Undo the change. It passes. That's Merkle integrity — one changed byte breaks the entire hash chain.
+
+---
+
 ## See It in Action
 
 **Boot — Merkle integrity check, computed in real time:**
