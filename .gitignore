@@ -11,3 +11,4 @@ demo/adversarial_validation_run.json
 demo/gigachat_validation_run.json
 build/
 pcis.egg-info/
+demo/demo_search_index.json
