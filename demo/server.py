@@ -165,6 +165,7 @@ def api_query():
         for leaf in branch["leaves"]:
             hash_lookup[leaf["id"]] = leaf.get("hash", "")
 
+    use_keyword_fallback = False
     try:
         raw = knowledge_search.search(query, top_k=3)
         scored = []
@@ -179,9 +180,15 @@ def api_query():
                 "id": leaf_id,
                 "score": round(score, 3),
             })
+        if not scored:
+            use_keyword_fallback = True
     except Exception as e:
-        # Ollama not running or model not pulled — fall back to keyword search.
         logger.warning("Semantic search failed (%s), falling back to keyword search.", e)
+        use_keyword_fallback = True
+        scored = []
+
+    if use_keyword_fallback:
+        # Ollama not running, model not pulled, or index empty — keyword search.
         keywords = query.split()
         scored = []
         for branch_name, branch in tree["branches"].items():
