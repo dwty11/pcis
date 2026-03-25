@@ -18,6 +18,24 @@ A knowledge tree that only grows becomes a liability. PCIS includes a pruning pr
 ## 6. Model-Agnostic Design
 PCIS does not depend on any specific language model. The knowledge tree, integrity layer, adversarial pass, and gap-scan all operate through a standard API interface. The underlying model — GPT-4, Claude, Llama, or any locally-hosted model (including GigaChat for on-prem deployments) — can be swapped without touching the memory layer. This means no vendor lock-in, no retraining required when models change, and the ability to run entirely on-premises with local models.
 
+## 7. Typed Synapse Graph
+
+`core/knowledge_synapses.py`
+
+Cross-leaf relationships are first-class objects. Each synapse is a directed typed edge between two leaves — SUPPORTS, CONTRADICTS, REFINES, DERIVES_FROM, or SUPERSEDES — stored in `data/synapses.json` and tamper-evident via SHA-256. When the gardener commits a COUNTER leaf, it automatically wires a CONTRADICTS synapse back to the challenged leaf. This turns a flat tree of facts into a belief network where confidence propagates through evidence chains.
+
+The combined root hash (`sha256(tree_root + synapse_root)`) is computed at boot, ensuring structural integrity across both the knowledge tree and its relationship graph.
+
+## 8. Belief Traversal Engine
+
+`core/belief_traversal.py`
+
+`assess_belief(leaf_id)` walks the synapse graph via BFS, aggregating evidence: supporting leaves boost confidence, contradictions reduce it, depth decay applies per hop. The result is a net confidence score, a stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), and a plain-English explanation of why the agent holds that belief at that confidence level.
+
+`query_belief(text)` accepts a natural-language query, runs semantic search to find the most relevant leaf, then calls `assess_belief` on it. The agent can now answer not just *what it knows* but *how sure it is and why*.
+
+This is the first step toward the Bayesian belief updating planned in v2.0 — the architecture is in place, the update rule is currently heuristic rather than formally Bayesian.
+
 ## PCIS and External Memory Continual Learning
 
 The central challenge in continual learning is the stability-plasticity tradeoff: systems that learn new things tend to forget old ones (catastrophic forgetting), and systems that preserve old knowledge tend to resist new learning. Most approaches address this by modifying training procedures or weight update rules.
