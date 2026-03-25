@@ -4,7 +4,7 @@
 # Run from repo root: ./start_demo.sh
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-PYTHON=/opt/homebrew/bin/python3
+PYTHON="${PYTHON:-python3}"
 FAILED=0
 
 echo ""

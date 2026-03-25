@@ -96,10 +96,10 @@ For regulated environments (finance, healthcare, compliance) where "the AI said 
 
 ## Known limitations in v1.0
 
-- Merkle integrity is root-hash only (not full branch proofs)
+- Merkle integrity is root-hash only (not full branch proofs) — branch proofs are a v1.1 target
 - Confidence values are heuristic, not Bayesian — formal updating is a v2.0 target
-- Query is keyword search, not semantic
-- Gardener requires local Ollama — no cloud LLM option yet
+- Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback
+- Adversarial validator supports Anthropic, OpenAI, GigaChat, and Ollama — cloud LLM options are live; additional providers are v1.1 work
 - No authentication on demo server
 
 These are real gaps. If any of them block you — open an issue.
