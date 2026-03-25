@@ -19,6 +19,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import core.knowledge_search as knowledge_search
 from core.knowledge_tree import verify_tree_integrity
 
+try:
+    from core.belief_traversal import query_belief as _query_belief, assess_belief as _assess_belief
+    _belief_available = True
+except ImportError:
+    _belief_available = False
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -283,6 +289,57 @@ def api_gigachat_validation():
                         counter["original_content"] = leaf["content"]
                         break
     return jsonify(data)
+
+
+@app.route("/api/belief", methods=["POST"])
+def api_belief():
+    """Assess belief stance for a natural-language query via synapse graph traversal."""
+    if not _belief_available:
+        return jsonify({"error": "Belief traversal unavailable", "detail": "Could not import core.belief_traversal"})
+
+    data = request.get_json()
+    query = (data.get("query") or "").strip()
+    if not query:
+        return jsonify({"error": "Empty query"})
+
+    try:
+        tree = load_tree()
+        # Load synapses from demo dir if available, else fall back to default
+        from core.knowledge_synapses import load_synapses
+        syn_path = os.path.join(DEMO_DIR, "demo_synapses.json")
+        synapses = load_synapses(syn_path) if os.path.exists(syn_path) else load_synapses()
+
+        assessments = _query_belief(query, top_k=3, tree=tree, synapses=synapses)
+
+        # Enrich each assessment with supporting/contradicting leaf details
+        for a in assessments:
+            leaf_id = a["leaf_id"]
+            supporting = []
+            contradicting = []
+            for s in synapses.get("synapses", []):
+                if s["from_leaf"] == leaf_id or s["to_leaf"] == leaf_id:
+                    neighbor_id = s["to_leaf"] if s["from_leaf"] == leaf_id else s["from_leaf"]
+                    # Find neighbor leaf content
+                    for branch in tree["branches"].values():
+                        for leaf in branch["leaves"]:
+                            if leaf["id"] == neighbor_id:
+                                entry = {
+                                    "id": neighbor_id,
+                                    "content": leaf["content"][:200],
+                                    "confidence": leaf["confidence"],
+                                    "relation": s["relation"],
+                                }
+                                if s["relation"] in ("SUPPORTS", "REFINES", "DERIVES_FROM"):
+                                    supporting.append(entry)
+                                elif s["relation"] == "CONTRADICTS":
+                                    contradicting.append(entry)
+                                break
+            a["supporting"] = supporting
+            a["contradicting"] = contradicting
+
+        return jsonify({"assessments": assessments, "query": query})
+    except Exception as e:
+        return jsonify({"error": "Belief traversal unavailable", "detail": str(e)})
 
 
 @app.route("/api/status")

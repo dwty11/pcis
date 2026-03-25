@@ -701,6 +701,7 @@ body {
   <div class="tab active" data-tab="boot">Boot</div>
   <div class="tab" data-tab="tree">Knowledge Tree</div>
   <div class="tab" data-tab="query">Query</div>
+  <div class="tab" data-tab="belief">Belief</div>
   <div class="tab" data-tab="adversarial">Adversarial</div>
   <div class="tab" data-tab="gigachat">GigaChat Validation</div>
 </div>
@@ -764,6 +765,17 @@ body {
     </div>
   </div>
 
+  <!-- ══════ BELIEF SCREEN ══════ -->
+  <div class="screen" id="screen-belief">
+    <div class="query-input-wrap">
+      <input class="query-input" id="beliefInput" type="text" placeholder="Assess a belief — e.g. &quot;What does the system believe about...&quot;" autocomplete="off">
+      <button class="btn" id="beliefBtn" onclick="runBelief()">Assess Belief</button>
+    </div>
+    <div id="beliefResults">
+      <div class="query-empty">Enter a query to assess belief stance, confidence, and evidence</div>
+    </div>
+  </div>
+
   <!-- ══════ ADVERSARIAL SCREEN ══════ -->
   <div class="screen" id="screen-adversarial">
     <div class="stats-row" id="advStats"></div>
@@ -803,6 +815,9 @@ document.querySelectorAll('.tab').forEach(tab => {
 
     // Auto-load data
     if (tab.dataset.tab === 'tree' && !treeLoaded) loadTree();
+    if (tab.dataset.tab === 'belief' && !document.getElementById('beliefInput').value.trim()) {
+      document.getElementById('beliefInput').focus();
+    }
     if (tab.dataset.tab === 'adversarial' && !advLoaded) loadAdversarial();
     if (tab.dataset.tab === 'gigachat' && !gcLoaded) loadGigaChat();
   });
@@ -1018,6 +1033,121 @@ async function runQuery() {
     `;
   } catch (e) {
     resultsDiv.innerHTML = '<div class="query-empty">Error: ' + e.message + '</div>';
+  }
+}
+
+// ── Belief Screen ──
+document.getElementById('beliefInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runBelief();
+});
+
+function stanceBadge(stance) {
+  const colors = {
+    'CONFIDENT': 'var(--green)',
+    'UNCERTAIN': 'var(--yellow)',
+    'CONTESTED': 'var(--orange)',
+    'SUPERSEDED': 'var(--red)',
+    'NOT_FOUND': 'var(--text-muted)',
+  };
+  const color = colors[stance] || 'var(--text-dim)';
+  return `<span style="display:inline-block;padding:3px 12px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:1px;background:${color}20;color:${color};border:1px solid ${color}40">${stance}</span>`;
+}
+
+async function runBelief() {
+  const input = document.getElementById('beliefInput');
+  const query = input.value.trim();
+  if (!query) return;
+
+  const resultsDiv = document.getElementById('beliefResults');
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Assessing belief state...</div>';
+
+  try {
+    const res = await fetch('/api/belief', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      resultsDiv.innerHTML = `
+        <div class="query-empty" style="color:var(--orange)">
+          ${escapeHtml(data.error)}${data.detail ? '<br><span style="font-size:12px;color:var(--text-muted)">' + escapeHtml(data.detail) + '</span>' : ''}
+          <br><br><span style="font-size:12px;color:var(--text-muted)">Belief traversal requires Ollama to be running</span>
+        </div>`;
+      return;
+    }
+
+    if (!data.assessments || data.assessments.length === 0) {
+      resultsDiv.innerHTML = '<div class="query-empty">No beliefs found matching "' + escapeHtml(query) + '"</div>';
+      return;
+    }
+
+    // Fetch current root hash for the Merkle note
+    let rootHash = '';
+    try {
+      const bootRes = await fetch('/api/boot');
+      const bootData = await bootRes.json();
+      rootHash = bootData.merkle_root || '';
+    } catch (e) {}
+
+    resultsDiv.innerHTML = `
+      <div class="match-count">${data.assessments.length} belief${data.assessments.length !== 1 ? 's' : ''} assessed</div>
+      ${data.assessments.map((a, i) => `
+        <div class="result-card">
+          <div class="result-rank">#${i + 1}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px;margin-bottom:14px;flex-wrap:wrap">
+            ${stanceBadge(a.stance)}
+            <span class="result-branch">${a.branch}</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:16px">
+            <div style="text-align:center">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:var(--accent)">${a.net_confidence.toFixed(2)}</div>
+              <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Net Confidence</div>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace">
+              base: ${a.base_confidence.toFixed(2)} &middot; depth: ${a.depth_reached}
+            </div>
+          </div>
+          <div style="font-size:13px;line-height:1.7;margin-bottom:16px;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px">
+            <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Reasoning</div>
+            ${escapeHtml(a.reasoning)}
+          </div>
+          ${a.supporting && a.supporting.length > 0 ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--green);text-transform:uppercase;margin-bottom:8px">Supporting Leaves</div>
+              ${a.supporting.map(s => `
+                <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+                  <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px"></span>
+                  <span style="flex:1;color:var(--text);line-height:1.5">${escapeHtml(s.content)}</span>
+                  <span style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);white-space:nowrap">${s.confidence.toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${a.contradicting && a.contradicting.length > 0 ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:8px">Contradicting Leaves</div>
+              ${a.contradicting.map(c => `
+                <div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+                  <span style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:4px"></span>
+                  <span style="flex:1;color:var(--text);line-height:1.5">${escapeHtml(c.content)}</span>
+                  <span style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);white-space:nowrap">${c.confidence.toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="result-meta">
+            <span>leaf: ${a.leaf_id}</span>
+            <span>support: ${a.support_count}</span>
+            <span>contradictions: ${a.contradiction_count}</span>
+            <span style="color:var(--text-muted)">Belief state verified &middot; root hash: <span style="color:var(--purple)">${rootHash ? rootHash.slice(0, 24) + '...' : 'unavailable'}</span></span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) {
+    resultsDiv.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
   }
 }
 
