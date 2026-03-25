@@ -345,7 +345,7 @@ def parse_gardener_output(response_text):
             continue
 
         if line.startswith("COUNTER|"):
-            parts = line.split("|", 3)
+            parts = line.split("|", 4)
             if len(parts) < 3:
                 continue
             branch = parts[1].strip()
@@ -359,7 +359,17 @@ def parse_gardener_output(response_text):
             else:
                 conf = extract_confidence(raw_content, 0.65)
             content = strip_conf(raw_content)
-            counters.append({"branch": branch, "content": content, "confidence": conf})
+            # Original leaf ID: 5th field (new format) or COUNTER: [id] prefix (backward compat)
+            original_leaf_id = None
+            if len(parts) >= 5 and parts[4].strip():
+                original_leaf_id = clean_leaf_id(parts[4])
+            if not original_leaf_id:
+                m = re.match(r"COUNTER:\s*\[([a-f0-9]+)\]", content)
+                if m:
+                    original_leaf_id = m.group(1)
+                    content = re.sub(r"^COUNTER:\s*\[[a-f0-9]+\]\s*", "", content)
+            counters.append({"branch": branch, "content": content, "confidence": conf,
+                             "original_leaf_id": original_leaf_id})
 
         elif line.startswith("SYNAPSE|"):
             parts = line.split("|", 2)
@@ -547,7 +557,7 @@ ALREADY CHALLENGED (do NOT generate COUNTER leaves for these leaf IDs — they h
 YOUR TASK — produce structured output in EXACTLY this format (one entry per line, no extra text before or after):
 
 1. COUNTER leaves — the strongest honest challenge to any high-confidence leaf:
-   COUNTER|<branch>|COUNTER: [<leaf_id>] <the challenge or counter-argument>|<your confidence 0.0-1.0>
+   COUNTER|<branch>|<the challenge argument only>|<your confidence 0.0-1.0>|<original_leaf_id>
 
 2. SYNAPSE entries — connections between branches not yet documented:
    SYNAPSE|<description of the connection and why it matters>|<your confidence 0.0-1.0>
@@ -558,7 +568,7 @@ YOUR TASK — produce structured output in EXACTLY this format (one entry per li
 RULES:
 - Be genuinely adversarial. Do not add leaves that confirm existing beliefs.
 - The ONLY valid branch names are: {branch_list}. Use exactly one of these — nothing else.
-- Every COUNTER must reference a specific leaf_id with COUNTER: [id] prefix.
+- Do not include 'COUNTER: [id]' in the content — the leaf ID goes in the 5th field.
 - Do NOT challenge leaf IDs listed in ALREADY CHALLENGED above — pick fresh targets.
 - Aim for 3-5 COUNTERs, 2-3 SYNAPSEs, 1-3 FLAGs.
 - Use confidence 0.5-0.75 for counter-arguments (they're challenges, not certainties).
@@ -877,16 +887,20 @@ def main():
                     committed_written.append({**c, "leaf_id": leaf_id})
 
                     try:
-                        import re as _re
-                        original_match = _re.search(r'COUNTER:\s*\[([a-f0-9]+)\]', c["content"])
-                        if original_match:
+                        original_id = c.get("original_leaf_id")
+                        if not original_id:
+                            # Backward compat: old staged items may still have COUNTER: [id] prefix
+                            _orig_match = re.match(r"COUNTER:\s*\[([a-f0-9]+)\]", c["content"])
+                            original_id = _orig_match.group(1) if _orig_match else None
+                        if original_id and leaf_id:
                             from core.knowledge_synapses import load_synapses as _ls, save_synapses as _ss, add_synapse as _as
                             _synapses = _ls()
-                            _as(_synapses, leaf_id, original_match.group(1), "CONTRADICTS",
+                            _as(_synapses, leaf_id, original_id, "CONTRADICTS",
                                 note="Gardener counter-challenge", source="gardener")
                             _ss(_synapses)
-                    except Exception as _e:
-                        log.warning("Synapse creation failed (non-fatal): %s", _e)
+                            log.info("🔗 Synapse: %s --[CONTRADICTS]--> %s", leaf_id, original_id)
+                    except Exception as e:
+                        log.warning("Synapse creation failed (non-fatal): %s", e)
             log.info("💾 Tree saved.")
         committed_counters = committed_written
 
