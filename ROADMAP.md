@@ -30,7 +30,8 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [x] Adversarial pass — external LLM challenges high-confidence leaves, generates COUNTER entries
 - [x] Gap-scan — reads session logs, finds knowledge not yet committed to tree
 - [x] Pruning protocol — flags stale and low-confidence leaves for review
-- [x] Cross-branch synapses — gardener detects and logs connections between knowledge domains
+- [x] Cross-branch synapses — typed edges (SUPPORTS / CONTRADICTS / REFINES / DERIVES_FROM / SUPERSEDES), Merkle-chained
+- [x] Belief traversal — BFS confidence assessment, stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), plain-English reasoning
 - [x] Model-agnostic design — swap LLM without touching memory layer
 - [x] Demo UI — five-tab Flask app, runs locally in 60 seconds
 
