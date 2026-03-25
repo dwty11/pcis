@@ -60,6 +60,11 @@ def index():
     return send_file("index.html")
 
 
+@app.route("/sokrat.html")
+def sokrat():
+    return send_file("sokrat.html")
+
+
 @app.route("/api/boot")
 def api_boot():
     """Verify Merkle integrity of the knowledge tree on boot."""
