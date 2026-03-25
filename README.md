@@ -3,7 +3,11 @@
 
 **PCIS maintains the assistant's beliefs about the world — not the world itself.**
 
-Most AI systems optimize for *competent behaviour* — writing code, answering questions, completing tasks. PCIS adds the layer underneath: *epistemic self-awareness* — what the agent believes, why it believes it, what evidence supports or contradicts it, and how confident it should be.
+Most AI memory projects solve retrieval. PCIS solves something harder: giving an AI a persistent self.
+
+The knowledge tree is not a database. It is a belief system — what the agent knows, how confident it is, and cryptographic proof of the state at any point in time. The adversarial gardener actively challenges high-confidence beliefs using an external LLM, searching for contradictions and weaknesses. When a challenge holds, it enters the tree as a COUNTER leaf and the confidence updates. The Merkle root means nothing changes silently. Together they produce something that didn't exist before: an AI that carries its own epistemic identity across every session, every model swap, every restart — and that has been stress-tested, not just populated.
+
+This repository is the foundation. Build on it, and your AI won't just remember — it will know what it believes, why, and how those beliefs have held up under challenge.
 
 A RAG system indexes the world. PCIS indexes the agent's mind.
 
