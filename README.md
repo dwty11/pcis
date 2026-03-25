@@ -1,7 +1,11 @@
 # PCIS — Persistent Cognitive Identity Systems
 ### The still point of the turning model.
 
-**Git for knowledge and beliefs. Give your AI agent a cryptographically verifiable long-term identity — so it never forgets who it is, what it knows, or why.**
+**PCIS maintains the assistant's beliefs about the world — not the world itself.**
+
+Most AI systems optimize for *competent behaviour* — writing code, answering questions, completing tasks. PCIS adds the layer underneath: *epistemic self-awareness* — what the agent believes, why it believes it, what evidence supports or contradicts it, and how confident it should be.
+
+A RAG system indexes the world. PCIS indexes the agent's mind.
 
 > **License:** Business Source License 1.1 — non-commercial use is free. Commercial deployments require a license (email idwty@proton.me). Converts to Apache 2.0 on 2030-03-20. [See LICENSE](LICENSE)
 
@@ -120,9 +124,13 @@ It fails. Undo the change. It passes. That's Merkle integrity — one changed by
 
 ## What PCIS Does
 
-PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely knows, with cryptographic proof of what it knew and when.
+Most AI assistants fail long-term for the same reason: they store memories but never maintain them. After a few months you get contradictory beliefs, outdated facts, messy retrieval — and an assistant that's less reliable than no assistant at all.
 
-The problem: every AI agent deployed today starts each session with no memory of what happened before. At scale — contradictions, hallucinated history, lost client context, no audit trail. PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over time.
+The root cause isn't competence. It's the absence of epistemic maintenance.
+
+PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely owns, with cryptographic proof of what it believed and when. The agent doesn't just remember. It knows *why* it believes what it believes, can defend it under challenge, and flags when confidence should decay.
+
+PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over years, not sessions.
 
 PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model — including GigaChat for on-prem deployments. Switching the underlying model requires no changes to the memory layer.
 
