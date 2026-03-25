@@ -1,8 +1,11 @@
+# Docker networking requires services to bind on 0.0.0.0 inside the container.
+# For production deployments, restrict external access via firewall rules or
+# a reverse proxy (nginx/traefik) — do not expose port 5555 directly to the internet.
 services:
   pcis:
     build: .
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     environment:
       - PCIS_DOCKER=1
       - OLLAMA_HOST=http://ollama:11434
@@ -12,7 +15,7 @@ services:
   ollama:
     image: ollama/ollama
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
 
