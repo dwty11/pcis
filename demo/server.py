@@ -95,6 +95,60 @@ def api_boot():
 
         status = "CLEAN" if tree_ok else "MODIFIED"
 
+        # Epistemic health: assess every leaf's belief stance
+        epistemic = None
+        if _belief_available:
+            try:
+                from core.knowledge_synapses import load_synapses
+                syn_path = os.path.join(DEMO_DIR, "demo_synapses.json")
+                synapses = load_synapses(syn_path) if os.path.exists(syn_path) else load_synapses()
+
+                counts = {"confident": 0, "uncertain": 0, "contested": 0, "superseded": 0}
+                all_assessments = []
+                for branch in tree["branches"].values():
+                    for leaf in branch["leaves"]:
+                        a = _assess_belief(leaf["id"], tree=tree, synapses=synapses)
+                        stance_lower = a["stance"].lower()
+                        if stance_lower in counts:
+                            counts[stance_lower] += 1
+                        all_assessments.append(a)
+
+                total_leaves = sum(counts.values())
+
+                # Surface the 3 most interesting leaves
+                # Priority: CONTESTED/SUPERSEDED first, then UNCERTAIN, then lowest-confidence CONFIDENT
+                priority_order = {"CONTESTED": 0, "SUPERSEDED": 0, "UNCERTAIN": 1, "CONFIDENT": 2, "NOT_FOUND": 3}
+                all_assessments.sort(key=lambda a: (priority_order.get(a["stance"], 9), a["net_confidence"]))
+                surfaced = []
+                for a in all_assessments[:3]:
+                    surfaced.append({
+                        "leaf_id": a["leaf_id"],
+                        "branch": a["branch"],
+                        "content": a["content"],
+                        "stance": a["stance"],
+                        "net_confidence": round(a["net_confidence"], 2),
+                    })
+
+                # Last gardener run from adversarial_validation_run.json
+                last_gardener = None
+                val_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
+                if os.path.exists(val_file):
+                    try:
+                        with open(val_file, "r") as vf:
+                            val_data = json.load(vf)
+                        last_gardener = val_data.get("run_date") or val_data.get("timestamp")
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+
+                epistemic = {
+                    "total_leaves": total_leaves,
+                    **counts,
+                    "surfaced": surfaced,
+                    "last_gardener_run": last_gardener,
+                }
+            except Exception as ep_err:
+                logger.warning("Epistemic health computation failed: %s", ep_err)
+
         resp = {
             "status": status,
             "merkle_root": tree.get("root_hash", ""),
@@ -106,6 +160,8 @@ def api_boot():
         }
         if integrity_errors:
             resp["integrity_errors"] = integrity_errors
+        if epistemic:
+            resp["epistemic_health"] = epistemic
         return jsonify(resp)
     except Exception as e:
         return jsonify({"status": "ERROR", "error": str(e)}), 500

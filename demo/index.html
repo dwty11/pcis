@@ -739,6 +739,7 @@ body {
       <div class="boot-root" id="bootRoot"></div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-muted)" id="bootTimestamp"></div>
     </div>
+    <div id="epistemicHealth" style="display:none;margin-top:32px"></div>
   </div>
 
   <!-- ══════ TREE SCREEN ══════ -->
@@ -870,6 +871,7 @@ async function runBoot() {
       document.getElementById('bootRoot').textContent = data.merkle_root;
       document.getElementById('bootTimestamp').textContent = data.timestamp;
       document.getElementById('headerRoot').textContent = 'root: ' + data.merkle_root.slice(0, 16) + '...';
+      if (data.epistemic_health) renderEpistemicHealth(data.epistemic_health);
       btn.disabled = false;
     }, delay + 500);
 
@@ -889,6 +891,70 @@ function addLine(text, cls, delay) {
     terminal.appendChild(div);
     terminal.scrollTop = terminal.scrollHeight;
   }, delay);
+}
+
+function renderEpistemicHealth(eh) {
+  const container = document.getElementById('epistemicHealth');
+  container.style.display = 'block';
+
+  const stanceColors = {
+    'CONFIDENT': 'var(--green)',
+    'UNCERTAIN': 'var(--yellow)',
+    'CONTESTED': 'var(--orange)',
+    'SUPERSEDED': 'var(--red)',
+    'NOT_FOUND': 'var(--text-muted)',
+  };
+
+  const gardenerText = eh.last_gardener_run
+    ? 'Last adversarial review: ' + eh.last_gardener_run
+    : 'No adversarial review recorded';
+
+  // Check if all confident and nothing interesting surfaced
+  const allClean = eh.uncertain === 0 && eh.contested === 0 && eh.superseded === 0;
+
+  let surfacedHtml = '';
+  if (allClean) {
+    surfacedHtml = `
+      <div style="padding:12px 16px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:8px;font-size:13px;color:var(--green)">
+        Belief state: no contested or uncertain beliefs detected
+      </div>`;
+  } else {
+    surfacedHtml = eh.surfaced.map(s => {
+      const color = stanceColors[s.stance] || 'var(--text-dim)';
+      const content = s.content.length > 80 ? s.content.slice(0, 80) + '...' : s.content;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <span style="display:inline-block;padding:2px 10px;border-radius:5px;font-size:11px;font-weight:600;letter-spacing:1px;background:${color}20;color:${color};border:1px solid ${color}40;white-space:nowrap">${s.stance}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--accent);min-width:36px">${s.net_confidence.toFixed(2)}</span>
+          <span style="font-size:12px;color:var(--text-muted);min-width:60px">${s.branch}</span>
+          <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(content)}</span>
+        </div>`;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="section-title">Epistemic Health</div>
+    <div class="stats-row" style="margin-bottom:16px">
+      <div class="stat-card">
+        <div class="stat-value">${eh.total_leaves}</div>
+        <div class="stat-label">Beliefs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value green">${eh.confident}</div>
+        <div class="stat-label">Confident</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--yellow)">${eh.uncertain}</div>
+        <div class="stat-label">Uncertain</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--orange)">${eh.contested}</div>
+        <div class="stat-label">Contested</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:16px">${gardenerText}</div>
+    ${surfacedHtml}
+  `;
 }
 
 // ── Tree Screen ──
