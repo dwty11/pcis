@@ -1,6 +1,6 @@
 ---
 name: session-lifecycle
-description: "PCIS session bootstrap and commit protocol for AI agents. Use at conversation start (load context from tree) and conversation end (commit new knowledge). Required reading before any PCIS integration."
+description: "PCIS session bootstrap and commit protocol for AI agents. Use at conversation start (verify integrity, load context) and conversation end (commit new knowledge, update Merkle root). Required reading before any PCIS integration."
 ---
 
 # PCIS Session Lifecycle
@@ -9,45 +9,42 @@ PCIS is not a database you query on demand. It is your agent's persistent identi
 
 ---
 
-## Session Start — Load Context
+## Conversation Start
 
-Before doing anything else, orient yourself in the knowledge tree.
+Run these steps before doing anything else.
 
 ```bash
-# 1. Verify tree integrity — if this fails, stop and report
-python3 core/knowledge_tree.py --root
-python3 core/verify_memory.py
+# 1. Verify tree integrity — if not CLEAN, stop and alert the user
+python3 core/verify_memory.py --status
 
-# 2. Load relevant context for the session topic
+# 2. Search for context relevant to the user's first message
 python3 core/knowledge_search.py "<what this session is about>"
 
-# 3. Load any standing constraints or active state
-python3 core/knowledge_tree.py --show --branch constraints
-python3 core/knowledge_tree.py --show --branch state
+# 3. Check for pending gardener notifications
+cat memory/gardener-pending-notify.flag 2>/dev/null
 ```
 
-**If integrity check returns CHANGED or MISSING:** Do not proceed. Report the discrepancy. The tree may have been tampered with or corrupted.
+**If integrity check returns CHANGED or MISSING:** Do not proceed. Report the discrepancy. The tree may have been tampered with or corrupted. Searching a compromised tree is pointless — verify first, then trust.
 
-**If integrity check returns CLEAN:** Proceed. The tree state you are reading is verified.
+**If a gardener flag exists:** Inform the user: "The gardener flagged items for review. Run `python3 core/gardener.py --apply-staging` when ready."
 
----
-
-## During the Session
-
-Use the tree as working memory, not just a reference:
-
-- When the user states a new fact or preference → commit it before the session ends
-- When a decision is made → commit it with reasoning as `source`
-- When you discover a contradiction with an existing leaf → add a COUNTER leaf; do not silently overwrite
-- When two pieces of knowledge connect → note the connection in the leaf text
-
-Do not accumulate knowledge mentally and commit at the end in bulk. Commit as you go when stakes are high.
+**If CLEAN:** Proceed. Everything you read from the tree is cryptographically verified.
 
 ---
 
-## Session End — Commit New Knowledge
+## During the Conversation
 
-At the end of every session where something meaningful happened:
+- When the user mentions an entity (company, person, project) — search the tree before responding
+- When the user corrects you — store the correction immediately as a new leaf with `--source "user-correction"`
+- When you make a decision or recommendation — store the reasoning with source and confidence
+- When you learn something worth retaining — store it immediately, don't batch for later
+- When you discover a contradiction with an existing leaf — add a COUNTER leaf; do not silently overwrite
+
+---
+
+## Conversation End
+
+Review the session for knowledge worth committing. Store 1-3 high-value leaves — not a brain dump.
 
 ```bash
 # Add new knowledge (repeat for each significant fact, decision, or lesson)
@@ -61,26 +58,21 @@ python3 core/knowledge_tree.py \
 python3 core/verify_memory.py --update
 ```
 
+**Do not store:** trivial exchanges, temporary file paths, information already in the tree at equal or higher confidence.
+
 **Branch selection:**
 | What happened | Branch |
 |---|---|
-| New fact about the domain | `technical` |
-| Decision made | `state` |
-| Lesson from a mistake | `lessons` |
-| Behavioral rule established | `constraints` |
+| New domain fact or architecture decision | `technical` |
+| Current project state | `state` |
+| Lesson from a mistake or correction | `lessons` |
+| Behavioral rule or standing order | `constraints` |
 | Long-term belief or principle | `identity` |
+| People, organizations, interaction history | `relationships` |
 
 **Confidence guide:**
-- `1.0` — direct instruction, explicit order, verified fact
-- `0.9` — strong inference from clear evidence
-- `0.7-0.85` — reasonable conclusion, some uncertainty
-- `0.5-0.65` — hypothesis, low confidence, needs verification
-
----
-
-## What NOT to Do
-
-- **Do not skip session-end commits** — "mental notes" do not survive session restarts. The tree does.
-- **Do not overwrite existing leaves** — add a COUNTER leaf with `COUNTER: [leaf-id]` prefix if you disagree with existing knowledge.
-- **Do not commit bulk summaries** — one fact per leaf. "Many things happened" is not a leaf.
-- **Do not run `--update` before committing new leaves** — update the root after all new knowledge is in.
+- `1.0` — user directly stated this; I witnessed it
+- `0.9` — verified fact, strong evidence
+- `0.7–0.85` — well-sourced, some uncertainty
+- `0.5–0.65` — hypothesis or inference; needs verification
+- Never default to 1.0 — reserve it for direct user statements only
