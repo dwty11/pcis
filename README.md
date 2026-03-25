@@ -12,6 +12,8 @@
 Current agents amnesia on every restart → contradictions, lost context, no audit trail.  
 PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-challenging adversarial gardener**.
 
+> **RAG retrieves. PCIS proves.**
+
 ---
 
 ## Try it in 60 seconds
