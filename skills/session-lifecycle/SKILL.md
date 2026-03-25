@@ -20,13 +20,13 @@ python3 core/verify_memory.py --status
 # 2. Search for context relevant to the user's first message
 python3 core/knowledge_search.py "<what this session is about>"
 
-# 3. Check for pending gardener notifications
-cat memory/gardener-pending-notify.flag 2>/dev/null
+# 3. Check for staged gardener challenges
+python3 core/gardener.py --apply-staging --dry-run 2>/dev/null || true
 ```
 
 **If integrity check returns CHANGED or MISSING:** Do not proceed. Report the discrepancy. The tree may have been tampered with or corrupted. Searching a compromised tree is pointless — verify first, then trust.
 
-**If a gardener flag exists:** Inform the user: "The gardener flagged items for review. Run `python3 core/gardener.py --apply-staging` when ready."
+**If staged challenges exist:** Inform the user: "The gardener has staged items for review. Run `python3 core/gardener.py --apply-staging` to commit them."
 
 **If CLEAN:** Proceed. Everything you read from the tree is cryptographically verified.
 
