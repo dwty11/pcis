@@ -875,6 +875,18 @@ def main():
                     leaf_id = add_leaf(fresh_tree, branch, c["content"], source, c["confidence"])
                     log.info("✅ Added counter [%s] to %s", leaf_id, branch)
                     committed_written.append({**c, "leaf_id": leaf_id})
+
+                    try:
+                        import re as _re
+                        original_match = _re.search(r'COUNTER:\s*\[([a-f0-9]+)\]', c["content"])
+                        if original_match:
+                            from core.knowledge_synapses import load_synapses as _ls, save_synapses as _ss, add_synapse as _as
+                            _synapses = _ls()
+                            _as(_synapses, leaf_id, original_match.group(1), "CONTRADICTS",
+                                note="Gardener counter-challenge", source="gardener")
+                            _ss(_synapses)
+                    except Exception as _e:
+                        log.warning("Synapse creation failed (non-fatal): %s", _e)
             log.info("💾 Tree saved.")
         committed_counters = committed_written
 
