@@ -62,7 +62,7 @@ def index():
 
 @app.route("/sokrat.html")
 def sokrat():
-    return send_file("sokrat.html")
+    return send_file("compliance-demo.html")
 
 
 @app.route("/api/boot")
