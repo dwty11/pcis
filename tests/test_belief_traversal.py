@@ -2,7 +2,7 @@
 """Tests for belief_traversal.py"""
 
 import pytest
-from core.belief_traversal import assess_belief, SUPPORT_WEIGHT, CONTRADICTION_WEIGHT, DEPTH_DECAY
+from core.belief_traversal import assess_belief, query_belief, _keyword_search, SUPPORT_WEIGHT, CONTRADICTION_WEIGHT, DEPTH_DECAY
 
 
 def _make_tree(leaves_by_branch):
@@ -258,3 +258,57 @@ class TestClamping:
         ])
         result = assess_belief("a1", tree=tree, synapses=synapses)
         assert result["net_confidence"] >= 0.0
+
+
+class TestQueryBelief:
+    def test_returns_list_of_dicts(self):
+        tree = _make_tree({"phil": [
+            _make_leaf("a1", content="identity and self", confidence=0.85),
+        ]})
+        synapses = _make_synapses([])
+        results = query_belief("identity", top_k=3, tree=tree, synapses=synapses)
+        assert isinstance(results, list)
+        assert len(results) == 1
+        r = results[0]
+        assert "leaf_id" in r
+        assert "stance" in r
+        assert "net_confidence" in r
+        assert "reasoning" in r
+
+    def test_ordered_by_net_confidence(self):
+        tree = _make_tree({"phil": [
+            _make_leaf("a1", content="test concept alpha", confidence=0.50),
+            _make_leaf("a2", content="test concept beta", confidence=0.90),
+            _make_leaf("a3", content="test concept gamma", confidence=0.70),
+        ]})
+        synapses = _make_synapses([])
+        results = query_belief("test concept", top_k=5, tree=tree, synapses=synapses)
+        confs = [r["net_confidence"] for r in results]
+        assert confs == sorted(confs, reverse=True)
+
+    def test_top_k_respected(self):
+        tree = _make_tree({"phil": [
+            _make_leaf("a1", content="shared word here", confidence=0.80),
+            _make_leaf("a2", content="shared word there", confidence=0.70),
+            _make_leaf("a3", content="shared word everywhere", confidence=0.60),
+        ]})
+        synapses = _make_synapses([])
+        results = query_belief("shared", top_k=2, tree=tree, synapses=synapses)
+        assert len(results) <= 2
+
+    def test_no_synapses(self):
+        tree = _make_tree({"phil": [
+            _make_leaf("a1", content="philosophy of mind", confidence=0.75),
+        ]})
+        synapses = _make_synapses([])
+        results = query_belief("philosophy", top_k=3, tree=tree, synapses=synapses)
+        assert len(results) == 1
+        assert results[0]["net_confidence"] == 0.75
+
+    def test_empty_results(self):
+        tree = _make_tree({"phil": [
+            _make_leaf("a1", content="something unrelated", confidence=0.80),
+        ]})
+        synapses = _make_synapses([])
+        results = query_belief("xyznonexistent", top_k=3, tree=tree, synapses=synapses)
+        assert results == []

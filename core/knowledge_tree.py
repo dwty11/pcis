@@ -18,6 +18,7 @@ Usage:
     python3 knowledge_tree.py --link <from_leaf_id> <to_leaf_id> <RELATION> [--note "..."] [--source "..."]
     python3 knowledge_tree.py --links <leaf_id>
     python3 knowledge_tree.py --assess <leaf_id>
+    python3 knowledge_tree.py --query-belief <natural language query>
 
 Examples:
     python3 knowledge_tree.py --add technical "REST endpoints should use plural nouns" --source "style-guide" --confidence 0.85
@@ -148,6 +149,16 @@ def _write_tree(tree, path):
             tree["branches"][branch_name]["leaves"]
         )
     tree["root_hash"] = compute_root_hash(tree)
+    # Combined root: ties tree integrity to synapse integrity (Opus architecture, 2026-03-25)
+    try:
+        from core.knowledge_synapses import load_synapses, compute_synapses_root
+        synapses = load_synapses()
+        synapse_root = compute_synapses_root(synapses)
+    except Exception:
+        synapse_root = hashlib.sha256(b"NO_SYNAPSES").hexdigest()
+    tree["combined_root_hash"] = hashlib.sha256(
+        (tree["root_hash"] + synapse_root).encode()
+    ).hexdigest()
     tmp_path = path + ".tmp"
     with open(tmp_path, 'w', encoding='utf-8') as f:
         json.dump(tree, f, ensure_ascii=False, indent=2)
@@ -463,6 +474,19 @@ if __name__ == "__main__":
         print(f"  Net belief:  {result['net_confidence']:.2f} ({result['stance']})")
         print(f"  Reasoning:   {result['reasoning']}")
         print(f"  Support:     {result['support_count']} | Contradictions: {result['contradiction_count']}")
+    elif args[0] == "--query-belief":
+        from belief_traversal import query_belief
+        if len(args) < 2:
+            print("Usage: --query-belief <text>")
+            sys.exit(1)
+        query_text = " ".join(args[1:])
+        results = query_belief(query_text)
+        if not results:
+            print("No results found.")
+        for r in results:
+            print(f"\n[{r['stance']}] {r['leaf_id']} ({r['branch']})")
+            print(f"  {r['content']}")
+            print(f"  Net belief: {r['net_confidence']:.2f} | {r['reasoning']}")
     elif args[0] == "--help":
         print(__doc__)
     else:
