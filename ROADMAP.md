@@ -61,6 +61,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 
 The v2.0 architecture upgrades PCIS from narrative reasoning to formal epistemic infrastructure.
 
+- [x] **Belief graph traversal** — assess_belief() engine, typed synapse edges, epistemic stance (CONFIDENT/UNCERTAIN/CONTESTED/SUPERSEDED), Merkle-chained. Shipped 2026-03-25.
 - [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment
 - [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only
 - [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation agents; probability redistribution is automatic and auditable
