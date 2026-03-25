@@ -15,6 +15,9 @@ Usage:
     python3 knowledge_tree.py --diff <other_tree.json>
     python3 knowledge_tree.py --export
     python3 knowledge_tree.py --prune <branch> <leaf_id>
+    python3 knowledge_tree.py --link <from_leaf_id> <to_leaf_id> <RELATION> [--note "..."] [--source "..."]
+    python3 knowledge_tree.py --links <leaf_id>
+    python3 knowledge_tree.py --assess <leaf_id>
 
 Examples:
     python3 knowledge_tree.py --add technical "REST endpoints should use plural nouns" --source "style-guide" --confidence 0.85
@@ -368,6 +371,65 @@ def cmd_prune(args):
             print(f"Leaf {args[1]} not found in [{args[0]}]")
 
 
+def cmd_link(args):
+    if len(args) < 3:
+        print("Usage: --link <from_leaf_id> <to_leaf_id> <RELATION> [--note '...'] [--source '...']")
+        sys.exit(1)
+    from_leaf_id, to_leaf_id, relation = args[0], args[1], args[2]
+    note, source = "", "session"
+    for i, arg in enumerate(args):
+        if arg == "--note" and i + 1 < len(args):
+            note = args[i + 1]
+        if arg == "--source" and i + 1 < len(args):
+            source = args[i + 1]
+    from knowledge_synapses import (
+        load_synapses, save_synapses, add_synapse, find_leaf_in_tree,
+    )
+    tree = load_tree()
+    br_a, _ = find_leaf_in_tree(tree, from_leaf_id)
+    br_b, _ = find_leaf_in_tree(tree, to_leaf_id)
+    if br_a is None:
+        print(f"Error: leaf '{from_leaf_id}' not found in tree.")
+        sys.exit(1)
+    if br_b is None:
+        print(f"Error: leaf '{to_leaf_id}' not found in tree.")
+        sys.exit(1)
+    synapses = load_synapses()
+    synapse_id = add_synapse(synapses, from_leaf_id, to_leaf_id, relation, note, source)
+    save_synapses(synapses)
+    print(f"Synapse created: {from_leaf_id} --[{relation}]--> {to_leaf_id}")
+    print(f"   ID: {synapse_id}")
+    print(f"   Root: {synapses['root_hash'][:24]}...")
+
+
+def cmd_links(args):
+    if not args:
+        print("Usage: --links <leaf_id>")
+        sys.exit(1)
+    leaf_id = args[0]
+    from knowledge_synapses import load_synapses, get_synapses_for_leaf, find_leaf_in_tree
+    tree = load_tree()
+    synapses = load_synapses()
+    matches = get_synapses_for_leaf(synapses, leaf_id)
+    if not matches:
+        print(f"No synapses found for leaf {leaf_id}.")
+        return
+    print(f"\nSynapses for leaf {leaf_id} ({len(matches)}):\n")
+    for s in matches:
+        if s["from_leaf"] == leaf_id:
+            other_id = s["to_leaf"]
+            direction = f"--[{s['relation']}]-->"
+        else:
+            other_id = s["from_leaf"]
+            direction = f"<--[{s['relation']}]--"
+        _, other_leaf = find_leaf_in_tree(tree, other_id)
+        content_preview = other_leaf["content"][:60] if other_leaf else "(leaf not found)"
+        print(f"   {direction} {other_id}: {content_preview}")
+        if s["note"]:
+            print(f"            note: {s['note']}")
+    print()
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
@@ -384,6 +446,23 @@ if __name__ == "__main__":
         cmd_export()
     elif args[0] == "--prune":
         cmd_prune(args[1:])
+    elif args[0] == "--link":
+        cmd_link(args[1:])
+    elif args[0] == "--links":
+        cmd_links(args[1:])
+    elif args[0] == "--assess":
+        from belief_traversal import assess_belief
+        if len(args) < 2:
+            print("Usage: --assess <leaf_id>")
+            sys.exit(1)
+        tree = load_tree()
+        result = assess_belief(args[1], tree=tree)
+        print(f"\nBelief Assessment: {result['leaf_id']}")
+        print(f"  Content:     {result['content']}")
+        print(f"  Branch:      {result.get('branch', '?')}")
+        print(f"  Net belief:  {result['net_confidence']:.2f} ({result['stance']})")
+        print(f"  Reasoning:   {result['reasoning']}")
+        print(f"  Support:     {result['support_count']} | Contradictions: {result['contradiction_count']}")
     elif args[0] == "--help":
         print(__doc__)
     else:
