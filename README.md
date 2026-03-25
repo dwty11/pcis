@@ -180,9 +180,19 @@ The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero per
 
 ## Prerequisites
 
-- Python 3.10+ (Linux or macOS)
+- Python 3.10+ (Linux or macOS — Windows not currently supported due to `fcntl` dependency)
 - pip
-- An LLM API key (for adversarial validation; optional for demo mode)
+
+**For the adversarial gardener (recommended):**
+- [Ollama](https://ollama.com) running locally
+- A model pulled: `ollama pull qwen3:14b` (or any compatible model)
+- An LLM API key (Anthropic, OpenAI, or GigaChat) — optional; Ollama is the default
+
+**For semantic search:**
+- Ollama + `ollama pull nomic-embed-text`
+- Without it, search falls back to keyword matching (still functional)
+
+**Demo mode** works without any of the above — synthetic data, no external calls.
 
 ---
 
