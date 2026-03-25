@@ -74,6 +74,26 @@ The v2.0 architecture upgrades PCIS from narrative reasoning to formal epistemic
 
 ---
 
+## Alternatives and differentiation
+
+There are other AI memory projects. Here is an honest comparison.
+
+| Project | What it does well | What PCIS does differently |
+|---|---|---|
+| **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | No cryptographic proof — audit trail is logs, not a Merkle root. Requires MatrixOne (Chinese company). Cloud option is a data sovereignty issue for enterprise deployments. PCIS is a JSON file on your own infrastructure. |
+| **ByteRover** | Consumer-friendly, 30k+ downloads, OpenClaw memory plugin | Consumer market (personal productivity). No tamper evidence, no adversarial belief challenge, no compliance audit trail. |
+| **Letta / MemGPT** | Mature, multi-agent, OS-memory model | No epistemic hygiene — memories accumulate without contradiction detection. No cryptographic integrity. |
+| **Mem0** | Simple API, easy integration | Retrieval only — no belief revision, no gardener, no proof of what the agent knew and when. |
+| **Traditional RAG** | Fast, scalable, well-understood | Retrieves documents. Does not maintain beliefs, does not detect contradictions, does not prove identity. |
+
+**The core distinction:** most AI memory tools solve *retrieval*. PCIS solves *identity* — what an agent believes, how those beliefs have been challenged, and cryptographic proof of the state at any point in time.
+
+For regulated environments (finance, healthcare, compliance) where "the AI said so" is not enough — PCIS is the only architecture that produces an auditable, tamper-evident belief record.
+
+> *Memoria remembers. PCIS proves.*
+
+---
+
 ## Known limitations in v1.0
 
 - Merkle integrity is root-hash only (not full branch proofs)
