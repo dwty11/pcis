@@ -1,7 +1,9 @@
 {
   "warning": "Never commit config.json with real keys. This file is an example only.",
   "base_dir": ".",
+  "llm_provider": "ollama",
   "llm_api_key": "",
-  "model_name": "your-model-name",
-  "demo_mode": true
+  "llm_model": "qwen3:14b",
+  "demo_mode": true,
+  "_ssl_note": "PCIS_SSL_VERIFY=false disables certificate verification entirely. Never use in production \u2014 for self-signed certs in isolated dev environments only."
 }
