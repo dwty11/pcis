@@ -37,7 +37,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 
 ---
 
-## v1.1 — Operational hardening
+## v2.0 — What's next
 
 - [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention
 - [ ] Docker image — `docker run pcis/demo` with no local Python setup
@@ -45,24 +45,11 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [ ] Semantic search — embedding-based query, not keyword match
 - [ ] Config validation — helpful errors when config.json is missing or malformed
 - [ ] Belief decay — confidence degrades automatically over time unless reinforced by new evidence
-
----
-
-## v1.2 — Agent integration
-
 - [ ] LangChain adapter — PCIS as a memory provider for LangChain agents
 - [ ] OpenAI function calling integration — agent reads/writes tree via structured API
 - [ ] Webhook support — gardener posts summary to Slack/Discord after nightly run
 - [ ] Multi-agent shared tree — multiple agents reading from one verified knowledge source
 - [ ] Source credibility weights — evidence from peer-reviewed sources weighted differently from LLM-generated claims
-
----
-
-## v2.0 — Formal epistemics
-
-The v2.0 architecture upgrades PCIS from narrative reasoning to formal epistemic infrastructure.
-
-- [x] **Belief graph traversal** — assess_belief() engine, typed synapse edges, epistemic stance (CONFIDENT/UNCERTAIN/CONTESTED/SUPERSEDED), Merkle-chained. Shipped 2026-03-25.
 - [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment
 - [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only
 - [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation agents; probability redistribution is automatic and auditable
