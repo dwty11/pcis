@@ -207,3 +207,53 @@ def assess_belief(leaf_id, tree=None, synapses=None, max_depth=3):
         "superseded": False,
         "depth_reached": max_depth_reached,
     }
+
+
+def _keyword_search(text, tree, top_k):
+    """Simple keyword fallback: match query words against leaf content."""
+    words = text.lower().split()
+    if not words:
+        return []
+    results = []
+    for branch_name, branch in tree.get("branches", {}).items():
+        for leaf in branch.get("leaves", []):
+            content_lower = leaf["content"].lower()
+            hits = sum(1 for w in words if w in content_lower)
+            if hits > 0:
+                results.append((hits, leaf["id"]))
+    results.sort(key=lambda x: x[0], reverse=True)
+    return [leaf_id for _, leaf_id in results[:top_k]]
+
+
+def query_belief(text, top_k=3, tree=None, synapses=None):
+    """
+    Natural language entry point to belief assessment.
+    Searches the knowledge tree semantically, then assesses the top results.
+    Returns a list of assessment dicts (same shape as assess_belief()),
+    ordered by net_confidence descending, up to top_k results.
+    Falls back to keyword search if semantic search unavailable — never raises.
+    """
+    tree_was_none = tree is None
+    if tree is None:
+        from core.knowledge_tree import load_tree
+        tree = load_tree()
+    if synapses is None:
+        from core.knowledge_synapses import load_synapses
+        synapses = load_synapses()
+    leaf_ids = []
+    if tree_was_none:
+        try:
+            from core.knowledge_search import search
+            results = search(text, top_k=top_k, min_score=0.0)
+            leaf_ids = [leaf_id for _, leaf_id, _ in results]
+        except Exception:
+            pass
+    if not leaf_ids:
+        leaf_ids = _keyword_search(text, tree, top_k)
+    if not leaf_ids:
+        return []
+    assessments = []
+    for leaf_id in leaf_ids[:top_k]:
+        assessments.append(assess_belief(leaf_id, tree=tree, synapses=synapses))
+    assessments.sort(key=lambda a: a["net_confidence"], reverse=True)
+    return assessments
