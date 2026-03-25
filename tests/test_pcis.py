@@ -108,6 +108,38 @@ class TestAdversarialCounters(unittest.TestCase):
         self.assertFalse(content.startswith("COUNTER:"))
 
 
+class TestCounterParsing(unittest.TestCase):
+    """parse_gardener_output handles new 5-field and old prefix COUNTER formats."""
+
+    def test_new_format_5th_field(self):
+        """Leaf ID in the 5th pipe field, no prefix in content."""
+        line = "COUNTER|technical|This claim is overstated|0.65|abc123def456"
+        counters, _, _ = gd.parse_gardener_output(line)
+        self.assertEqual(len(counters), 1)
+        c = counters[0]
+        self.assertEqual(c["branch"], "technical")
+        self.assertEqual(c["content"], "This claim is overstated")
+        self.assertAlmostEqual(c["confidence"], 0.65)
+        self.assertEqual(c["original_leaf_id"], "abc123def456")
+
+    def test_backward_compat_prefix_in_content(self):
+        """Old format: COUNTER: [id] in content, no 5th field — still parses."""
+        line = "COUNTER|technical|COUNTER: [abc123def456] This claim is overstated|0.65"
+        counters, _, _ = gd.parse_gardener_output(line)
+        self.assertEqual(len(counters), 1)
+        c = counters[0]
+        self.assertEqual(c["branch"], "technical")
+        self.assertEqual(c["content"], "This claim is overstated")
+        self.assertEqual(c["original_leaf_id"], "abc123def456")
+
+    def test_no_leaf_id_at_all(self):
+        """Neither 5th field nor prefix — original_leaf_id is None."""
+        line = "COUNTER|lessons|A generic challenge|0.60"
+        counters, _, _ = gd.parse_gardener_output(line)
+        self.assertEqual(len(counters), 1)
+        self.assertIsNone(counters[0]["original_leaf_id"])
+
+
 class TestDemoTreeIntegrity(unittest.TestCase):
     """demo_tree.json is well-formed and internally consistent."""
 
