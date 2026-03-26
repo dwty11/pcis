@@ -19,6 +19,7 @@ Usage:
     python3 knowledge_tree.py --links <leaf_id>
     python3 knowledge_tree.py --assess <leaf_id>
     python3 knowledge_tree.py --query-belief <natural language query>
+    python3 knowledge_tree.py --decay [--half-life 180] [--dry-run]
 
 Examples:
     python3 knowledge_tree.py --add technical "REST endpoints should use plural nouns" --source "style-guide" --confidence 0.85
@@ -487,6 +488,27 @@ if __name__ == "__main__":
             print(f"\n[{r['stance']}] {r['leaf_id']} ({r['branch']})")
             print(f"  {r['content']}")
             print(f"  Net belief: {r['net_confidence']:.2f} | {r['reasoning']}")
+    elif args[0] == "--decay":
+        from core.belief_decay import apply_decay_to_tree
+        half_life = 180
+        dry_run = False
+        for i, arg in enumerate(args[1:]):
+            if arg == "--half-life" and i + 2 < len(args):
+                half_life = int(args[i + 2])
+            if arg == "--dry-run":
+                dry_run = True
+        summary = apply_decay_to_tree(
+            half_life_days=half_life, dry_run=dry_run
+        )
+        mode = "DRY RUN" if dry_run else "APPLIED"
+        print(f"\nBelief Decay ({mode}, half-life={half_life}d)")
+        print(f"   Leaves updated: {summary['updated']}/{summary['total']}")
+        print(f"   Exempt (skipped): {summary['skipped']}")
+        print(f"   Decay range: {summary['min_decay']:.4f} – {summary['max_decay']:.4f}")
+        print(f"   Avg decay: {summary['avg_decay']:.4f}")
+        if not dry_run and summary['updated'] > 0:
+            tree = load_tree()
+            print(f"   New root: {tree['root_hash'][:24]}...")
     elif args[0] == "--help":
         print(__doc__)
     else:
