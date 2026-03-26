@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
@@ -573,6 +574,46 @@ def api_ingest():
     except Exception as e:
         logger.exception("Ingestion failed")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ingest/upload", methods=["POST"])
+def api_ingest_upload():
+    """Accept a PDF or TXT file upload, extract text, and return it."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    uploaded = request.files["file"]
+    filename = uploaded.filename or ""
+    ext = os.path.splitext(filename)[1].lower()
+
+    if ext not in (".pdf", ".txt"):
+        return jsonify({"error": f"Unsupported file type: {ext or '(none)'}"}), 400
+
+    try:
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+            uploaded.save(tmp)
+            tmp_path = tmp.name
+
+        if ext == ".pdf":
+            from core.doc_ingest import _read_pdf
+            text = _read_pdf(tmp_path)
+        else:
+            with open(tmp_path, "r", encoding="utf-8") as f:
+                text = f.read()
+
+        return jsonify({
+            "text": text,
+            "filename": filename,
+            "chars": len(text),
+        })
+    except Exception as e:
+        logger.exception("File upload processing failed")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
 
 @app.route("/api/search", methods=["POST"])

@@ -844,6 +844,11 @@ body {
         Process a document once — the beliefs are stored permanently with cryptographic integrity.
       </p>
     </div>
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:14px">
+      <button class="btn" onclick="document.getElementById('fileUpload').click()" style="white-space:nowrap">Upload PDF or TXT</button>
+      <input type="file" id="fileUpload" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(this)">
+      <span id="uploadStatus" style="font-size:12px;color:var(--text-dim)"></span>
+    </div>
     <div style="margin-bottom:16px">
       <textarea id="ingestContent" rows="10" placeholder="Paste document content here..."
         style="width:100%;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;resize:vertical;outline:none;transition:border-color 0.2s"
@@ -1700,6 +1705,38 @@ function hideHistoryDetail() {
 }
 
 // ── Ingest Screen ──
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('uploadStatus');
+  statusEl.textContent = 'Uploading…';
+  statusEl.style.color = 'var(--text-dim)';
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await fetch('/api/ingest/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.textContent = data.error || 'Upload failed';
+      statusEl.style.color = 'var(--orange)';
+      return;
+    }
+    document.getElementById('ingestContent').value = data.text;
+    document.getElementById('ingestSource').value = data.filename || '';
+    statusEl.textContent = '\u{1F4C4} Extracted ' + data.chars.toLocaleString() + ' chars from ' + data.filename;
+    statusEl.style.color = 'var(--green, #4ade80)';
+    runIngest();
+  } catch (e) {
+    statusEl.textContent = 'Upload error: ' + e.message;
+    statusEl.style.color = 'var(--orange)';
+  } finally {
+    input.value = '';
+  }
+}
+
 async function runIngest() {
   const content = document.getElementById('ingestContent').value.trim();
   if (!content) return;
