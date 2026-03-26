@@ -40,11 +40,11 @@ Independent analysis of production AI memory systems reveals seven predictable f
 ## v2.0 — What's next
 
 - [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention
-- [ ] Docker image — `docker run pcis/demo` with no local Python setup
+- [x] Docker image — `docker compose up` with no local Python setup (ollama-init pulls model on first run)
 - [ ] Proper Merkle tree — balanced binary tree with branch proofs, not just root hash
 - [ ] Semantic search — embedding-based query, not keyword match
 - [ ] Config validation — helpful errors when config.json is missing or malformed
-- [ ] Belief decay — confidence degrades automatically over time unless reinforced by new evidence
+- [x] Belief decay — exponential decay (half-life 180 days), constraints/state branches exempt, CLI `--decay [--dry-run]`
 - [ ] LangChain adapter — PCIS as a memory provider for LangChain agents
 - [ ] OpenAI function calling integration — agent reads/writes tree via structured API
 - [ ] Webhook support — gardener posts summary to Slack/Discord after nightly run

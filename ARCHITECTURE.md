@@ -4,7 +4,7 @@
 PCIS stores agent knowledge as a structured tree of leaves, not a flat log or vector index. Each leaf carries a fact, a branch tag, a confidence score, a source reference, and a timestamp. Knowledge is organized by domain, queryable by semantic search, and human-readable at every level. The tree persists across sessions — the agent wakes up knowing what it knew when it last ran.
 
 ## 2. Merkle Integrity Verification
-Every state of the knowledge tree is cryptographically hashed using a Merkle structure. When the agent boots, it computes the current root hash and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption. This makes the agent's memory tamper-evident and auditable: you can prove what the agent knew at any point in time.
+Every state of the knowledge tree is fingerprinted using a cryptographic hash chain. When the agent boots, it computes the current root hash and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption. This makes the agent's memory tamper-evident and auditable: you can prove what the agent knew at any point in time.
 
 ## 3. Adversarial Pass via External LLM
 PCIS runs a periodic adversarial pass where an external LLM is given existing knowledge leaves and asked to challenge them. The adversary is not looking for errors — it is looking for contradictions, outdated assumptions, and knowledge that no longer holds given new context. Where challenges succeed, COUNTER leaves are generated and staged for review. The tree is not blindly updated — it is pressure-tested.
