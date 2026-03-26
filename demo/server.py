@@ -10,14 +10,16 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
+import threading
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
 
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import core.knowledge_search as knowledge_search
-from core.knowledge_tree import verify_tree_integrity
+from core.knowledge_tree import verify_tree_integrity, add_knowledge, compute_root_hash
 
 try:
     from core.belief_traversal import query_belief as _query_belief, assess_belief as _assess_belief
@@ -410,6 +412,237 @@ def api_belief():
         return jsonify({"error": "Belief traversal unavailable", "detail": str(e)})
 
 
+@app.route("/api/belief/recompute", methods=["POST"])
+def api_belief_recompute():
+    """Recompute all Bayesian confidence updates from scratch."""
+    try:
+        from core.belief_updater import recompute_all
+        from core.knowledge_synapses import load_synapses
+
+        tree = load_tree()
+        syn_path = os.path.join(DEMO_DIR, "demo_synapses.json")
+        synapses = load_synapses(syn_path) if os.path.exists(syn_path) else load_synapses()
+
+        log_file = os.path.join(DEMO_DIR, "demo_belief_updates.json")
+        result = recompute_all(tree, synapses=synapses, log_file=log_file)
+
+        # Save updated tree
+        tree["last_updated"] = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+        from core.knowledge_tree import compute_branch_hash, compute_root_hash
+        for branch_name in tree.get("branches", {}):
+            tree["branches"][branch_name]["hash"] = compute_branch_hash(
+                tree["branches"][branch_name]["leaves"]
+            )
+        tree["root_hash"] = compute_root_hash(tree)
+        with open(DEMO_TREE_FILE, "w", encoding="utf-8") as f:
+            json.dump(tree, f, ensure_ascii=False, indent=2)
+
+        return jsonify(result)
+    except Exception as e:
+        logger.exception("Belief recompute failed")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/belief/update-log")
+def api_belief_update_log():
+    """Return the Bayesian confidence update log."""
+    try:
+        from core.belief_updater import get_update_log
+        log_file = os.path.join(DEMO_DIR, "demo_belief_updates.json")
+        log = get_update_log(log_file)
+        return jsonify({"updates": log})
+    except Exception as e:
+        return jsonify({"updates": [], "error": str(e)})
+
+
+@app.route("/api/history")
+def api_history():
+    """Return the most recent belief changes across all leaves."""
+    try:
+        from core.belief_history import get_recent_changes
+        history_file = os.path.join(DEMO_DIR, "demo_belief_history.json")
+        n = request.args.get("n", 20, type=int)
+        changes = get_recent_changes(n=n, history_file=history_file)
+
+        # Enrich with leaf content snippets
+        tree = load_tree()
+        for c in changes:
+            for branch in tree["branches"].values():
+                for leaf in branch["leaves"]:
+                    if leaf["id"] == c["leaf_id"]:
+                        c["content_snippet"] = leaf["content"][:80]
+                        break
+
+        return jsonify({"changes": changes})
+    except Exception as e:
+        return jsonify({"changes": [], "error": str(e)})
+
+
+@app.route("/api/history/<leaf_id>")
+def api_history_leaf(leaf_id):
+    """Return full version history for one leaf."""
+    try:
+        from core.belief_history import get_leaf_history
+        history_file = os.path.join(DEMO_DIR, "demo_belief_history.json")
+        records = get_leaf_history(leaf_id, history_file=history_file)
+
+        # Enrich with leaf content snippet
+        tree = load_tree()
+        content_snippet = ""
+        for branch in tree["branches"].values():
+            for leaf in branch["leaves"]:
+                if leaf["id"] == leaf_id:
+                    content_snippet = leaf["content"][:120]
+                    break
+
+        return jsonify({
+            "leaf_id": leaf_id,
+            "content_snippet": content_snippet,
+            "records": records,
+        })
+    except Exception as e:
+        return jsonify({"leaf_id": leaf_id, "records": [], "error": str(e)})
+
+
+@app.route("/api/history/<leaf_id>/diff")
+def api_history_diff(leaf_id):
+    """Return diff between two version records of a leaf."""
+    try:
+        from core.belief_history import diff_versions
+        history_file = os.path.join(DEMO_DIR, "demo_belief_history.json")
+        v1 = request.args.get("v1", 0, type=int)
+        v2 = request.args.get("v2", 1, type=int)
+        result = diff_versions(leaf_id, v1, v2, history_file=history_file)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/ingest", methods=["POST"])
+def api_ingest():
+    """Ingest document content: extract factual claims and commit as leaves."""
+    data = request.get_json()
+    content = (data.get("content") or "").strip()
+    source = data.get("source", "manual").strip() or "manual"
+
+    if not content:
+        return jsonify({"error": "Empty content"}), 400
+    if len(content) > 50_000:
+        return jsonify({"error": "Content too long (max 50,000 chars)"}), 400
+
+    try:
+        from core.doc_ingest import extract_claims_from_text, INGEST_BRANCH, DEFAULT_CONFIDENCE
+
+        claims = extract_claims_from_text(content)
+
+        tree = load_tree()
+
+        leaves = []
+        for claim in claims:
+            leaf_id = add_knowledge(
+                tree, INGEST_BRANCH, claim,
+                source=source, confidence=DEFAULT_CONFIDENCE,
+            )
+            leaves.append({
+                "id": leaf_id,
+                "content": claim,
+                "confidence": DEFAULT_CONFIDENCE,
+            })
+
+        root_hash = compute_root_hash(tree)
+
+        # Save the updated demo tree
+        import json as _json
+        tree["last_updated"] = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+        for branch_name in tree.get("branches", {}):
+            from core.knowledge_tree import compute_branch_hash
+            tree["branches"][branch_name]["hash"] = compute_branch_hash(
+                tree["branches"][branch_name]["leaves"]
+            )
+        tree["root_hash"] = root_hash
+        with open(DEMO_TREE_FILE, "w", encoding="utf-8") as f:
+            _json.dump(tree, f, ensure_ascii=False, indent=2)
+
+        return jsonify({
+            "leaves": leaves,
+            "count": len(leaves),
+            "root_hash": root_hash,
+            "source": source,
+        })
+
+    except Exception as e:
+        logger.exception("Ingestion failed")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/search", methods=["POST"])
+def api_search():
+    """Dedicated semantic search endpoint.
+
+    POST {"query": "...", "top": 5, "branch": null}
+    Returns results with id, content, branch, confidence, score, source.
+    Falls back to substring match if Ollama is unavailable.
+    """
+    data = request.get_json()
+    query = (data.get("query") or "").strip()
+    if not query:
+        return jsonify({"error": "Empty query"}), 400
+
+    top_k = data.get("top", 5)
+    branch_filter = data.get("branch") or None
+
+    tree = load_tree()
+    fallback = False
+    model = knowledge_search.EMBED_MODEL
+
+    try:
+        raw = knowledge_search.search(query, top_k=top_k, branch_filter=branch_filter)
+        results = []
+        for score, leaf_id, leaf_data in raw:
+            results.append({
+                "id": leaf_id,
+                "content": leaf_data["content"],
+                "branch": leaf_data["branch"],
+                "confidence": leaf_data.get("confidence", 0.7),
+                "score": round(score, 4),
+                "source": leaf_data.get("source", ""),
+            })
+        if not results:
+            raise ValueError("no semantic results")
+    except Exception as e:
+        logger.warning("Semantic search failed (%s), falling back to substring match.", e)
+        fallback = True
+        keywords = query.lower().split()
+        scored = []
+        for branch_name, branch in tree["branches"].items():
+            if branch_filter and branch_name != branch_filter:
+                continue
+            for leaf in branch["leaves"]:
+                content_lower = leaf["content"].lower()
+                hits = sum(1 for kw in keywords if kw in content_lower)
+                if hits > 0:
+                    score = round(hits * leaf["confidence"], 4)
+                    scored.append({
+                        "id": leaf["id"],
+                        "content": leaf["content"],
+                        "branch": branch_name,
+                        "confidence": leaf["confidence"],
+                        "score": score,
+                        "source": leaf["source"],
+                    })
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        results = scored[:top_k]
+
+    resp = {
+        "results": results,
+        "query": query,
+        "model": model,
+    }
+    if fallback:
+        resp["fallback"] = True
+    return jsonify(resp)
+
+
 @app.route("/api/status")
 def api_status():
     """System health overview."""
@@ -439,7 +672,37 @@ def api_status():
     })
 
 
+def _maybe_reindex():
+    """Trigger background reindex if search index is missing or stale (>1 hour)."""
+    index_path = knowledge_search.INDEX_FILE
+    stale = True
+    if os.path.exists(index_path):
+        age = datetime.now(TZ_UTC).timestamp() - os.path.getmtime(index_path)
+        stale = age > 3600  # older than 1 hour
+
+    if not stale:
+        return
+
+    logger.info("Search index missing or stale — triggering background reindex.")
+
+    def _run():
+        try:
+            script = os.path.join(os.path.dirname(DEMO_DIR), "core", "knowledge_search.py")
+            env = os.environ.copy()
+            env["PCIS_BASE_DIR"] = DEMO_DIR
+            subprocess.run(
+                [sys.executable, script, "--reindex"],
+                env=env, timeout=120,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+        except Exception as exc:
+            logger.warning("Background reindex failed: %s", exc)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 if __name__ == "__main__":
+    _maybe_reindex()
     host = "0.0.0.0" if os.environ.get("PCIS_DOCKER") else "127.0.0.1"
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
