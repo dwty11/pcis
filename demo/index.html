@@ -725,7 +725,7 @@ body {
       <div class="boot-explain">
         <div class="boot-explain-section">
           <div class="boot-explain-label">What is happening</div>
-          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on every memory and knowledge file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the Merkle root changes and the status flags CHANGED.<br><br>This is not a status flag. It is a mathematical proof, computed in real time.</div>
+          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on every memory and knowledge file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the root hash changes and the status flags CHANGED.<br><br>This is cryptographic tamper detection, computed in real time.</div>
         </div>
         <div class="boot-explain-section">
           <div class="boot-explain-label">Workspace</div>
@@ -1314,7 +1314,7 @@ async function loadGigaChat() {
         <div class="stat-label">Model</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" style="color:var(--orange)">${data.entries_challenged}</div>
+        <div class="stat-value" style="color:var(--orange)">${data.leaves_challenged || data.entries_challenged || 0}</div>
         <div class="stat-label">Entries Challenged</div>
       </div>
     `;
@@ -1323,9 +1323,9 @@ async function loadGigaChat() {
       <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
         <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root Transition</div>
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
-          <span style="color:var(--text-dim)">${data.merkle_root_before.slice(0,24)}...</span>
+          <span style="color:var(--text-dim)">${(data.merkle_root_before||'').slice(0,24)}...</span>
           <span style="color:var(--purple);font-size:18px">&rarr;</span>
-          <span style="color:var(--green)">${data.merkle_root_after.slice(0,24)}...</span>
+          <span style="color:var(--green)">${(data.merkle_root_after||'').slice(0,24)}...</span>
         </div>
       </div>
     `;
@@ -1337,8 +1337,10 @@ async function loadGigaChat() {
     }
 
     list.innerHTML = data.counters.map(c => {
-      const originalClip = c.original_content ? escapeHtml(c.original_content.slice(0, 100)) + (c.original_content.length > 100 ? '...' : '') : 'N/A';
-      const challenge = c.content.startsWith('COUNTER: ') ? c.content.slice(9) : c.content;
+      const rawContent = c.counter_content || c.content || '';
+      const originalText = (c.original && c.original.content) ? c.original.content : (c.original_content || '');
+      const originalClip = originalText ? escapeHtml(originalText.slice(0, 100)) + (originalText.length > 100 ? '...' : '') : 'N/A';
+      const challenge = rawContent.startsWith('COUNTER: ') ? rawContent.replace(/^COUNTER: \[[^\]]+\]\s*\n?\n?/, '') : rawContent;
       return `
         <div class="adversarial-card" style="border-left-color:var(--purple)">
           <div class="adv-label" style="color:var(--purple)">GigaChat Challenge</div>
