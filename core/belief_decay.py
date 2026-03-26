@@ -44,7 +44,8 @@ def decay_confidence(leaf, half_life_days=180, now=None):
     return round(decayed, 6), round(age_days, 2)
 
 
-def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=None):
+def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=None,
+                        history_file=None):
     """Apply confidence decay to every non-exempt leaf in the tree.
 
     Returns a summary dict:
@@ -62,6 +63,7 @@ def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=N
     skipped = 0
     total = 0
     drops = []
+    decayed_leaves = []  # (leaf_id, old_conf, new_conf) for history
 
     for branch_name, branch in tree.get("branches", {}).items():
         for leaf in branch.get("leaves", []):
@@ -81,6 +83,7 @@ def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=N
                 # Note: confidence is not part of the hash (hash = branch:timestamp:content)
                 # but we still count it as updated
                 updated += 1
+                decayed_leaves.append((leaf["id"], old_conf, new_conf))
 
     summary = {
         "updated": updated,
@@ -93,5 +96,18 @@ def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=N
 
     if not dry_run and updated > 0:
         save_tree(tree, tree_path)
+
+        # Record each decayed leaf in belief history
+        try:
+            from core.belief_history import record_change
+            for leaf_id, old_c, new_c in decayed_leaves:
+                record_change(
+                    leaf_id, "decayed",
+                    round(old_c, 6), round(new_c, 6),
+                    f"time decay (half-life {half_life_days}d)",
+                    tree, history_file=history_file,
+                )
+        except Exception:
+            pass  # history is advisory
 
     return summary

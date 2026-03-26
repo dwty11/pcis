@@ -699,10 +699,13 @@ body {
 
 <div class="tabs">
   <div class="tab active" data-tab="boot">Boot</div>
+  <div class="tab" data-tab="search">Search</div>
   <div class="tab" data-tab="tree">Knowledge Tree</div>
   <div class="tab" data-tab="query">Query</div>
   <div class="tab" data-tab="belief">Belief</div>
   <div class="tab" data-tab="adversarial">Adversarial</div>
+  <div class="tab" data-tab="history">History</div>
+  <div class="tab" data-tab="ingest">Ingest</div>
   <div class="tab" data-tab="gigachat">GigaChat Validation</div>
 </div>
 
@@ -742,6 +745,24 @@ body {
     <div id="epistemicHealth" style="display:none;margin-top:32px"></div>
   </div>
 
+  <!-- ══════ SEARCH SCREEN ══════ -->
+  <div class="screen" id="screen-search">
+    <div style="margin-bottom:24px">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">Semantic Search</h2>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
+        Search the knowledge tree by meaning using local embeddings (nomic-embed-text via Ollama).
+        Results are ranked by cosine similarity. Falls back to substring matching if Ollama is unavailable.
+      </p>
+    </div>
+    <div class="query-input-wrap">
+      <input class="query-input" id="searchInput" type="text" placeholder="Search by meaning — e.g. &quot;lessons about identity&quot;" autocomplete="off">
+      <button class="btn" id="searchBtn" onclick="runSearch()">Search</button>
+    </div>
+    <div id="searchResults">
+      <div class="query-empty">Enter a query to search across all knowledge branches</div>
+    </div>
+  </div>
+
   <!-- ══════ TREE SCREEN ══════ -->
   <div class="screen" id="screen-tree">
     <div class="stats-row" id="treeStats"></div>
@@ -775,6 +796,15 @@ body {
     <div id="beliefResults">
       <div class="query-empty">Enter a query to assess belief stance, confidence, and evidence</div>
     </div>
+    <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:0">Recent Confidence Updates</div>
+        <button class="btn" id="recomputeBtn" onclick="runRecompute()" style="font-size:12px;padding:8px 18px">Recompute All</button>
+      </div>
+      <div id="beliefUpdateLog">
+        <div class="query-empty" style="font-size:12px">No Bayesian updates recorded yet</div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════ ADVERSARIAL SCREEN ══════ -->
@@ -784,6 +814,48 @@ body {
     <div id="advList">
       <div class="loading"><div class="spinner"></div> Loading adversarial data...</div>
     </div>
+  </div>
+
+  <!-- ══════ HISTORY SCREEN ══════ -->
+  <div class="screen" id="screen-history">
+    <div style="margin-bottom:24px">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">Belief Version History</h2>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
+        Every change to a leaf's confidence is versioned with a full audit trail.
+        Click any row to view the full history for that leaf.
+      </p>
+    </div>
+    <div id="historyTimeline">
+      <div class="loading"><div class="spinner"></div> Loading history...</div>
+    </div>
+    <div id="historyDetail" style="display:none;margin-top:28px;border-top:1px solid var(--border);padding-top:24px">
+      <button class="btn" onclick="hideHistoryDetail()" style="font-size:12px;padding:6px 14px;margin-bottom:16px">&larr; Back to timeline</button>
+      <div id="historyDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- ══════ INGEST SCREEN ══════ -->
+  <div class="screen" id="screen-ingest">
+    <div style="margin-bottom:24px">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">Document Ingestion</h2>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
+        Paste document content below. The system will extract factual claims via LLM,
+        commit each as a Merkle-anchored leaf, and return the updated root hash.
+        Process a document once — the beliefs are stored permanently with cryptographic integrity.
+      </p>
+    </div>
+    <div style="margin-bottom:16px">
+      <textarea id="ingestContent" rows="10" placeholder="Paste document content here..."
+        style="width:100%;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;resize:vertical;outline:none;transition:border-color 0.2s"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+      <input id="ingestSource" type="text" placeholder="Source label (optional)" value=""
+        style="background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;width:260px;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <button class="btn" id="ingestBtn" onclick="runIngest()">Ingest Document</button>
+    </div>
+    <div id="ingestResults"></div>
   </div>
 
   <!-- ══════ GIGACHAT VALIDATION SCREEN ══════ -->
@@ -815,11 +887,18 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('screen-' + tab.dataset.tab).classList.add('active');
 
     // Auto-load data
+    if (tab.dataset.tab === 'search' && !document.getElementById('searchInput').value.trim()) {
+      document.getElementById('searchInput').focus();
+    }
     if (tab.dataset.tab === 'tree' && !treeLoaded) loadTree();
-    if (tab.dataset.tab === 'belief' && !document.getElementById('beliefInput').value.trim()) {
-      document.getElementById('beliefInput').focus();
+    if (tab.dataset.tab === 'belief') {
+      if (!document.getElementById('beliefInput').value.trim()) {
+        document.getElementById('beliefInput').focus();
+      }
+      if (!beliefLogLoaded) loadBeliefUpdateLog();
     }
     if (tab.dataset.tab === 'adversarial' && !advLoaded) loadAdversarial();
+    if (tab.dataset.tab === 'history' && !historyLoaded) loadHistory();
     if (tab.dataset.tab === 'gigachat' && !gcLoaded) loadGigaChat();
   });
 });
@@ -1217,6 +1296,155 @@ async function runBelief() {
   }
 }
 
+// ── Belief Update Log ──
+let beliefLogLoaded = false;
+
+async function loadBeliefUpdateLog() {
+  const container = document.getElementById('beliefUpdateLog');
+  try {
+    const res = await fetch('/api/belief/update-log');
+    const data = await res.json();
+    beliefLogLoaded = true;
+
+    if (!data.updates || data.updates.length === 0) {
+      container.innerHTML = '<div class="query-empty" style="font-size:12px">No Bayesian updates recorded yet</div>';
+      return;
+    }
+
+    const recent = data.updates.slice(-10).reverse();
+    container.innerHTML = recent.map(u => {
+      const arrow = u.new_confidence > u.old_confidence ? '+' : '';
+      const delta = u.new_confidence - u.old_confidence;
+      const deltaColor = delta > 0 ? 'var(--green)' : 'var(--red)';
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px">
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);min-width:60px">${u.old_confidence.toFixed(2)}</span>
+          <span style="color:${deltaColor};font-weight:600;min-width:20px">&rarr;</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent);min-width:60px">${u.new_confidence.toFixed(2)}</span>
+          <span style="color:${deltaColor};font-family:'JetBrains Mono',monospace;min-width:60px">(${arrow}${delta.toFixed(3)})</span>
+          <span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(u.reason)}</span>
+          <span style="color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap">${u.timestamp}</span>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="query-empty" style="font-size:12px">Could not load update log</div>';
+  }
+}
+
+async function runRecompute() {
+  const btn = document.getElementById('recomputeBtn');
+  const container = document.getElementById('beliefUpdateLog');
+  btn.disabled = true;
+  container.innerHTML = '<div class="loading"><div class="spinner"></div> Recomputing all beliefs...</div>';
+
+  try {
+    const res = await fetch('/api/belief/recompute', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.error) {
+      container.innerHTML = '<div class="query-empty" style="color:var(--orange)">' + escapeHtml(data.error) + '</div>';
+      btn.disabled = false;
+      return;
+    }
+
+    let html = `<div style="padding:10px 16px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:8px;font-size:12px;color:var(--green);margin-bottom:12px">${data.updated} confidence value${data.updated !== 1 ? 's' : ''} updated</div>`;
+
+    if (data.changes && data.changes.length > 0) {
+      html += data.changes.map(u => {
+        const arrow = u.new_confidence > u.old_confidence ? '+' : '';
+        const delta = u.new_confidence - u.old_confidence;
+        const deltaColor = delta > 0 ? 'var(--green)' : 'var(--red)';
+        return `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px">
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);min-width:60px">${u.old_confidence.toFixed(2)}</span>
+            <span style="color:${deltaColor};font-weight:600;min-width:20px">&rarr;</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--accent);min-width:60px">${u.new_confidence.toFixed(2)}</span>
+            <span style="color:${deltaColor};font-family:'JetBrains Mono',monospace;min-width:60px">(${arrow}${delta.toFixed(3)})</span>
+            <span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(u.reason)}</span>
+          </div>`;
+      }).join('');
+    }
+
+    container.innerHTML = html;
+    treeLoaded = false; // invalidate tree cache
+  } catch (e) {
+    container.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+  btn.disabled = false;
+}
+
+// ── Search Screen ──
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+
+async function runSearch() {
+  const input = document.getElementById('searchInput');
+  const query = input.value.trim();
+  if (!query) return;
+
+  const resultsDiv = document.getElementById('searchResults');
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Searching knowledge tree...</div>';
+
+  try {
+    const res = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, top: 5 }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      resultsDiv.innerHTML = '<div class="query-empty" style="color:var(--orange)">' + escapeHtml(err.error || 'Request failed') + '</div>';
+      return;
+    }
+
+    const data = await res.json();
+
+    let fallbackHtml = '';
+    if (data.fallback) {
+      fallbackHtml = `
+        <div style="padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:12px;color:var(--yellow);margin-bottom:16px">
+          Ollama unavailable — showing substring matches instead of semantic results
+        </div>`;
+    }
+
+    let modelHtml = `<div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:16px">embedding model: ${escapeHtml(data.model)}${data.fallback ? ' (not connected)' : ''}</div>`;
+
+    if (data.results.length === 0) {
+      resultsDiv.innerHTML = fallbackHtml + modelHtml + '<div class="query-empty">No matches found for "' + escapeHtml(query) + '"</div>';
+      return;
+    }
+
+    resultsDiv.innerHTML = `
+      ${fallbackHtml}
+      ${modelHtml}
+      <div class="match-count">${data.results.length} results</div>
+      ${data.results.map((r, i) => `
+        <div class="result-card">
+          <div class="result-rank">#${i + 1}</div>
+          <div class="result-branch">${escapeHtml(r.branch)}</div>
+          <div class="result-content">${escapeHtml(r.content)}</div>
+          <div class="result-meta">
+            <span>source: ${escapeHtml(r.source)}</span>
+            <span class="confidence-bar">
+              conf:
+              <span class="confidence-track">
+                <span class="confidence-fill ${r.confidence >= 0.8 ? 'conf-high' : r.confidence >= 0.6 ? 'conf-mid' : 'conf-low'}"
+                      style="width:${r.confidence * 100}%"></span>
+              </span>
+              ${r.confidence}
+            </span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">score: ${r.score}</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) {
+    resultsDiv.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
 // ── Adversarial Screen ──
 let advLoaded = false;
 
@@ -1362,6 +1590,183 @@ async function loadGigaChat() {
   } catch (e) {
     document.getElementById('gcList').innerHTML = '<div class="query-empty">Error loading GigaChat validation data: ' + e.message + '</div>';
   }
+}
+
+// ── History Screen ──
+let historyLoaded = false;
+
+function changeTypeBadge(type) {
+  const styles = {
+    'confidence_update': { color: 'var(--accent)', label: 'Confidence' },
+    'decayed': { color: 'var(--orange)', label: 'Decayed' },
+    'created': { color: 'var(--green)', label: 'Created' },
+    'content_edit': { color: 'var(--purple)', label: 'Content Edit' },
+    'source_update': { color: 'var(--text-dim)', label: 'Source' },
+  };
+  const s = styles[type] || { color: 'var(--text-dim)', label: type };
+  return `<span style="display:inline-block;padding:2px 10px;border-radius:5px;font-size:11px;font-weight:600;letter-spacing:0.5px;background:${s.color}20;color:${s.color};border:1px solid ${s.color}40;white-space:nowrap">${s.label}</span>`;
+}
+
+async function loadHistory() {
+  const container = document.getElementById('historyTimeline');
+  try {
+    const res = await fetch('/api/history?n=20');
+    const data = await res.json();
+    historyLoaded = true;
+
+    if (!data.changes || data.changes.length === 0) {
+      container.innerHTML = '<div class="query-empty">No belief changes recorded yet</div>';
+      return;
+    }
+
+    container.innerHTML = data.changes.map(c => {
+      const snippet = c.content_snippet ? escapeHtml(c.content_snippet) : c.leaf_id.slice(0, 12) + '...';
+      const oldVal = typeof c.old_value === 'number' ? c.old_value.toFixed(3) : escapeHtml(String(c.old_value || '').slice(0, 40));
+      const newVal = typeof c.new_value === 'number' ? c.new_value.toFixed(3) : escapeHtml(String(c.new_value || '').slice(0, 40));
+      const isNum = typeof c.old_value === 'number' && typeof c.new_value === 'number';
+      const deltaColor = isNum ? (c.new_value >= c.old_value ? 'var(--green)' : 'var(--red)') : 'var(--text-dim)';
+
+      return `
+        <div class="card" style="cursor:pointer;padding:16px 20px" onclick="loadLeafHistory('${c.leaf_id}')">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);min-width:140px;white-space:nowrap">${c.timestamp}</span>
+            ${changeTypeBadge(c.change_type)}
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim);min-width:50px">${oldVal}</span>
+            <span style="color:${deltaColor};font-weight:600">&rarr;</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);min-width:50px">${newVal}</span>
+            <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${snippet}</span>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-muted)">${escapeHtml(c.reason)}</div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="query-empty">Error loading history: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function loadLeafHistory(leafId) {
+  const detail = document.getElementById('historyDetail');
+  const content = document.getElementById('historyDetailContent');
+  document.getElementById('historyTimeline').style.display = 'none';
+  detail.style.display = 'block';
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading leaf history...</div>';
+
+  try {
+    const res = await fetch('/api/history/' + leafId);
+    const data = await res.json();
+
+    const snippet = data.content_snippet ? escapeHtml(data.content_snippet) : leafId;
+
+    if (!data.records || data.records.length === 0) {
+      content.innerHTML = `
+        <div class="card-title" style="margin-bottom:12px">${snippet}</div>
+        <div class="query-empty">No version history for this leaf</div>`;
+      return;
+    }
+
+    content.innerHTML = `
+      <div class="card-title" style="margin-bottom:4px">${snippet}</div>
+      <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:20px">${leafId}</div>
+      <div class="section-title">${data.records.length} version${data.records.length !== 1 ? 's' : ''}</div>
+      ${data.records.map((r, i) => {
+        const oldVal = typeof r.old_value === 'number' ? r.old_value.toFixed(3) : escapeHtml(String(r.old_value || '').slice(0, 60));
+        const newVal = typeof r.new_value === 'number' ? r.new_value.toFixed(3) : escapeHtml(String(r.new_value || '').slice(0, 60));
+        const isNum = typeof r.old_value === 'number' && typeof r.new_value === 'number';
+        const deltaColor = isNum ? (r.new_value >= r.old_value ? 'var(--green)' : 'var(--red)') : 'var(--text-dim)';
+        return `
+          <div style="display:flex;align-items:flex-start;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);min-width:24px;text-align:right">v${i}</span>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+                ${changeTypeBadge(r.change_type)}
+                <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-dim)">${oldVal}</span>
+                <span style="color:${deltaColor};font-weight:600">&rarr;</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent)">${newVal}</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(r.reason)}</div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:2px">${r.timestamp}${r.leaf_hash_after ? ' &middot; hash: ' + r.leaf_hash_after.slice(0, 16) + '...' : ''}</div>
+            </div>
+          </div>`;
+      }).join('')}
+    `;
+  } catch (e) {
+    content.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function hideHistoryDetail() {
+  document.getElementById('historyDetail').style.display = 'none';
+  document.getElementById('historyTimeline').style.display = 'block';
+}
+
+// ── Ingest Screen ──
+async function runIngest() {
+  const content = document.getElementById('ingestContent').value.trim();
+  if (!content) return;
+
+  const source = document.getElementById('ingestSource').value.trim() || 'manual';
+  const btn = document.getElementById('ingestBtn');
+  const resultsDiv = document.getElementById('ingestResults');
+
+  btn.disabled = true;
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Extracting claims via LLM — this may take a moment...</div>';
+
+  try {
+    const res = await fetch('/api/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, source }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      resultsDiv.innerHTML = `<div class="query-empty" style="color:var(--orange)">${escapeHtml(data.error)}</div>`;
+      btn.disabled = false;
+      return;
+    }
+
+    resultsDiv.innerHTML = `
+      <div class="stats-row" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-value green">${data.count}</div>
+          <div class="stat-label">Claims Extracted</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value purple">${data.source}</div>
+          <div class="stat-label">Source</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:13px;color:var(--green)">${data.root_hash.slice(0, 24)}...</div>
+          <div class="stat-label">New Root Hash</div>
+        </div>
+      </div>
+      <div class="section-title">Extracted Claims</div>
+      ${data.leaves.map((l, i) => `
+        <div class="leaf-item" style="margin-bottom:8px">
+          <div class="leaf-content">${escapeHtml(l.content)}</div>
+          <div class="leaf-meta">
+            <span style="color:var(--purple)">${l.id.slice(0, 12)}...</span>
+            <span class="confidence-bar">
+              conf:
+              <span class="confidence-track">
+                <span class="confidence-fill conf-high" style="width:${l.confidence * 100}%"></span>
+              </span>
+              ${l.confidence}
+            </span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+
+    // Invalidate tree cache so Tree tab reloads
+    treeLoaded = false;
+    document.getElementById('headerRoot').textContent = 'root: ' + data.root_hash.slice(0, 16) + '...';
+
+  } catch (e) {
+    resultsDiv.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+
+  btn.disabled = false;
 }
 
 // ── Utility ──

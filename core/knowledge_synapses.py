@@ -80,7 +80,8 @@ def save_synapses(synapses, path=None):
     os.replace(tmp, path)
 
 
-def add_synapse(synapses, from_leaf, to_leaf, relation, note="", source="session"):
+def add_synapse(synapses, from_leaf, to_leaf, relation, note="", source="session",
+                tree=None):
     if relation not in VALID_RELATIONS:
         raise ValueError(f"Invalid relation '{relation}'. Must be one of: {VALID_RELATIONS}")
     if note and len(note) > 500:
@@ -99,6 +100,15 @@ def add_synapse(synapses, from_leaf, to_leaf, relation, note="", source="session
         "hash": synapse_hash,
     }
     synapses["synapses"].append(synapse)
+
+    # Bayesian belief update — lazy import to avoid circular dependency
+    if tree is not None and relation in ("SUPPORTS", "CONTRADICTS"):
+        try:
+            from core.belief_updater import update_from_synapse
+            update_from_synapse(synapse, tree)
+        except Exception:
+            pass  # updater is optional; don't break synapse creation
+
     return synapse_id
 
 
