@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCIS — Synapse Graph</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Top bar */
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 48px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+  }
+  #topbar .title {
+    font-size: 15px; font-weight: 600; color: #58a6ff;
+    letter-spacing: 1px;
+  }
+  #topbar .hash {
+    font-size: 12px; color: #8b949e;
+  }
+
+  /* Legend */
+  #legend {
+    position: fixed; top: 60px; left: 16px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+    padding: 12px 16px;
+    z-index: 100;
+    font-size: 12px;
+  }
+  #legend .legend-title {
+    font-size: 11px; color: #8b949e; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  #legend .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px;
+  }
+  #legend .legend-swatch {
+    width: 24px; height: 3px; border-radius: 2px;
+  }
+
+  /* Stats */
+  #stats {
+    position: fixed; bottom: 16px; left: 16px;
+    font-size: 12px; color: #8b949e;
+    z-index: 100;
+  }
+
+  /* Side panel */
+  #panel {
+    position: fixed; top: 48px; right: 0; bottom: 0;
+    width: 340px;
+    background: #161b22;
+    border-left: 1px solid #30363d;
+    padding: 20px;
+    transform: translateX(100%);
+    transition: transform 0.2s ease;
+    z-index: 100;
+    overflow-y: auto;
+  }
+  #panel.open { transform: translateX(0); }
+  #panel .panel-close {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; color: #8b949e;
+    font-size: 18px; cursor: pointer;
+  }
+  #panel .panel-close:hover { color: #c9d1d9; }
+  #panel .panel-branch {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  #panel .panel-content {
+    font-size: 13px; color: #e6edf3; line-height: 1.5;
+    margin: 12px 0;
+    padding: 12px;
+    background: #0d1117;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+  }
+  #panel .panel-meta {
+    font-size: 11px; color: #8b949e;
+    margin-top: 8px;
+  }
+  #panel .panel-meta span { color: #c9d1d9; }
+  #panel .panel-synapses {
+    margin-top: 16px;
+    border-top: 1px solid #30363d;
+    padding-top: 12px;
+  }
+  #panel .panel-synapses h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: #8b949e; margin-bottom: 8px;
+  }
+  #panel .synapse-entry {
+    font-size: 12px; margin-bottom: 8px;
+    padding: 8px; background: #0d1117; border-radius: 4px;
+    border-left: 3px solid #30363d;
+  }
+  #panel .synapse-entry .syn-relation {
+    font-weight: 600; font-size: 11px;
+  }
+  #panel .synapse-entry .syn-note {
+    color: #8b949e; font-size: 11px; margin-top: 4px;
+  }
+
+  /* Empty state */
+  #empty-state {
+    display: none;
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; color: #8b949e;
+    font-size: 14px;
+  }
+  #empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  #empty-state code {
+    background: #161b22; padding: 2px 8px; border-radius: 4px;
+    color: #58a6ff;
+  }
+
+  /* SVG */
+  svg { width: 100%; height: 100%; }
+  .edge-label {
+    font-size: 10px;
+    fill: #8b949e;
+    pointer-events: none;
+  }
+  .node-label {
+    font-size: 10px;
+    fill: #8b949e;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="title">PCIS — Synapse Graph</div>
+  <div class="hash" id="root-hash"></div>
+</div>
+
+<div id="legend">
+  <div class="legend-title">Relations</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#3fb950"></div> SUPPORTS</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#f85149"></div> CONTRADICTS</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#58a6ff"></div> REFINES</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#d29922"></div> DERIVES_FROM</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#bc8cff"></div> SUPERSEDES</div>
+</div>
+
+<div id="stats"></div>
+
+<div id="panel">
+  <button class="panel-close" onclick="closePanel()">&times;</button>
+  <div id="panel-body"></div>
+</div>
+
+<div id="empty-state">
+  <div class="empty-icon">&#x2B21;</div>
+  <div>No synapses yet</div>
+  <div style="margin-top:8px">Use <code>--link</code> to add connections</div>
+</div>
+
+<svg id="graph"></svg>
+
+<script>
+const GRAPH_DATA = {
+  "nodes": [
+    {
+      "id": "cf58be512c6b",
+      "content": "Skimming time-sensitive data is a trust violation. Verify timezone, verify date on screen matches current time, never assume.",
+      "branch": "lessons",
+      "source": "session-2026-03-03",
+      "confidence": 1.0,
+      "created": "2026-03-03 16:13:47 GMT+3"
+    },
+    {
+      "id": "74827c504601",
+      "content": "Test theater is worse than no tests \u2014 false confidence is more dangerous than acknowledged ignorance. Every test must push real data through real systems.",
+      "branch": "lessons",
+      "source": "session-2026-03-03",
+      "confidence": 1.0,
+      "created": "2026-03-03 16:13:47 GMT+3"
+    }
+  ],
+  "edges": [
+    {
+      "id": "cdc14013-03e6-4010-b568-5d688bd84961",
+      "from": "cf58be512c6b",
+      "to": "74827c504601",
+      "relation": "SUPPORTS",
+      "note": "Both are about epistemic discipline \u2014 data verification and test honesty reinforce each other"
+    }
+  ],
+  "root_hash": "df883ba8811874cd63ecbe96e9ccf34b980832aea1147944467309638fd5a713",
+  "synapse_count": 1,
+  "node_count": 2
+};
+
+const RELATION_COLORS = {
+  SUPPORTS: '#3fb950',
+  CONTRADICTS: '#f85149',
+  REFINES: '#58a6ff',
+  DERIVES_FROM: '#d29922',
+  SUPERSEDES: '#bc8cff',
+};
+
+const BRANCH_COLORS = [
+  '#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff',
+  '#f778ba', '#79c0ff', '#56d364', '#e3b341', '#ff7b72',
+  '#d2a8ff', '#a5d6ff', '#7ee787', '#ffa657', '#ffa198',
+];
+
+(function() {
+  if (typeof GRAPH_DATA === 'undefined') {
+    document.getElementById('empty-state').style.display = 'block';
+    return;
+  }
+
+  const data = GRAPH_DATA;
+
+  // Root hash display
+  document.getElementById('root-hash').textContent =
+    data.root_hash ? 'root: ' + data.root_hash.slice(0, 16) + '...' : '';
+
+  // Stats
+  document.getElementById('stats').textContent =
+    data.node_count + ' nodes · ' + data.synapse_count + ' edges';
+
+  if (data.edges.length === 0) {
+    document.getElementById('empty-state').style.display = 'block';
+    return;
+  }
+
+  // Branch color map
+  const branches = [...new Set(data.nodes.map(n => n.branch))].sort();
+  const branchColor = {};
+  branches.forEach((b, i) => { branchColor[b] = BRANCH_COLORS[i % BRANCH_COLORS.length]; });
+
+  // Build D3 data
+  const nodeMap = {};
+  data.nodes.forEach(n => { nodeMap[n.id] = n; });
+
+  const nodes = data.nodes.map(n => ({ ...n }));
+  const links = data.edges.map(e => ({
+    source: e.from,
+    target: e.to,
+    relation: e.relation,
+    note: e.note,
+    id: e.id,
+  }));
+
+  // SVG setup
+  const svg = d3.select('#graph');
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  svg.attr('viewBox', [0, 0, width, height]);
+
+  // Arrow markers for each relation
+  const defs = svg.append('defs');
+  Object.entries(RELATION_COLORS).forEach(([rel, color]) => {
+    defs.append('marker')
+      .attr('id', 'arrow-' + rel)
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 22)
+      .attr('refY', 0)
+      .attr('markerWidth', 8)
+      .attr('markerHeight', 8)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', color);
+  });
+
+  // Container for zoom/pan
+  const g = svg.append('g');
+
+  // Zoom behavior
+  const zoom = d3.zoom()
+    .scaleExtent([0.2, 4])
+    .on('zoom', (event) => { g.attr('transform', event.transform); });
+  svg.call(zoom);
+
+  // Center the view
+  svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(1));
+
+  // Simulation
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(200))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(0, 0))
+    .force('collide', d3.forceCollide(40));
+
+  // Draw edges
+  const link = g.append('g')
+    .selectAll('line')
+    .data(links)
+    .join('line')
+    .attr('stroke', d => RELATION_COLORS[d.relation] || '#484f58')
+    .attr('stroke-width', 2)
+    .attr('stroke-opacity', 0.7)
+    .attr('marker-end', d => 'url(#arrow-' + d.relation + ')');
+
+  // Edge labels
+  const edgeLabel = g.append('g')
+    .selectAll('text')
+    .data(links)
+    .join('text')
+    .attr('class', 'edge-label')
+    .text(d => d.relation);
+
+  // Draw nodes
+  const node = g.append('g')
+    .selectAll('circle')
+    .data(nodes)
+    .join('circle')
+    .attr('r', 12)
+    .attr('fill', d => branchColor[d.branch] || '#484f58')
+    .attr('stroke', '#0d1117')
+    .attr('stroke-width', 2)
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', dragStart)
+      .on('drag', dragging)
+      .on('end', dragEnd));
+
+  // Node labels (short)
+  const nodeLabel = g.append('g')
+    .selectAll('text')
+    .data(nodes)
+    .join('text')
+    .attr('class', 'node-label')
+    .attr('dy', -18)
+    .attr('text-anchor', 'middle')
+    .text(d => d.content.slice(0, 40) + (d.content.length > 40 ? '...' : ''));
+
+  // Tooltip on hover
+  node.append('title')
+    .text(d => d.content.slice(0, 80));
+
+  // Click → side panel
+  node.on('click', (event, d) => {
+    event.stopPropagation();
+    openPanel(d, data.edges);
+  });
+
+  svg.on('click', () => closePanel());
+
+  // Tick
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    edgeLabel
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2 - 6);
+
+    node
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y);
+
+    nodeLabel
+      .attr('x', d => d.x)
+      .attr('y', d => d.y);
+  });
+
+  // Drag handlers
+  function dragStart(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
+  }
+  function dragging(event, d) {
+    d.fx = event.x; d.fy = event.y;
+  }
+  function dragEnd(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null; d.fy = null;
+  }
+})();
+
+function openPanel(node, edges) {
+  const panel = document.getElementById('panel');
+  const body = document.getElementById('panel-body');
+
+  const relatedEdges = edges.filter(e => e.from === node.id || e.to === node.id);
+  let synapsesHtml = '';
+  if (relatedEdges.length > 0) {
+    synapsesHtml = '<div class="panel-synapses"><h4>Synapses</h4>';
+    relatedEdges.forEach(e => {
+      const color = RELATION_COLORS[e.relation] || '#484f58';
+      const dir = e.from === node.id
+        ? '→ ' + e.to
+        : e.from + ' →';
+      synapsesHtml += '<div class="synapse-entry" style="border-left-color:' + color + '">';
+      synapsesHtml += '<div class="syn-relation" style="color:' + color + '">' + e.relation + '</div>';
+      synapsesHtml += '<div style="margin-top:2px">' + dir + '</div>';
+      if (e.note) synapsesHtml += '<div class="syn-note">' + e.note + '</div>';
+      synapsesHtml += '</div>';
+    });
+    synapsesHtml += '</div>';
+  }
+
+  const branchColors = {};
+  if (typeof GRAPH_DATA !== 'undefined') {
+    const brs = [...new Set(GRAPH_DATA.nodes.map(n => n.branch))].sort();
+    const BRANCH_COLORS = [
+      '#58a6ff','#3fb950','#d29922','#f85149','#bc8cff',
+      '#f778ba','#79c0ff','#56d364','#e3b341','#ff7b72',
+    ];
+    brs.forEach((b, i) => { branchColors[b] = BRANCH_COLORS[i % BRANCH_COLORS.length]; });
+  }
+  const bc = branchColors[node.branch] || '#58a6ff';
+
+  body.innerHTML =
+    '<div class="panel-branch" style="color:' + bc + '">' + node.branch + '</div>' +
+    '<div class="panel-content">' + escapeHtml(node.content) + '</div>' +
+    '<div class="panel-meta">ID: <span>' + node.id + '</span></div>' +
+    '<div class="panel-meta">Source: <span>' + (node.source || '—') + '</span></div>' +
+    '<div class="panel-meta">Confidence: <span>' + (node.confidence || '—') + '</span></div>' +
+    '<div class="panel-meta">Created: <span>' + (node.created || '—') + '</span></div>' +
+    synapsesHtml;
+
+  panel.classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
