@@ -71,6 +71,18 @@ def sokrat():
     return send_file("compliance-demo.html")
 
 
+@app.route("/api/health")
+def api_health():
+    """Lightweight health check for Docker/load balancers."""
+    try:
+        tree = load_tree()
+        return jsonify({"status": "ok", "leaves": sum(
+            len(b["leaves"]) for b in tree["branches"].values()
+        )})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 @app.route("/api/boot")
 def api_boot():
     """Verify Merkle integrity of the knowledge tree on boot."""

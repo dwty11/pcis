@@ -37,19 +37,17 @@ Open `http://localhost:5555` — five tabs showing the full architecture live.
 
 ---
 
-## Quick Start with Docker
+## Quick Start (Docker)
+
+Zero local setup. Requires only Docker + internet.
 
 ```bash
+git clone https://github.com/dwty11/pcis.git
+cd pcis
 docker compose up
 ```
 
-Open `http://localhost:5555`
-
-On first run, pull the embedding model for semantic search:
-
-```bash
-docker compose exec ollama ollama pull nomic-embed-text
-```
+Open [http://localhost:5555](http://localhost:5555) — the demo loads a pre-seeded knowledge tree with 45 beliefs across 5 branches. The `qwen3:14b` model pulls automatically on first run (may take a few minutes depending on bandwidth).
 
 ---
 

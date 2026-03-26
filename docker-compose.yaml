@@ -8,9 +8,11 @@ services:
       - "127.0.0.1:5555:5555"
     environment:
       - PCIS_DOCKER=1
+      - PCIS_DEMO_MODE=1
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
-      - ollama
+      ollama:
+        condition: service_started
 
   ollama:
     image: ollama/ollama
@@ -18,6 +20,23 @@ services:
       - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+
+  # One-shot init container: pulls the LLM model on first run
+  ollama-init:
+    image: ollama/ollama
+    depends_on:
+      - ollama
+    restart: "no"
+    entrypoint: >
+      sh -c '
+        echo "Waiting for Ollama..." &&
+        until curl -sf http://ollama:11434/api/tags > /dev/null 2>&1; do sleep 2; done &&
+        echo "Pulling qwen3:14b (this may take a while on first run)..." &&
+        ollama pull qwen3:14b &&
+        echo "Model ready."
+      '
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
 
 volumes:
   ollama_data:
