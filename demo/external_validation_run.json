@@ -1,7 +1,7 @@
 {
   "run_date": null,
-  "provider": "gigachat",
-  "model": "GigaChat-Pro",
+  "provider": "external",
+  "model": "external-validator",
   "entries_challenged": 0,
   "merkle_root_before": null,
   "merkle_root_after": null,
