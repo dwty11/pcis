@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCIS — Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: rgba(18, 21, 34, 0.72);
+      --text: #f0f0f5;
+      --muted: rgba(240, 240, 245, 0.60);
+      --accent: #4f8ef7;
+      --accent-2: #a78bfa;
+      --accent-3: #34d399;
+      --line: rgba(255, 255, 255, 0.09);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(79,142,247,0.07), transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.05), transparent 50%);
+    }
+
+    body { padding: 64px 48px; max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+
+    header { margin-bottom: 56px; }
+
+    h1 {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .url-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--accent-3);
+      background: rgba(52, 211, 153, 0.08);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+
+    .url-badge::before { content: '⬤'; font-size: 7px; }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section + .section { margin-top: 44px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    a.card {
+      display: block;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px 22px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.18s, transform 0.18s, background 0.18s;
+    }
+
+    a.card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      background: rgba(79, 142, 247, 0.06);
+    }
+
+    a.card.live {
+      border-color: rgba(52, 211, 153, 0.25);
+    }
+
+    a.card.live:hover {
+      border-color: var(--accent-3);
+      background: rgba(52, 211, 153, 0.06);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .tag-lang { color: var(--accent-2); background: rgba(167,139,250,0.08); }
+    .tag-live { color: var(--accent-3); background: rgba(52,211,153,0.10); }
+    .tag-pdf  { color: #fb923c; background: rgba(251,146,60,0.10); }
+    .tag-vr   { color: #e879f9; background: rgba(232,121,249,0.10); }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
+      color: rgba(240,240,245,0.25);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PCIS</h1>
+    <div class="subtitle">Persistent Cognitive Identity Systems &mdash; all project materials in one place.</div>
+    <div class="url-badge">192.168.1.67:5555/hub</div>
+  </header>
+
+  <!-- ── Live Demo ── -->
+  <div class="section">
+    <div class="section-title">Live Demo</div>
+    <div class="grid">
+      <a class="card live" href="http://192.168.1.67:5555/demo" target="_blank" rel="noopener">
+        <div class="card-title">PCIS Demo Server</div>
+        <div class="card-desc">Live Flask app &mdash; tree browser, adversarial validator, belief decay, document ingest, semantic search.</div>
+        <div class="card-tags"><span class="tag tag-live">Live :5555</span></div>
+      </a>
+      <a class="card live" href="http://192.168.1.67:8888/pcis/knowledge-tree.html">
+        <div class="card-title">Knowledge Tree</div>
+        <div class="card-desc">338 leaves across 14 branches. Search, filter by branch, confidence-coded.</div>
+        <div class="card-tags"><span class="tag tag-live">Local</span></div>
+      </a>
+      <a class="card live" href="http://192.168.1.67:8888/pcis/synapse_graph.html">
+        <div class="card-title">Synapse Graph</div>
+        <div class="card-desc">D3 force graph of knowledge connections &mdash; CONTRADICTS, SUPPORTS, EXTENDS.</div>
+        <div class="card-tags"><span class="tag tag-live">Local</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Presentations ── -->
+  <div class="section">
+    <div class="section-title">Presentations</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-slides.html">
+        <div class="card-title">Slides</div>
+        <div class="card-desc">Full pitch deck with animated backgrounds.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-slides-ru.html">
+        <div class="card-title">Slides</div>
+        <div class="card-desc">Full pitch deck &mdash; Russian version.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── One-Pagers ── -->
+  <div class="section">
+    <div class="section-title">One-Pagers</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-onepager-boris.html">
+        <div class="card-title">One-Pager (Boris)</div>
+        <div class="card-desc">Problem, solution, proof, protection &mdash; print-ready.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-onepager-boris-ru.html">
+        <div class="card-title">One-Pager (Boris)</div>
+        <div class="card-desc">Russian version for Boris.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-onepager-boris-v2-ru.html">
+        <div class="card-title">One-Pager v2 (Boris)</div>
+        <div class="card-desc">Updated Russian one-pager, v2.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-onepager.pdf" target="_blank">
+        <div class="card-title">One-Pager PDF</div>
+        <div class="card-desc">Printable one-pager document.</div>
+        <div class="card-tags"><span class="tag tag-pdf">PDF</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Ланит ── -->
+  <div class="section">
+    <div class="section-title">Ланит</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-lanit-diagram.html">
+        <div class="card-title">Архитектурный обзор</div>
+        <div class="card-desc">Инженерный разбор 5-слойного стека — для CTO и платформенных архитекторов.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Partner Docs ── -->
+  <div class="section">
+    <div class="section-title">Partner Docs</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-frolov-final.pdf" target="_blank">
+        <div class="card-title">Фролов Brief</div>
+        <div class="card-desc">Infrastructure brief for Фролов (CTO/platform framing). Sent 2026-03-24.</div>
+        <div class="card-tags"><span class="tag tag-pdf">PDF</span><span class="tag tag-lang">RU</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-frolov-onepager.pdf" target="_blank">
+        <div class="card-title">Фролов One-Pager</div>
+        <div class="card-desc">One-pager variant for Фролов.</div>
+        <div class="card-tags"><span class="tag tag-pdf">PDF</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-lanit.pdf" target="_blank">
+        <div class="card-title">Ланит Brief</div>
+        <div class="card-desc">Enterprise AI memory standard pitch for Ланит. Meeting Monday 2026-03-30.</div>
+        <div class="card-tags"><span class="tag tag-pdf">PDF</span><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Architecture & Visuals ── -->
+  <div class="section">
+    <div class="section-title">Architecture &amp; Visuals</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-visual.html">
+        <div class="card-title">Visual</div>
+        <div class="card-desc">Architecture and concept diagrams.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-visual-ru.html">
+        <div class="card-title">Visual</div>
+        <div class="card-desc">Architecture diagrams &mdash; Russian.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-stack-diagram.html">
+        <div class="card-title">Stack Diagram</div>
+        <div class="card-desc">Full 5-layer technical stack visualization.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-stack-diagram-ru.html">
+        <div class="card-title">Stack Diagram</div>
+        <div class="card-desc">5-layer stack &mdash; Russian.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Journey ── -->
+  <div class="section">
+    <div class="section-title">Journey</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-journey.html">
+        <div class="card-title">Journey</div>
+        <div class="card-desc">Development timeline and milestones.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-journey-ru.html">
+        <div class="card-title">Journey</div>
+        <div class="card-desc">Development timeline &mdash; Russian.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Roadmap ── -->
+  <div class="section">
+    <div class="section-title">Roadmap</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-roadmap.html">
+        <div class="card-title">Roadmap</div>
+        <div class="card-desc">Upcoming features and milestones.</div>
+        <div class="card-tags"><span class="tag tag-lang">EN</span></div>
+      </a>
+      <a class="card" href="http://192.168.1.67:8888/pcis/pcis-roadmap-ru.html">
+        <div class="card-title">Roadmap</div>
+        <div class="card-desc">Upcoming features &mdash; Russian.</div>
+        <div class="card-tags"><span class="tag tag-lang">RU</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── VR ── -->
+  <div class="section">
+    <div class="section-title">VR / Immersive</div>
+    <div class="grid">
+      <a class="card" href="http://192.168.1.67:8888/joi-vr.html">
+        <div class="card-title">JOI — VR Experience</div>
+        <div class="card-desc">Immersive VR presentation of the PCIS concept. Open in Quest browser.</div>
+        <div class="card-tags"><span class="tag tag-vr">VR</span></div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    PCIS · Свидетельство 2026617854 · Имамниязов Жан Нигматжанович · <span id="ts"></span>
+  </footer>
+  <script>
+    document.getElementById('ts').textContent = new Date().toLocaleDateString('en-GB', {year:'numeric',month:'long',day:'numeric'});
+  </script>
+</body>
+</html>
