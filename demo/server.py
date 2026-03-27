@@ -15,7 +15,7 @@ import sys
 import tempfile
 import threading
 from datetime import datetime, timezone, timedelta
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, redirect, request, send_file
 
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -66,6 +66,16 @@ def load_tree():
 
 @app.route("/")
 def index():
+    return redirect("/hub")
+
+
+@app.route("/hub")
+def hub():
+    return send_file("hub.html")
+
+
+@app.route("/demo")
+def demo():
     return send_file("index.html")
 
 
@@ -776,7 +786,7 @@ def _maybe_reindex():
 
 if __name__ == "__main__":
     _maybe_reindex()
-    host = "0.0.0.0" if os.environ.get("PCIS_DOCKER") else "127.0.0.1"
+    host = "0.0.0.0"
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
     print(f"  http://localhost:5555\n")
