@@ -240,11 +240,36 @@ def query_belief(text, top_k=3, tree=None, synapses=None):
     if synapses is None:
         from core.knowledge_synapses import load_synapses
         synapses = load_synapses()
+    # Minimum semantic similarity score to consider a result in-scope.
+    # Below this threshold the query is outside the knowledge base.
+    RELEVANCE_THRESHOLD = 0.60
+
     leaf_ids = []
     if tree_was_none:
         try:
             from core.knowledge_search import search
             results = search(text, top_k=top_k, min_score=0.0)
+            # Gate on relevance: if best match is below threshold, return out-of-scope
+            if results:
+                top_score = results[0][0]
+                if top_score < RELEVANCE_THRESHOLD:
+                    return [{
+                        "leaf_id": "",
+                        "content": "",
+                        "branch": "",
+                        "base_confidence": 0.0,
+                        "net_confidence": 0.0,
+                        "stance": "OUT_OF_SCOPE",
+                        "reasoning": (
+                            f"Query did not match any belief in the knowledge base "
+                            f"(best similarity: {top_score:.2f}, threshold: {RELEVANCE_THRESHOLD:.2f}). "
+                            f"Insufficient data to assess."
+                        ),
+                        "support_count": 0,
+                        "contradiction_count": 0,
+                        "superseded": False,
+                        "depth_reached": 0,
+                    }]
             leaf_ids = [leaf_id for _, leaf_id, _ in results]
         except Exception:
             pass
