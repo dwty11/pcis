@@ -385,7 +385,7 @@ def api_belief():
         synapses = load_synapses(syn_path) if os.path.exists(syn_path) else load_synapses()
 
         # Relevance gate: check semantic similarity before assessing
-        RELEVANCE_THRESHOLD = 0.60
+        RELEVANCE_THRESHOLD = 0.40
         try:
             from core.knowledge_search import search as _search
             search_results = _search(query, top_k=3, min_score=0.0)
