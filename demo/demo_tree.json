@@ -1,1031 +1,1031 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "7f6f762f01f1f672ba58de196b7c208eebc72d8c8e6a5db935c99c68e82c125f",
+  "root_hash": "16797a80ec0468aec52bbc1d54e114f2365e84f10f359ebad5b863bcab27ac6f",
   "last_updated": "2026-03-26 10:00:00 UTC",
   "branches": {
-    "clients": {
-      "hash": "e46e023a1509c3fa8acafccbd14130612b09438c007e920eea57578515d822ac",
+    "projects": {
+      "hash": "a48892228a718d589fb8e1406c1f7e0c4d7535252f328d0e03795f0d8ac57c8b",
       "leaves": [
         {
-          "id": "b73cb993ad0e",
-          "hash": "b73cb993ad0e93482781c83ccbcf4b0433652961476ef92532d017cdd9459e13",
-          "content": "Acme Corp — enterprise SaaS client, onboarded Q3 2025. Primary use case: automated document processing. 12-month contract, renewal discussion scheduled Q2 2026. Key contact: Head of Engineering.",
-          "source": "session-2025-09-15",
-          "confidence": 0.88,
-          "created": "2026-03-23 12:49:23 UTC",
+          "id": "3e73a988d28c",
+          "hash": "3e73a988d28cb881ad108999e79ee116da65696c07b1df45ea7359b0fa54c916",
+          "content": "ВЕКТОР — агент автоматизации кассовых операций, Блок-А. Владелец: отдел операционных технологий. Статус: MVP завершён Q4 2025, пилот на 3 филиалах. Цель — полный rollout на 120 отделений к Q3 2026. Стек: Python, LangChain, внутренняя LLM (GigaChat-Pro). Ожидаемый эффект: 180 FTE, 320М руб/год.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.93,
+          "created": "2026-01-15 09:30:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "b00a551888e6",
-          "hash": "b00a551888e663a54cf47bc9419edc8d123042e8af9538a53a1fff13c7a54b52",
-          "content": "Acme Corp: last contact March 10 2026. Discussed pipeline performance at scale (10k docs/day). Positive — requested benchmark report before renewal meeting.",
-          "source": "session-2026-03-10",
-          "confidence": 0.82,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "68605f527bb5",
-          "hash": "68605f527bb59ad867af6d65f721d3a13d1902679dba8e38ab64038674d0e3f7",
-          "content": "Brightfield Analytics — mid-market client, data pipeline integration. Technically strong team, prefers async communication. Currently evaluating competitor offering — price sensitive.",
-          "source": "session-2026-01-20",
-          "confidence": 0.75,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "62abc53db20a",
-          "hash": "62abc53db20a9a810e7bfd3263d6b828fd9b3b131b671f0be5987bd7400699ed",
-          "content": "COUNTER: [b73cb993ad0e] Confidence in Acme Corp renewal is based on two meetings. Statistically insufficient for a high-confidence renewal forecast. Recommend reducing confidence to 0.65 until benchmark report is delivered and reviewed.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.8,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "a4f1c7e83b21",
-          "hash": "54e9c68c9ed0c67ad5615cc4bc7de707dd19ae7c312273bdb09098d213cca342",
-          "content": "Meridian Health Systems — healthcare vertical, onboarded Jan 2026. Primary use case: clinical trial document classification. Strict HIPAA requirements drove custom data residency config. 24-month contract.",
-          "source": "session-2026-01-08",
-          "confidence": 0.91,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "d92e5f0a7c34",
-          "hash": "9a7b4b5f6d2c2b3debcdf40d9ba7cd1cd2fbc3758bbc9aa57c7fcd0a3eee6f6e",
-          "content": "Meridian Health: completed Phase 1 integration — 3,200 documents processed in first 30 days. Zero data-residency violations flagged. Expanding to radiology department Q2 2026.",
-          "source": "session-2026-02-12",
+          "id": "c72afc6955f1",
+          "hash": "c72afc6955f1748a54f7f0556b3fe49ea56d26e9de381da3964a2dc347e8783e",
+          "content": "ВЕКТОР: по результатам пилота (янв-фев 2026) точность классификации кассовых документов 94.2%. Обнаружены edge-cases с валютными ордерами — требуется доработка NER-модуля. Срок: до конца Q1 2026.",
+          "source": "pilot-report-2026-02",
           "confidence": 0.87,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-02-20 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "e7c3b9d12f08",
-          "hash": "c6d52bfd9cf91f857e2bbfa967f2c2a5e55b24435025def4b073da1e2ea17b8a",
-          "content": "Pinnacle Financial Group — enterprise fintech client, onboarded Nov 2025. Use case: regulatory filing extraction and cross-referencing. High-touch account requiring weekly sync calls.",
-          "source": "session-2025-11-14",
-          "confidence": 0.84,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "f1a2d8c54e67",
-          "hash": "f4e8b4026a66559b84c85b0f93d5b12db05204bef775a85656e16c1e38a5061b",
-          "content": "TerraForge Industrial — manufacturing sector pilot. Evaluating PCIS for supply chain documentation and vendor compliance tracking. Decision expected by end of Q1 2026.",
-          "source": "session-2026-02-20",
-          "confidence": 0.68,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c8b4e6f21a93",
-          "hash": "d7a5b62090db86bebe49a6f779ce74dadd9e883dfd481c185ce604b33c434abf",
-          "content": "Brightfield Analytics: renewed for 12 months at 8% discount after competitive evaluation. Decisive factor was Merkle audit trail — competitor lacked tamper-evident logging.",
-          "source": "session-2026-03-18",
+          "id": "cb4cdfa1144b",
+          "hash": "cb4cdfa1144b38280cd738fcecedc3e65c9c49084cba816d0da4b73f2d668974",
+          "content": "АРХИВ — агент управления документооборотом, Блок-Б. Автоматизирует категоризацию, маршрутизацию и архивирование входящей корреспонденции. Команда: 8 разработчиков + 2 ML-инженера. Статус: в разработке, релиз MVP запланирован на Q2 2026. Бюджет: 45М руб.",
+          "source": "program-tracker-2026-01",
           "confidence": 0.9,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-01-15 09:35:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "7520f7d18a7",
-          "hash": "e4af7856a6062e05f9f5c1200a1cc0ea734860300513fea02961e1bf27e0bfaa",
-          "content": "NovaStar Logistics — Series C logistics startup, onboarded Dec 2025. Primary use case: freight compliance document tracking across 14 jurisdictions. 18-month contract with expansion clause.",
-          "source": "session-2025-12-08",
-          "confidence": 0.89,
-          "created": "2025-12-08 14:22:10 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "834e0b40a2e",
-          "hash": "129f0400c225d221e4ea96281191430b9e503bc8084505596f0fcfd52bcd9500",
-          "content": "NovaStar Logistics: Q1 2026 usage review — 8,400 documents processed, 99.2% classification accuracy. Requesting API rate limit increase from 500 to 2,000 req/min.",
-          "source": "session-2026-02-28",
-          "confidence": 0.85,
-          "created": "2026-02-28 10:15:33 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "60fa4e2d1c2",
-          "hash": "5211910950850afe1f93c150a7af85b26830a998fedbb690e66a16a56b23b4a0",
-          "content": "Titan Financial Services — top-20 US bank, evaluating PCIS for mortgage document processing. Proof of concept approved for 90 days starting Feb 2026. Security review passed with zero critical findings.",
-          "source": "session-2026-01-22",
-          "confidence": 0.83,
-          "created": "2026-01-22 09:41:17 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a01deecdf30",
-          "hash": "72c5a41938a2b0590a00dea127b9712fbe9017a0aae8422f6415c47206fa2bfd",
-          "content": "Titan Financial: POC milestone 1 complete — processed 12,000 mortgage applications in batch mode. Accuracy: 97.8% on structured fields, 91.3% on free-text clauses. Stakeholder demo scheduled March 15.",
-          "source": "session-2026-03-02",
-          "confidence": 0.87,
-          "created": "2026-03-02 16:08:44 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a241c9af871",
-          "hash": "296623e57ef6e7d2094672d81ad06f20442e95aca7df5f4e7795034bee96ca49",
-          "content": "Meridian Group Capital — private equity firm, onboarded Oct 2025. Use case: due diligence document ingestion for portfolio company acquisitions. Processes ~200 documents per deal.",
-          "source": "session-2025-10-14",
+          "id": "61c2ab4752a9",
+          "hash": "61c2ab4752a90312853bf12c290eb143cd84b5d095a78169c13895ddd7630ebb",
+          "content": "АРХИВ: спринт-ревью 12 марта 2026 — завершена интеграция с ECM-системой (Directum). OCR-pipeline обрабатывает 15к документов/день на тестовом стенде. Отставание от плана: 2 недели из-за задержки API-доступа к хранилищу.",
+          "source": "sprint-review-2026-03-12",
           "confidence": 0.84,
-          "created": "2025-10-14 11:30:22 UTC",
+          "created": "2026-03-12 16:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "d4214e2c873",
-          "hash": "983a449698cd91ef322c9f3f5b95b286c7ae36d7268e0dbf32477d2471509bd1",
-          "content": "Meridian Group: completed 3 deal rooms using PCIS pipeline since onboarding. Average turnaround reduced from 12 days to 4 days. Expanding license to cover London office.",
-          "source": "session-2026-02-10",
-          "confidence": 0.88,
-          "created": "2026-02-10 15:47:09 UTC",
+          "id": "e7f255b932b1",
+          "hash": "e7f255b932b15bc29c6cbe150a6cd7866783f1de183682ac63998de298d1b021",
+          "content": "НЕВА — агент мониторинга транзакций и антифрод, Блок-В (безопасность). Анализирует потоки транзакций в реальном времени, выявляет аномалии. Статус: production с ноября 2025. Текущая нагрузка: 2.3М транзакций/день. False positive rate: 0.8%.",
+          "source": "ops-dashboard-2026-03",
+          "confidence": 0.95,
+          "created": "2026-03-01 08:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "9141720c8bc",
-          "hash": "44b5e59760d75be670477641836ddc06fc46fdfb334eb38cfd4f74c5f7ffd76b",
-          "content": "Cascade Biotech — mid-size pharma company, pilot started Jan 2026. Use case: FDA submission document preparation and cross-reference checking. Highly regulated environment with 21 CFR Part 11 requirements.",
-          "source": "session-2026-01-15",
-          "confidence": 0.79,
-          "created": "2026-01-15 13:22:55 UTC",
+          "id": "956de4233b69",
+          "hash": "956de4233b69de555e5125dd5b16bc6f0635a85739382d6b961b903ecfb5238f",
+          "content": "ОРИОН — агент управления недвижимостью и инфраструктурой, Блок-Г. Оптимизирует расходы на содержание 340 объектов недвижимости банка. Предиктивное обслуживание инженерных систем. Статус: PoC завершён, переход в MVP. Прогноз экономии: 85М руб/год.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.81,
+          "created": "2026-01-15 09:40:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "e12dda0db2a",
-          "hash": "bbb47412e8370086afb5201cf9ed4d385778fe9e4f8b52e06be8cb199c4e7b68",
-          "content": "Vanguard Education Group — edtech holding company managing 6 online universities. Use case: accreditation document management and compliance tracking. 36-month contract signed.",
-          "source": "session-2025-11-20",
-          "confidence": 0.91,
-          "created": "2025-11-20 08:55:41 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "9000aef3ae4",
-          "hash": "4ef7158bf2d075299135c538d2c81d6ed250f4e87ee63c05221b5a96fa6a5466",
-          "content": "Atlas Manufacturing Co. — Fortune 500 industrial conglomerate. Evaluating PCIS for ISO 9001 quality management documentation across 23 plants. Budget approved; legal review in progress.",
-          "source": "session-2026-03-05",
-          "confidence": 0.73,
-          "created": "2026-03-05 10:12:38 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "9ef4ef46d85",
-          "hash": "c62da064f03c7f7d7e1ad215d3180d86dac5fe5531da7a342800be3459b21cce",
-          "content": "Acme Corp: benchmark report delivered March 18. Processing speed: 14,200 docs/day sustained over 72-hour test. Client response positive — renewal meeting moved up to March 28.",
-          "source": "session-2026-03-18",
-          "confidence": 0.86,
-          "created": "2026-03-18 17:30:02 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "507d9fd6d31",
-          "hash": "ad0e70683391da5ba95932ae15800ec747a9007d0a7942ab12ffe2d6f6a25d62",
-          "content": "COUNTER: [c8b4e6f21a93] Brightfield's renewal at 8% discount sets a precedent. Three other mid-market clients aware of this pricing. Risk of discount cascade in Q3 renewals if not addressed in pricing policy.",
-          "source": "adversarial-2026-03-22",
+          "id": "a00bef01d593",
+          "hash": "a00bef01d5936d629b5194230c6f7bde349714887cffefaa0aef99521b290788",
+          "content": "ПУЛЬС — агент HR-аналитики и мониторинга нагрузки персонала, кросс-блоковый. Отслеживает метрики продуктивности, прогнозирует текучесть кадров. Статус: alpha-тестирование. Пилотная группа: 500 сотрудников Блок-А. Дата запуска пилота: Q2 2026.",
+          "source": "hr-tech-board-2026-02",
           "confidence": 0.78,
-          "created": "2026-03-22 09:14:27 UTC",
+          "created": "2026-02-10 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "798b9971ba2e",
+          "hash": "798b9971ba2e05e4c1650b0b5655c7c53e38da3d276142e6986e6c01e8922b65",
+          "content": "АТЛАС — агент логистики и цепочки поставок, Блок-Е. Оптимизирует закупки канцелярии, IT-оборудования и расходных материалов для 120 отделений. Интеграция с SAP MM. Статус: разработка, MVP ожидается Q3 2026. Команда: 5 разработчиков.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.8,
+          "created": "2026-01-15 09:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "539c59ba2ffc",
+          "hash": "539c59ba2ffc1bd0ea3c0aca301a6b499938abaf9ebf9be16be71b04c94da62c",
+          "content": "МЕРКУРИЙ — агент туристического обслуживания корпоративных клиентов, Блок-Д. Автоматизирует бронирование, оформление виз, подбор маршрутов. Статус: концепция утверждена, начало разработки Q2 2026. Ожидаемый эффект: 45 FTE, 80М руб/год.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.76,
+          "created": "2026-01-15 09:50:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "dc9068c15e3b",
+          "hash": "dc9068c15e3ba06032b130e68b656803f14202b5ba1f56b4efcf8148e8ac8d64",
+          "content": "СИГНАЛ — агент мониторинга IT-инфраструктуры, кросс-блоковый. Корреляция алертов, автоматическая диагностика инцидентов, рекомендации по устранению. Статус: production с января 2026. MTTR снижен на 34%.",
+          "source": "it-ops-report-2026-03",
+          "confidence": 0.91,
+          "created": "2026-03-05 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c3fe9c466482",
+          "hash": "c3fe9c466482406e6bc45d143a07c899f73c930fc6c1580d8a5ae7761229fd67",
+          "content": "ПРИЗМА — агент аналитики и визуализации данных для руководства. Генерирует еженедельные дайджесты по всем направлениям Программы ИИ-агентов 2025-2026. Статус: beta, используется комитетом по цифровой трансформации с февраля 2026.",
+          "source": "digital-committee-2026-02",
+          "confidence": 0.85,
+          "created": "2026-02-28 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c22e61f86403",
+          "hash": "c22e61f86403d1e3ffba0723ae6f071e3863fa39aca3ffd8386499f4b5ec898c",
+          "content": "Программа ИИ-агентов 2025-2026: общий статус на март 2026. 9 агентов в портфеле, из них 2 в production (НЕВА, СИГНАЛ), 3 в разработке/пилоте (ВЕКТОР, АРХИВ, ПУЛЬС), 2 на стадии MVP (ОРИОН, ПРИЗМА), 2 в концепции (АТЛАС, МЕРКУРИЙ).",
+          "source": "program-status-2026-03",
+          "confidence": 0.92,
+          "created": "2026-03-15 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "9896c7728b37",
+          "hash": "9896c7728b37787630be97be8600b80a9816394aa347d3dbb53997aeca4e6f65",
+          "content": "Блок-А: кассовые операции — основной потребитель ИИ-автоматизации. Три агента задействованы: ВЕКТОР (ведущий), ПУЛЬС (HR-мониторинг смен), СИГНАЛ (мониторинг POS-терминалов). Суммарный ожидаемый эффект по блоку: 230 FTE, 410М руб/год.",
+          "source": "block-a-review-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-10 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0ee09735193a",
+          "hash": "0ee09735193aad14d3f44f0150979148c0f9ef716dcdad7be4262151522676c6",
+          "content": "Milestone: к Q2 2026 запланирован запуск единой платформы оркестрации агентов (внутренний проект «Платформа-А»). Все 9 агентов должны быть интегрированы через общий API-gateway. Ответственный: архитектурный комитет программы.",
+          "source": "architecture-board-2026-02",
+          "confidence": 0.83,
+          "created": "2026-02-15 13:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "77053f858f38",
+          "hash": "77053f858f38f7ffd4c46fa8c42a28008175b5854c1cc726230da27ca6d2032b",
+          "content": "ВЕКТОР: критическая зависимость от обновления ядра АБС (автоматизированная банковская система). Обновление запланировано на апрель 2026. Без него невозможен полный rollout — текущий API не поддерживает batch-обработку валютных операций.",
+          "source": "dependency-tracker-2026-03",
+          "confidence": 0.89,
+          "created": "2026-03-18 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "82599e29b3db",
+          "hash": "82599e29b3db5a52ccabde63297991e66b2bef68c14e27a87ee8c3b258c191f5",
+          "content": "НЕВА: обновление модели v2.3 — добавлен детектор дропперских счетов. Точность на тесте: 91.7%. Rollout запланирован на 28 марта 2026 после согласования с compliance.",
+          "source": "neva-update-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-22 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "602bba318617",
+          "hash": "602bba318617ddf56abce4b02e983aa0f6a552d76dbd5a68ed8029547b792fcc",
+          "content": "COUNTER: [3e73a988d28c] Заявленные 180 FTE экономии от ВЕКТОР основаны на экстраполяции пилота с 3 филиалов. Масштабирование на 120 отделений может дать существенно меньший эффект из-за различий в процессах между регионами. Рекомендуется скорректировать до 120-150 FTE.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.82,
+          "created": "2026-03-20 11:00:00 UTC",
           "promoted_to": null,
           "is_counter": true
         },
         {
-          "id": "f2d63ada5f2",
-          "hash": "2240d9476cd1baa1dbd8bf4e7faece96f000e079e5ae99220abd671263cc3277",
-          "content": "Pinnacle Financial: weekly sync cadence reduced to biweekly after process stabilization. Churn risk lowered — NPS score improved from 32 to 67 between Nov 2025 and Feb 2026.",
-          "source": "session-2026-02-20",
-          "confidence": 0.82,
-          "created": "2026-02-20 14:05:19 UTC",
+          "id": "16980dae90d3",
+          "hash": "16980dae90d3a456bc3bb4db7539d149d3b7116d1452802da6a739fe2ff11809",
+          "content": "COUNTER: [cb4cdfa1144b] Отставание АРХИВ на 2 недели — оптимистичная оценка. Интеграция с Directum исторически занимает 2-3 месяца в крупных банках. Высок риск сдвига MVP на Q3 2026.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.79,
+          "created": "2026-03-20 11:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "6b6e95e4eb6f",
+          "hash": "6b6e95e4eb6f8bd09d9c15c4d4e8354c4356aa7b6cb241fc2cdb44ea71cad0e8",
+          "content": "COUNTER: [956de4233b69] ПУЛЬС: пилотная группа 500 сотрудников — недостаточная выборка для валидации моделей текучести. Минимально необходимо 2000+ сотрудников для статистически значимых результатов по подразделениям.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.77,
+          "created": "2026-03-20 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "782d64a54464",
+          "hash": "782d64a544641178311ac79cd9484546cd6453bcad746af4a6a140b7f4195110",
+          "content": "COUNTER: [9896c7728b37] Единая платформа оркестрации к Q2 2026 — нереалистичный срок. Аналогичные проекты в банковском секторе требуют 9-12 месяцев. Минимально реалистичный срок: Q4 2026.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.84,
+          "created": "2026-03-20 11:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        }
+      ]
+    },
+    "risks": {
+      "hash": "c386f2ecd564ac4e81abf31a85c2b5d5ee82612de9ec7fc0c71fafdfeeb7524b",
+      "leaves": [
+        {
+          "id": "f7c24842d597",
+          "hash": "f7c24842d597e19b95e2ce3b4441893652e821fe9e56ba2eaee7d37d14ab20f7",
+          "content": "RISK-001: Зависимость от GigaChat-Pro API. Все агенты используют внутреннюю LLM. При деградации сервиса (SLA 99.5%) одновременно встают все 9 агентов. Митигация: внедрить fallback на YandexGPT для некритичных задач к Q2 2026.",
+          "source": "risk-register-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-20 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "3439e66cab0",
-          "hash": "8a51f8112271fa34cf3d5d0f1ca5fd0bdc8f0ed06bc3c32111be1d97f29d5e7f",
-          "content": "TerraForge Industrial: pilot concluded — decision deferred to Q2 2026 due to internal restructuring. Maintain warm relationship; CTO expressed continued interest pending new budget cycle.",
-          "source": "session-2026-03-12",
-          "confidence": 0.72,
-          "created": "2026-03-12 11:38:50 UTC",
+          "id": "d52515fa1f3f",
+          "hash": "d52515fa1f3f29e09591318fa1ce3b8e7dddbff299ce373aee920dd0731944da",
+          "content": "RISK-002: Кадровый риск — дефицит ML-инженеров. На рынке РФ острая нехватка специалистов по LLM. Текущий gap: 4 ML-инженера. Без закрытия позиций АТЛАС и МЕРКУРИЙ не стартуют в срок. Митигация: программа стажировок + переобучение backend-разработчиков.",
+          "source": "hr-risk-report-2026-02",
+          "confidence": 0.88,
+          "created": "2026-02-05 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "5af846f7ecb6",
+          "hash": "5af846f7ecb6b209f1b5001bc45bfad5b6a060f25420e3ff1085c7703c031bb0",
+          "content": "RISK-003: Техническая несовместимость ВЕКТОР с обновлённой АБС. Новая версия АБС (v12.4) переходит на gRPC вместо REST API. Потребуется переписать интеграционный слой ВЕКТОР. Оценка трудоёмкости: 320 человеко-часов. Срок: критический — до конца Q1 2026.",
+          "source": "tech-risk-assessment-2026-02",
+          "confidence": 0.86,
+          "created": "2026-02-12 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "9a7c3efbc27b",
+          "hash": "9a7c3efbc27b1eebddbe713491d779f5abec8d69817f755b201ec031abe38f82",
+          "content": "RISK-004: Регуляторный риск — новые требования ЦБ РФ к использованию ИИ в финансовом секторе (проект указания от 15.12.2025). Требует обязательного аудита моделей и документирования процесса принятия решений. Влияние: все 9 агентов.",
+          "source": "compliance-alert-2026-01",
+          "confidence": 0.93,
+          "created": "2026-01-25 08:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "4fc404669af4",
+          "hash": "4fc404669af406ee083fa1fc3cfc619af38ab7443d9dcc7fc3c30bb952f6d144",
+          "content": "RISK-005: Data quality — качество обучающих данных для АРХИВ. Историческая корреспонденция (2018-2023) содержит ~12% дубликатов и ~7% некорректно размеченных документов. Без очистки датасета точность модели не превысит 88%.",
+          "source": "data-quality-audit-2026-02",
+          "confidence": 0.85,
+          "created": "2026-02-18 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0baab1ca9103",
+          "hash": "0baab1ca91032d068417504c46e4fa1d6b5d3044a0053fb5e5c067e7fb2d308b",
+          "content": "RISK-006: Инфраструктурный риск — GPU-кластер для обучения моделей загружен на 92%. При запуске обучения АТЛАС и дообучении НЕВА возникнет конкуренция за ресурсы. Митигация: закупка 8 дополнительных A100 (бюджет согласован, поставка Q2 2026).",
+          "source": "infra-capacity-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-01 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d2fd1d8de4bc",
+          "hash": "d2fd1d8de4bc6586c3b80d18464becab2b1a7ed400b9e840629840af13013943",
+          "content": "RISK-007: Vendor lock-in — зависимость ОРИОН от проприетарного решения для BIM-моделей (Autodesk). Лицензионные ограничения могут запретить использование API для ML-пайплайнов. Митигация: оценить open-source альтернативы (IFC.js, IfcOpenShell).",
+          "source": "vendor-risk-2026-02",
+          "confidence": 0.8,
+          "created": "2026-02-22 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e42663d7115f",
+          "hash": "e42663d7115f49a6c6b4b09a98383109d51058b9813142c20bec39dd5d82031c",
+          "content": "RISK-008: Риск слипа ВЕКТОР — зависимость от обновления АБС (апрель 2026). Если АБС задержится, rollout ВЕКТОР сдвинется на Q4 2026, что поставит под угрозу годовой KPI программы (500М руб экономии). Вероятность задержки АБС: 35%.",
+          "source": "program-risk-2026-03",
+          "confidence": 0.89,
+          "created": "2026-03-10 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "f273e87969b5",
+          "hash": "f273e87969b5b1416475aa4eeecc4090faa8efd5cee1da1323e294812c50b8df",
+          "content": "RISK-009: Конфликт приоритетов между Блок-А и Блок-В за ресурсы команды ML-платформы. ВЕКТОР и НЕВА конкурируют за время DevOps-инженеров на общей инфраструктуре. Эскалировано на уровень программного директора.",
+          "source": "escalation-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-08 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "57adf1de51fa",
+          "hash": "57adf1de51fa63adbe149aa8298f6c73bca5a9d6cbd85835a78f32fa9a166fd2",
+          "content": "RISK-010: Репутационный риск — некорректное решение НЕВА может заблокировать легитимную транзакцию VIP-клиента. Произошёл инцидент 02.03.2026 (false positive на 15М руб). Клиент удержан, но требуется улучшение whitelist-механизма.",
+          "source": "incident-report-2026-03",
+          "confidence": 0.9,
+          "created": "2026-03-03 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ffa5a952ad88",
+          "hash": "ffa5a952ad881e62a2c3306ee19ae8a49cd3c436d29ecc88a24df80ad8d7564c",
+          "content": "RISK-011: Интеграционный риск — ПРИЗМА зависит от данных всех остальных агентов. Отсутствие стандартизированного формата метрик приводит к ручной адаптации парсеров. Необходим единый протокол отчётности к Q2 2026.",
+          "source": "tech-debt-review-2026-03",
+          "confidence": 0.82,
+          "created": "2026-03-05 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "3d43f4a36d43",
+          "hash": "3d43f4a36d439a326df244e8d8ed356f91ae51119feb6dd789728d683e642b34",
+          "content": "RISK-012: Риск оттока ключевых разработчиков — тимлид ВЕКТОР и архитектор НЕВА получили оффёры от Яндекса. Retention-план: повышение грейда + участие в прибыли программы. Вероятность удержания: 70%.",
+          "source": "hr-confidential-2026-03",
+          "confidence": 0.78,
+          "created": "2026-03-12 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "276321918f02",
+          "hash": "276321918f023b679c3e9780ccd384bffa31808427d7576113e9ff3f1878e648",
+          "content": "Сводка рисков программы Q1 2026: 12 идентифицированных рисков, 3 критических (RISK-001, RISK-003, RISK-008), 5 высоких, 4 средних. Общий risk score: 7.2/10. Тренд: ухудшение vs Q4 2025 (было 6.1/10).",
+          "source": "risk-summary-2026-03",
+          "confidence": 0.9,
+          "created": "2026-03-15 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e40e4df75ee3",
+          "hash": "e40e4df75ee39e1a45bc092f5946a54797f8275b11d16cecdb7ceb4df3524766",
+          "content": "RISK-013: Санкционный риск — часть hardware-компонентов GPU-кластера (NVIDIA A100) может стать недоступной для замены. Текущий запас ЗИП: 6 месяцев. Митигация: тестирование отечественных ускорителей (Эльбрус, Байкал) для inference.",
+          "source": "sanctions-risk-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-14 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "7489f051952a",
+          "hash": "7489f051952a79f7f7ed82bfb7200f94456733071f11ac372b3224decfa60161",
+          "content": "RISK-014: Юридический риск — отсутствие прецедентной практики по ответственности за решения ИИ-агентов в финансовом секторе РФ. При ошибке НЕВА (ложная блокировка) клиент может подать иск. Необходим юридический анализ liability framework.",
+          "source": "legal-risk-2026-03",
+          "confidence": 0.84,
+          "created": "2026-03-16 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "4dafe86770c6",
+          "hash": "4dafe86770c62becad4372bdb36d8ff1356085e720ec9be4440d98f3af3da0aa",
+          "content": "COUNTER: [f7c24842d597] Fallback на YandexGPT недостаточен — латентность YandexGPT в 3-4 раза выше GigaChat-Pro, что неприемлемо для real-time агентов (НЕВА, СИГНАЛ). Необходимо рассмотреть локальный деплой open-source модели как резерв.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-20 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "b8336c0790e4",
+          "hash": "b8336c0790e4e774074cfe34a4d35a668ed05b1dd0568ff43456b73247d24878",
+          "content": "COUNTER: [e42663d7115f] Вероятность задержки АБС занижена (35%). Исторически обновления АБС задерживались в 60% случаев за последние 5 лет. Рекомендуется пересмотреть до 55-60%.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-20 12:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "b68043e01594",
+          "hash": "b68043e015941a1eafb20502fd717ff86635fa4dd3fc593abb0a021a1ceb6f3c",
+          "content": "COUNTER: [3d43f4a36d43] Оценка вероятности удержания тимлида ВЕКТОР (70%) не учитывает, что конкурентный оффёр включает RSU на 3 года. Retention-план банка не содержит аналогичного долгосрочного компонента. Реальная вероятность: 45-55%.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-20 12:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "3798d3790861",
+          "hash": "3798d3790861779448eb6841bbbc5d6293732d5abc5dc356d08a8d7bd0cba7ca",
+          "content": "COUNTER: [0baab1ca9103] Закупка 8 A100 не решит проблему GPU-дефицита если параллельно стартует fine-tuning для МЕРКУРИЙ (запланирован Q3 2026). Необходим пересчёт capacity plan с учётом полного портфеля агентов.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.81,
+          "created": "2026-03-20 12:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        }
+      ]
+    },
+    "effects": {
+      "hash": "d5c6a5ab4beb3d32f34e36583023f04e4f0fa72b7a4b0df01cc3e13f56572fcc",
+      "leaves": [
+        {
+          "id": "5c08929954ae",
+          "hash": "5c08929954aec8dac5b4e2adefbcefe6d9d908a8e21f6e97ca33f087f23098e6",
+          "content": "Суммарный ожидаемый эффект Программы ИИ-агентов 2025-2026: экономия 540М руб/год, высвобождение 520 FTE. Расчёт основан на бизнес-кейсах 9 агентов с учётом вероятности реализации (weighted). Горизонт выхода на полный эффект: Q4 2026.",
+          "source": "business-case-2026-01",
+          "confidence": 0.88,
+          "created": "2026-01-10 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bb305e22200b",
+          "hash": "bb305e22200b9e4c7b45be4b8b873787da6f8e8760c9b31fb3836521b125a81a",
+          "content": "ВЕКТОР — эффект: 180 FTE, 320М руб/год. Декомпозиция: автоклассификация кассовых документов (90 FTE), автозаполнение форм (50 FTE), автосверка (40 FTE). Уровень зрелости расчёта: высокий (подтверждён пилотом).",
+          "source": "effect-model-vektor-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-25 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a994320e5726",
+          "hash": "a994320e57260f1a06e20993c6fe8e04e3d504d65f3689c079f2bbe6cf8088f0",
+          "content": "АРХИВ — эффект: 85 FTE, 150М руб/год. Декомпозиция: автокатегоризация (40 FTE), маршрутизация (25 FTE), архивирование (20 FTE). Уровень зрелости: средний (оценка на основе бенчмарков, пилот не проведён).",
+          "source": "effect-model-arhiv-2026-02",
+          "confidence": 0.82,
+          "created": "2026-02-25 10:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "3c78018b5918",
+          "hash": "3c78018b59188692112b86634a06a4ec7422941269626f7920e3961c2054fb75",
+          "content": "НЕВА — эффект: 65 FTE, 115М руб/год. Снижение ручных проверок транзакций на 73%. Дополнительный эффект: предотвращение мошеннических операций — оценка 200-400М руб/год (не включено в базовый KPI программы).",
+          "source": "effect-model-neva-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-25 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "360957f6ccbc",
+          "hash": "360957f6ccbc2dcce58b9290617a7e29b565aef0a94c1e7f9335939df6e878a6",
+          "content": "ОРИОН — эффект: 35 FTE, 85М руб/год. Оптимизация расходов на обслуживание недвижимости через предиктивное техобслуживание (60М) и оптимизацию энергопотребления (25М). Уровень зрелости: низкий (PoC).",
+          "source": "effect-model-orion-2026-02",
+          "confidence": 0.75,
+          "created": "2026-02-25 10:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5a22caa5958f",
+          "hash": "5a22caa5958f600352fdbbf7a44d32cd64f0c638a30f81ecb805a17c7c09ab1f",
+          "content": "ПУЛЬС — эффект: 25 FTE, 45М руб/год. Снижение текучести на 8% через раннее выявление признаков выгорания и перегрузки. Экономия на подборе и адаптации. Уровень зрелости: низкий (гипотеза, требуется валидация).",
+          "source": "effect-model-puls-2026-02",
+          "confidence": 0.7,
+          "created": "2026-02-25 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "34d47a7cde92",
+          "hash": "34d47a7cde925a73dd35e7a8f033ec907139767d9d4d529ff3857b609a811ac1",
+          "content": "АТЛАС — эффект: 40 FTE, 70М руб/год. Оптимизация закупок через предиктивное планирование потребностей и автоматические тендерные процедуры. Уровень зрелости: низкий (концепция).",
+          "source": "effect-model-atlas-2026-02",
+          "confidence": 0.73,
+          "created": "2026-02-25 11:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "61e70cb3dc34",
+          "hash": "61e70cb3dc3468796955e701dd0fc3586cecbb511b0dbe404ccaae76bd2b7af2",
+          "content": "МЕРКУРИЙ — эффект: 45 FTE, 80М руб/год. Автоматизация бронирования командировок, подбора маршрутов, оформления виз. Снижение среднего времени обработки заявки с 4ч до 15мин. Уровень зрелости: низкий (концепция).",
+          "source": "effect-model-merkuriy-2026-02",
+          "confidence": 0.72,
+          "created": "2026-02-25 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "dc33d79e9d59",
+          "hash": "dc33d79e9d59352045a7b1c4b7b3c8673961fc58d3a36aa1d41caabe34aba251",
+          "content": "СИГНАЛ — эффект: 30 FTE, 55М руб/год. Сокращение MTTR на 34%, снижение числа эскалаций на L3 поддержку на 45%. Реализованный эффект (production с января 2026).",
+          "source": "effect-model-signal-2026-03",
+          "confidence": 0.93,
+          "created": "2026-03-01 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "4d1683b5cc96",
+          "hash": "4d1683b5cc96fddf802a647369f6c61fb64118f73680ad44cacff1a55d7218b6",
+          "content": "ПРИЗМА — эффект: 15 FTE, 25М руб/год. Автоматизация подготовки управленческой отчётности. Сокращение времени подготовки еженедельного дайджеста с 2 дней до 2 часов.",
+          "source": "effect-model-prizma-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-01 10:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "47b50cf0aef2",
+          "hash": "47b50cf0aef288e4811c2c9cdc795646128bb8eee8e572cb885bb48f698bee9d",
+          "content": "Блок-А (кассовые операции) — суммарный эффект: 230 FTE, 410М руб/год. Основной контрибьютор: ВЕКТОР (78% от эффекта блока). Блок-А — приоритетный для программы.",
+          "source": "block-effects-summary-2026-03",
+          "confidence": 0.89,
+          "created": "2026-03-05 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "2aa529f5a0fe",
+          "hash": "2aa529f5a0fe91badda0a17cdf0af5cd84b227aa05303683e3d748e6ca6220f9",
+          "content": "Блок-В (безопасность) — НЕВА в production даёт верифицированный эффект: за Q1 2026 предотвращено 47 мошеннических транзакций на общую сумму 89М руб. ROI агента: 340% за первый квартал эксплуатации.",
+          "source": "security-kpi-2026-03",
+          "confidence": 0.94,
+          "created": "2026-03-10 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "caeb0a9b36a0",
+          "hash": "caeb0a9b36a0340be495af5686922e024d85dbbcf9c54803b6dbbdbd2e0de6b8",
+          "content": "KPI программы на Q1 2026: план — 150М руб реализованной экономии, факт — 128М руб (85%). Основной вклад: НЕВА (62М) и СИГНАЛ (48М). ВЕКТОР на стадии пилота — эффект будет учтён с Q2 2026.",
+          "source": "program-kpi-q1-2026",
+          "confidence": 0.91,
+          "created": "2026-03-15 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "713b8cdee9b5",
+          "hash": "713b8cdee9b5a5bc14249c34f9a48a6165e843501b6cfd8c89b9738913d28698",
+          "content": "Стоимость владения программой (TCO): 280М руб/год. Включает: зарплаты (180М), инфраструктура (55М), лицензии (30М), обучение (15М). Net benefit при выходе на полную мощность: 260М руб/год.",
+          "source": "tco-analysis-2026-02",
+          "confidence": 0.86,
+          "created": "2026-02-20 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d69f0d0feb2c",
+          "hash": "d69f0d0feb2cf74cde01d98116c755495aafbef38f2b124ee0056096a50f6a48",
+          "content": "Payback period программы: 18 месяцев при текущих темпах. При выходе ВЕКТОР на полную мощность (Q3 2026) payback сократится до 14 месяцев. Breakeven ожидается в сентябре 2026.",
+          "source": "financial-model-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-12 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "7fea453365d4",
+          "hash": "7fea453365d4c8ad048f89ed2eb5933d0fa886ec420504eaa4a5171bcfd49120",
+          "content": "Блок-Д (туризм) + Блок-Е (supply chain) — совокупный ожидаемый эффект: 85 FTE, 150М руб/год. Оба блока на стадии концепции (МЕРКУРИЙ, АТЛАС). Реализация эффекта — не ранее 2027.",
+          "source": "block-de-forecast-2026-03",
+          "confidence": 0.74,
+          "created": "2026-03-08 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "54f6bb8ef55d",
+          "hash": "54f6bb8ef55d138e7aa5813255959f3a5d82b77ce0f6af3f1b5398ec9232360e",
+          "content": "COUNTER: [5c08929954ae] Суммарный эффект 540М руб/год предполагает одновременный выход всех агентов на полную мощность к Q4 2026, что нереалистично учитывая текущие задержки АРХИВ и незапущенные АТЛАС/МЕРКУРИЙ. Реалистичная оценка на Q4 2026: 350-400М руб/год.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.84,
+          "created": "2026-03-20 13:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "a50781fca454",
+          "hash": "a50781fca454b6d59dcd5438523d11fd00ea1c14c68be48e60b71d940162a28d",
+          "content": "COUNTER: [bb305e22200b] Эффект ВЕКТОР 180 FTE рассчитан при 100% adoption rate. Опыт автоматизации в банковском секторе показывает типичный adoption 60-75% в первый год. Скорректированный эффект: 110-135 FTE.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.81,
+          "created": "2026-03-20 13:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "4da1cede02c6",
+          "hash": "4da1cede02c6e311291547f30cf8266a7c64f3a265a7abe355bc5b6e8d9e7159",
+          "content": "COUNTER: [5a22caa5958f] Модель эффекта ПУЛЬС основана на корреляции, а не каузации. Снижение текучести на 8% может быть обусловлено другими факторами (рыночная конъюнктура, повышение зарплат). Необходим A/B тест с контрольной группой.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.79,
+          "created": "2026-03-20 13:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "f34f127f8c51",
+          "hash": "f34f127f8c517c37c4021031ae4d7b76d0c4f0d33f19c3288eacf42daf6fc223",
+          "content": "COUNTER: [713b8cdee9b5] TCO 280М руб/год не включает скрытые расходы: время бизнес-заказчиков на UAT (≈40М), расходы на data governance (≈20М), opportunity cost занятости DevOps (≈25М). Полный TCO: ~365М руб/год.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-20 13:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     },
     "compliance": {
-      "hash": "c4c81e35cff3d4cd063d07a1a7395171cac7aaa732178164f97427a06e6db318",
+      "hash": "75bb4dac556242fec93f2232ebcb8180df1bf2dcbf81c0593934df09f2bb0c85",
       "leaves": [
         {
-          "id": "6c1d120c878a",
-          "hash": "6c1d120c878a8acae9ed20db04d80ef7fbd6cd827e2118bb85fc76692732d565",
-          "content": "Data residency: all knowledge tree data stored locally, no external API calls made during inference. PCIS architecture satisfies data locality requirements by default — no data leaves the deployment boundary.",
-          "source": "architecture-review-2026-02-15",
-          "confidence": 0.9,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "71eb7255c24e",
-          "hash": "71eb7255c24eb0fd290e31a4162c132963364287ce0bd1466c9eb9d07768fc5f",
-          "content": "Audit trail: every knowledge tree entry contains SHA-256 hash of content, session timestamp, and source reference. Merkle root changes on every update. Full tamper-evident history available by replaying root hash sequence.",
-          "source": "architecture-review-2026-02-15",
+          "id": "ca7e0593488f",
+          "hash": "ca7e0593488f55e6c4f60671c5d9d3aa5327edae5821a1fbe95b64109d093b2b",
+          "content": "Audit trail: все решения ИИ-агентов логируются в неизменяемое хранилище (append-only log на базе PostgreSQL + WAL). Retention period: 7 лет. Соответствует требованиям ЦБ РФ 716-П и 747-П.",
+          "source": "compliance-framework-2026-01",
           "confidence": 0.95,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-01-05 09:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "11d0ec8996df",
-          "hash": "11d0ec8996dfb23d7c915dd949d76ab56aaf72beab9677251269c65328e083ae",
-          "content": "COUNTER: [6c1d120c878a] 'No external API calls' is an architectural property of the current build, not a guarantee. Any dependency update or plugin integration could introduce external calls silently. This leaf requires a periodic re-verification trigger — recommend automated test that intercepts all outbound network calls on each release.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.82,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "a3e7f12bc945",
-          "hash": "5db33a237eca363c0d6d326f12ee9f6256d407e4220d333528e89735609954bb",
-          "content": "SOC 2 Type II audit scheduled for Q2 2026. Pre-audit checklist completed — 14 of 16 controls verified. Remaining gaps: formal incident response runbook and third-party penetration test.",
-          "source": "audit-2026-01",
-          "confidence": 0.88,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "b8d4c1e067f2",
-          "hash": "e2779c6e082f409112caf68fc3b834367b7489fb63dad21e0f75dbc156766ffd",
-          "content": "GDPR Article 17 compliance: right-to-erasure implemented via leaf pruning with Merkle recomputation. Deletion is cryptographically verifiable — pruned leaf hash absent from subsequent root.",
-          "source": "architecture-review-2026-02-15",
-          "confidence": 0.93,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c5f9a2d318b7",
-          "hash": "5b58cc33b004dc2304794dd452577c1c1d1d20b77f11017f94cbe5f05dfaef05",
-          "content": "ISO 27001 gap analysis complete. Primary finding: need formalized access control matrix for knowledge tree write operations. Read access is unrestricted by design; write access requires session authentication.",
-          "source": "audit-2026-02",
-          "confidence": 0.86,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "d1e8b7c42a06",
-          "hash": "bb32d74e7836e79321d53ce8cb00fcc4e1589949b527a633840f945860e99e4c",
-          "content": "Data retention policy: knowledge tree leaves retained indefinitely unless explicitly pruned. Counter-leaves and low-confidence entries flagged for quarterly review. No automatic expiration to preserve institutional memory.",
-          "source": "policy-review-2026-03-01",
-          "confidence": 0.91,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "e4a6d3f15c89",
-          "hash": "7ef61175e6d2e5a77fd8b1601b8206d8d3aceeda2b424d83fd21a049aab025c6",
-          "content": "Healthcare client deployments must pass HIPAA BAA requirements before go-live. Checklist includes: encryption at rest (AES-256), audit logging enabled, no PHI in leaf content without de-identification.",
-          "source": "compliance-review-2026-01-15",
-          "confidence": 0.94,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "f7b2c8e49d13",
-          "hash": "07003af4c1f2450a1af2ffc5ece8c8627a6ea5acc39ea5fb9d7467c51eda38f0",
-          "content": "FedRAMP Moderate authorization pathway under evaluation for government sector clients. Estimated 8-month timeline. Blocker: need dedicated GovCloud deployment infrastructure.",
-          "source": "strategy-2026-03-05",
-          "confidence": 0.72,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "3a2709cfd3b",
-          "hash": "38c1e5897e5866bc6656caba3d4411fb1e1a2426f7420c67da206b8b7d263121",
-          "content": "PCI DSS v4.0 compliance assessment initiated for payment-adjacent clients. PCIS does not store cardholder data directly, but document ingestion pipelines may contain PAN references requiring tokenization.",
-          "source": "compliance-review-2026-02-01",
-          "confidence": 0.87,
-          "created": "2026-02-01 09:30:15 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "4d9931abe17",
-          "hash": "2beb42258e20e0802a725dcee4f384f05d958129a7700f77a587fe06c0e7a808",
-          "content": "Penetration test completed by CyberShield Labs, Feb 2026. No critical or high-severity findings. Two medium findings: verbose error messages in API responses and missing rate limiting on /api/search endpoint.",
-          "source": "pentest-2026-02",
-          "confidence": 0.92,
-          "created": "2026-02-18 16:45:22 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "8fbff402263",
-          "hash": "bfa8df4bf395167d147900362078d4c1927345293f57709ad8cffe1199fd6040",
-          "content": "COUNTER: [a3e7f12bc945] SOC 2 pre-audit checklist marks 14/16 controls as verified, but two missing controls — incident response and pen test — are among the most frequently cited in audit failures. Confidence should not exceed 0.75 until both gaps are closed.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.81,
-          "created": "2026-03-20 14:22:08 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "82b4ccfe5a2",
-          "hash": "dc8413a227ee343e25eefcc2ff67699f9e7fe24aa0aa13b1f5fa9788a54745f5",
-          "content": "FedRAMP Moderate authorization exploration started. Initial gap analysis shows 47 of 325 controls require implementation. Estimated 6-month effort with dedicated compliance engineer.",
-          "source": "compliance-review-2026-03-01",
-          "confidence": 0.74,
-          "created": "2026-03-01 10:15:33 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "530c45a7995",
-          "hash": "4997f8fa96263662c7f3ed9f45b7c3ea0080ece55e76b2e057a2e651af66d5d6",
-          "content": "Data processing agreements (DPAs) standardized across all EU clients. Template covers GDPR Articles 28, 32, and 33. Legal approved v2.1 of DPA template on March 5, 2026.",
-          "source": "legal-review-2026-03-05",
-          "confidence": 0.93,
-          "created": "2026-03-05 11:20:47 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "acc88ea8432",
-          "hash": "3e1bf8a68590cf52a50e72c08d4e5553ab4c1b93014e680c279c7394a2d187b8",
-          "content": "Vulnerability disclosure policy published at /security.txt. Coordinated disclosure window set to 90 days. Bug bounty program under evaluation — budget request submitted for Q3 2026.",
-          "source": "security-ops-2026-01-20",
-          "confidence": 0.85,
-          "created": "2026-01-20 13:40:55 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "80855d126b6",
-          "hash": "c7d38ef650e703c029100a12128e9106d9a19a6888a84fbafc03375db01308fa",
-          "content": "Annual security awareness training completed for all engineering staff. 100% completion rate. Topics covered: supply chain attacks, social engineering, secure coding practices, and incident escalation procedures.",
-          "source": "training-2026-02-15",
-          "confidence": 0.9,
-          "created": "2026-02-15 09:00:12 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "0b7c33ed588",
-          "hash": "29582949ec160e9fc5eab4c2076626a64fe9af79a823029ced328ca72472979f",
-          "content": "Client data classification framework adopted: Tier 1 (PII/PHI), Tier 2 (business confidential), Tier 3 (public). Knowledge tree leaves auto-tagged based on source branch and content analysis.",
-          "source": "policy-review-2026-02-20",
-          "confidence": 0.86,
-          "created": "2026-02-20 14:55:30 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "770d08c47c3",
-          "hash": "a445215ed9d3f45ed70aae6f23a20f76d5f96b60c3c595e5edc249ee524be8d3",
-          "content": "Cross-border data transfer mechanisms reviewed. Standard Contractual Clauses (SCCs) implemented for EU-US transfers. UK Addendum applied for post-Brexit compliance.",
-          "source": "legal-review-2026-01-30",
-          "confidence": 0.88,
-          "created": "2026-01-30 10:30:18 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "6d25d324a1b",
-          "hash": "98b7418aed6013883887fc7cc5d33debbd9dd91937f320263420374570660718",
-          "content": "Backup and disaster recovery tested. RTO: 4 hours, RPO: 1 hour. Knowledge tree restored from encrypted S3 snapshot in 47 minutes during tabletop exercise.",
-          "source": "dr-test-2026-03-10",
-          "confidence": 0.91,
-          "created": "2026-03-10 15:22:40 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        }
-      ]
-    },
-    "lessons": {
-      "hash": "ed2b59bc70498fd7e612e07b2b960359e9c44cb2bb5a5e154b24162f34226c7b",
-      "leaves": [
-        {
-          "id": "248c720c4e3a",
-          "hash": "248c720c4e3a2f6549a82b0a4458572e23cfc7e6cdfcd850861b11981fade10b",
-          "content": "Demo performance: VP-level presentations respond better to live demo than slides. Boot integrity check in real time (Merkle root computed on screen) is the highest-impact moment — do not skip it or pre-load results.",
-          "source": "session-2026-03-15",
-          "confidence": 0.85,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c22d36fc0bf6",
-          "hash": "c22d36fc0bf69c7a04717230e3c2051e1f64bd0271c507461311889516c9b6f0",
-          "content": "Knowledge tree commits: significant results must be committed to the tree at session end, not deferred. Daily notes get compressed; the tree is permanent. If a benchmark, decision, or proof matters — it goes in the tree immediately.",
-          "source": "session-2026-03-04",
-          "confidence": 0.95,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "267107a688c8",
-          "hash": "267107a688c895994d91f8db0dde3b7e4c8b678037340a6011f64f5e5ab86871",
-          "content": "Model-agnostic framing resonates strongly with enterprise buyers. The question they ask is always 'what happens when the model changes?' — having a concrete answer (swap the model, memory layer is unchanged) closes that objection immediately.",
-          "source": "session-2026-03-17",
-          "confidence": 0.88,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "716e5efee22a",
-          "hash": "716e5efee22a9c452792d373be4f98cbb4e5da38f4a89b1c17ad468ee5717f63",
-          "content": "COUNTER: [248c720c4e3a] 'Live demo always beats slides' is a pattern from a small sample of presentations. Some audiences (highly technical, time-constrained) prefer a structured slide deck they can reference later. Recommendation: lead with demo, have slides available for follow-up. Do not assume demo-first is universally optimal.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.78,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "180b23eff72e",
-          "hash": "180b23eff72e8f14c39d954f76375eb2ab92749b8093b3276e6eaff2597e23f2",
-          "content": "COUNTER: [c22d36fc0bf6] The 'commit immediately' rule is correct but incomplete. Committing every result without curation leads to tree bloat. The discipline is: commit significant results immediately AND prune low-confidence or superseded leaves at the end of each session. Both halves are required.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.82,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a1d7e4b29c36",
-          "hash": "09efb1a8cbac9099dffc1362e398d6d54af5d2efd283ca6c10efd3bb85da92e1",
-          "content": "Onboarding new clients: always run the adversarial gardener on their first knowledge branch within 48 hours. Early counter-leaves set the expectation that the system challenges its own beliefs — this builds trust faster than perfection.",
-          "source": "session-2026-02-22",
-          "confidence": 0.89,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "b3c8f1a52d49",
-          "hash": "6c6ab8aad775c09951adaa8679da9987371997888613fe94710eca1fcce6c400",
-          "content": "Production incident 2026-02-08: tree file corruption from concurrent writes during load test. Root cause was missing file lock. Fixed by adding fcntl.LOCK_EX to save_tree. Lesson: always assume multi-process access even in 'single-user' deployments.",
-          "source": "postmortem-2026-02",
+          "id": "b545f9a07aff",
+          "hash": "b545f9a07aff4229c41cddb3ab9b4b80d50c09b1e309a9a752cedd2e124ee9cf",
+          "content": "Data residency: все данные программы хранятся на территории РФ. GPU-кластер размещён в ЦОД банка (Москва, Санкт-Петербург). Модель GigaChat-Pro — on-premise deployment. Внешние API не используются для обработки персональных данных.",
+          "source": "data-residency-audit-2026-02",
           "confidence": 0.96,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-02-01 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "d5e2a7c84f13",
-          "hash": "1b8e1e15e4a0f45b85b8e5d5d874979a99c012f9b17ca021ab71f11c074e0daf",
-          "content": "Embedding model cold-start adds 4-6 seconds to first semantic search query. Pre-pulling the model in setup.sh reduced perceived latency to zero for demos. Always warm the model cache before any live presentation.",
-          "source": "session-2026-03-08",
-          "confidence": 0.87,
-          "created": "2026-03-23 12:49:23 UTC",
+          "id": "ba4f947bba09",
+          "hash": "ba4f947bba09c88cf6d5ba15c69168b63af7084a9291d1580beeac2a49117211",
+          "content": "Access control: RBAC + ABAC модель. Доступ к агентам — через SSO (Keycloak). Разделение ролей: оператор, аналитик, администратор, аудитор. Принцип least privilege. Ежемесячный пересмотр прав доступа.",
+          "source": "access-control-policy-2026-01",
+          "confidence": 0.94,
+          "created": "2026-01-10 11:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "e9f4b6d21a78",
-          "hash": "ba59683c1743f90ce624a3e2ea9dd847e23168cf3faa7c63b2457b13aaa96d25",
-          "content": "Client-facing tree exports should omit counter-leaves by default. Counter-leaves are internal epistemic hygiene — exposing them to clients without context creates confusion about system confidence.",
-          "source": "session-2026-03-12",
-          "confidence": 0.83,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "0cee11efa12",
-          "hash": "14b9a2ffdac70918aba74eeb3b5e7a6834d357a02ede2d537612ffb337824b24",
-          "content": "Lesson: batch ingestion of 50k+ documents causes memory pressure on 8GB instances. Discovered during Titan Financial POC. Mitigation: streaming mode with 500-doc chunks and explicit gc.collect() between batches.",
-          "source": "incident-2026-02-15",
-          "confidence": 0.88,
-          "created": "2026-02-15 17:30:45 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "9ba12a78ae3",
-          "hash": "44816bc908418354982b9de982ebf5d75560354fed4764b9a422de5abdf3d83b",
-          "content": "Lesson: client onboarding time directly correlates with data format diversity. Clients with >5 input formats average 3.2 weeks to full integration vs 1.1 weeks for single-format clients.",
-          "source": "retro-2026-01",
-          "confidence": 0.84,
-          "created": "2026-01-31 11:22:18 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "da1a4a872ab",
-          "hash": "329eb00dc57f3806f8e40d4127e26473a627b370fc28535f84d2a6132c96f58a",
-          "content": "Lesson: adversarial validation catches real issues. March 2026 gardener run identified 3 leaves with confidence scores unsupported by evidence. Two were corrected; one was pruned entirely.",
-          "source": "retro-2026-03",
-          "confidence": 0.91,
-          "created": "2026-03-20 16:45:33 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "657c79a9b26",
-          "hash": "ee493357aad69ee3f2f60b01c194493711b6bf1befbbf3838e5e8025588f264a",
-          "content": "COUNTER: [prev-lesson-general] Relying solely on confidence scores for leaf quality is insufficient. A leaf can be high-confidence but outdated, or low-confidence but accurately reflecting genuine uncertainty.",
-          "source": "adversarial-2026-03-22",
-          "confidence": 0.8,
-          "created": "2026-03-22 10:05:17 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "a1a734efb3e",
-          "hash": "5c5e592fab32d5da77275c8b6f199a61d61394577ea85ff07a7741f4179db85e",
-          "content": "Lesson: demo environment divergence from production caused a client-facing bug in Jan 2026. Demo tree had stale schema; production had migrated. Now enforcing schema version checks on all tree loads.",
-          "source": "incident-2026-01-18",
-          "confidence": 0.87,
-          "created": "2026-01-18 14:10:22 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a32826ffe60",
-          "hash": "0d8ace6668a7a41c32a2135127fe2a9560f5b2f98e4e13bec5455a3970cff9bb",
-          "content": "Lesson: semantic search quality degrades when leaf content exceeds 500 characters. Embedding models compress long text poorly. Best practice: split complex knowledge into multiple focused leaves.",
-          "source": "research-2026-02",
-          "confidence": 0.83,
-          "created": "2026-02-08 09:55:30 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c4c412d89cb",
-          "hash": "d9886cf754a77bac11ce94b51354d06c86e29875321badffa680ce345a2d5aab",
-          "content": "Lesson: weekly syncs with high-touch clients (Pinnacle Financial) were unsustainable at scale. Shifted to async Loom updates + biweekly live calls. Client satisfaction unchanged; team capacity recovered 6 hrs/week.",
-          "source": "retro-2026-02",
-          "confidence": 0.85,
-          "created": "2026-02-28 13:40:11 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c810accee99",
-          "hash": "f4baaa9f3ed63a3450c46fde8fca51db851abe047eb5006edf711c56453e62b2",
-          "content": "Lesson: Merkle root verification on every API request adds ~2ms latency. Acceptable for integrity-critical endpoints but unnecessary for read-only queries. Moved to verify-on-write + periodic background checks.",
-          "source": "perf-review-2026-03",
-          "confidence": 0.89,
-          "created": "2026-03-08 10:30:45 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "aa94f6d5e5e",
-          "hash": "26f3c47d37c17fb109c0852fec102290a18483353175816eb7dc979435e121da",
-          "content": "Lesson: belief decay with 180-day half-life was too aggressive for compliance leaves. Regulatory facts don't decay like market intelligence. Implemented per-branch decay profiles: compliance=360d, clients=120d, risk=90d.",
-          "source": "retro-2026-03",
-          "confidence": 0.92,
-          "created": "2026-03-15 11:20:08 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "1e0f879d6ef",
-          "hash": "f68ee0c155a6caf562495ab53b8c459a3d37e42673b74d770fe203918b5d2269",
-          "content": "Lesson: PDF extraction via pdftotext fails silently on scanned documents without OCR layer. Two client uploads returned empty strings. Added content-length validation post-extraction with fallback to Tesseract OCR.",
-          "source": "incident-2026-03-01",
-          "confidence": 0.86,
-          "created": "2026-03-01 15:48:22 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "d16132a86fb",
-          "hash": "dea483cd7b8efb7d75fb57e60a7742dd7b69f6612aba85e2039602236d7aeac2",
-          "content": "Lesson: synapse graph becomes unwieldy beyond 200 connections. Query time for belief traversal increased 4x between 150 and 250 synapses. Implemented connection pruning for low-weight edges during quarterly maintenance.",
-          "source": "perf-review-2026-02",
-          "confidence": 0.81,
-          "created": "2026-02-22 16:15:33 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "beef2723b53",
-          "hash": "66bd593986d71e1d355ca2ffb153e2101fb76f7afe1e999ed06c0b77e8fb5ba5",
-          "content": "Lesson: never merge client-specific customizations into the main product branch. Meridian Health's HIPAA configuration leaked into the default setup, temporarily enabling unnecessary audit logging for all clients.",
-          "source": "incident-2026-02-05",
+          "id": "f7031d6467c4",
+          "hash": "f7031d6467c45b16e9e5eb10d3df7ed70103e95844ecd9fcf5e15e1c2a265712",
+          "content": "Model governance: каждая версия модели проходит через Model Risk Management (MRM) процесс. Включает: валидацию на hold-out наборе, bias-тестирование, stress-тестирование, утверждение комитетом. Текущий цикл MRM: 3-4 недели.",
+          "source": "model-governance-2026-01",
           "confidence": 0.9,
-          "created": "2026-02-05 09:22:17 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        }
-      ]
-    },
-    "products": {
-      "hash": "b2e15c84a33f586fce3756ca1f04cf200f27c2024cb77acdb0ba874b6f7bd808",
-      "leaves": [
-        {
-          "id": "f8b9e375c48e",
-          "hash": "f8b9e375c48e33d5f33e27449ccfa8498876dc0c1ff68af9d3dd3c4c2a4f708a",
-          "content": "Core API v2.3: Merkle integrity verification p99 236ms (300-agent async simulation), memory footprint 346 MB. Benchmarked on isolated test cluster, March 2026. Not end-to-end LLM response latency. Confidence valid for current architecture — recalibrate after any infrastructure change.",
-          "source": "benchmark-2026-03-12",
-          "confidence": 0.92,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-01-15 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "3c5594c198e4",
-          "hash": "caa25eeada1d3d7c2584300b3049ac0746ff5c79adafcdbcad43f4c36b59f7a7",
-          "content": "Knowledge tree query: semantic search via nomic-embed-text embeddings returns results in <100ms for trees up to 10,000 leaves. Keyword fallback available when Ollama is unavailable.",
-          "source": "session-2026-02-28",
-          "confidence": 0.85,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c21c5d857e30",
-          "hash": "c21c5d857e3073abad893a149e7cc63f4c9feb22aa157bd727c527cc7a037879",
-          "content": "Merkle integrity verification adds ~12ms overhead on boot. Acceptable for most deployments. For latency-critical paths, integrity check can be deferred to background thread after initial boot.",
-          "source": "session-2026-03-01",
-          "confidence": 0.88,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "486b8c8bb45d",
-          "hash": "486b8c8bb45d6dfa6e4f7546d987f797d283be2e954c2704f87b1efe6dbce5b5",
-          "content": "COUNTER: [f8b9e375c48e] Benchmark confidence 0.92 is high for a single test run on isolated infrastructure. Production environments introduce variability (network jitter, contention, GC pauses). Recommend tagging this as 'lab-condition benchmark' and scheduling a production load test before quoting to enterprise clients.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.85,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a7d3e1f48c20",
-          "hash": "af87cff110c9d088f8f53190e274b2de3edf5118f9edde4b062abd578a4cbe81",
-          "content": "VR visualization module: Three.js-based 3D rendering of knowledge tree. Branch nodes rendered as orbital clusters, leaves as interactive spheres color-coded by confidence. Supports up to 500 leaves at 60fps on M-series hardware.",
-          "source": "benchmark-2026-03-18",
-          "confidence": 0.89,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "b2c9f5a61d37",
-          "hash": "8e9874510d710d66121c49cc8f6180b5849a8cdbab5fc6b2444a533b37d48576",
-          "content": "Tree diff engine: cross-instance comparison completes in O(n log n) for balanced trees. Tested with two 5,000-leaf instances — full diff computed in 180ms including network serialization overhead.",
-          "source": "benchmark-2026-03-10",
-          "confidence": 0.86,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "c6e8a4b72f15",
-          "hash": "656fc4451f956abd27110d99f31d6ed376008e2c256a8373e2a3ee31a1fdc228",
-          "content": "Plugin architecture: knowledge tree accepts custom branch types via JSON schema validation. Third-party integrations (Jira, Linear, Confluence) import external artifacts as read-only leaves with provenance tracking.",
-          "source": "architecture-review-2026-02-20",
-          "confidence": 0.81,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "d4f1b9c83e28",
-          "hash": "ca51c57acbeca70689b7dc5b0477136b9ba95889408a3b8289c210393e4bb30f",
-          "content": "Embedding index rebuild: full reindex of 10,000 leaves completes in 47 seconds on 8-core machine. Incremental indexing adds <200ms per new leaf. Index file size grows linearly at approximately 1.2 KB per leaf.",
-          "source": "benchmark-2026-03-14",
-          "confidence": 0.9,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "e5a2c7d94f31",
-          "hash": "8e2e24134c51dcbaaea5e43538a68e56d9828d9aa8421fde70461afc9aa931f1",
-          "content": "Roadmap Q3 2026: federated tree sync protocol for multi-site deployments. Design goal is eventual consistency with conflict resolution via timestamp + confidence weighting. Prototype targets two-node setup.",
-          "source": "strategy-2026-03-20",
-          "confidence": 0.73,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "22ea8fe7cea",
-          "hash": "cfb616650357143fda4c52069508db15c10afd725a414cb0b67b4c7b48a87bb8",
-          "content": "Product: Knowledge Tree v2.1 shipped Jan 2026. Key features: streaming ingestion, per-branch decay profiles, and improved PDF extraction with OCR fallback. 23 clients upgraded within first two weeks.",
-          "source": "release-2026-01-15",
-          "confidence": 0.92,
-          "created": "2026-01-15 10:00:00 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "79065d28221",
-          "hash": "6cd609144ef6a06911559a488dd055b82c49b1af5996c293fd203031acac9d9e",
-          "content": "Product: Semantic Search module powered by nomic-embed-text via Ollama. Supports top-k retrieval with branch filtering. Falls back to keyword matching when embedding service unavailable.",
-          "source": "architecture-doc-2026-01",
-          "confidence": 0.9,
-          "created": "2026-01-10 14:30:22 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "40ff316e476",
-          "hash": "7ed6fe8364c69577a1a9cdae21bedfbaec5863c107833fcec3e04c7fd3dc04f0",
-          "content": "Product: Belief Traversal engine — graph-based confidence assessment using synapse connections. Classifies leaves as CONFIDENT, UNCERTAIN, CONTESTED, or SUPERSEDED based on network position.",
-          "source": "architecture-doc-2026-02",
-          "confidence": 0.88,
-          "created": "2026-02-01 11:15:40 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "3fed6a4b26d",
-          "hash": "c4774acf2b49b6cb4d94f86fd68cec88987528b28b9d0dd2d996844b3fd6fb06",
-          "content": "Product roadmap Q2 2026: FedRAMP Moderate certification, multi-tenant knowledge trees, real-time collaboration on leaf editing, and a Slack integration for ingestion notifications.",
-          "source": "planning-2026-03",
-          "confidence": 0.78,
-          "created": "2026-03-10 09:00:15 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "1624717e18a",
-          "hash": "58e36938061d54d25762a21f932fbe94f43fcc093ae6dcae9ec991e0817439d5",
-          "content": "Product: API rate limiting implemented at 1,000 req/min per client. Burst allowance: 50 requests in 1 second. Clients exceeding limits receive 429 with Retry-After header.",
-          "source": "release-2026-02-20",
-          "confidence": 0.91,
-          "created": "2026-02-20 16:45:08 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "595663c46ea",
-          "hash": "6f8aae9468bec7f59a996099578fb09007afd371c21424c4e8bec42bc200c2e1",
-          "content": "COUNTER: [product-roadmap] Multi-tenant knowledge trees require fundamental schema changes. Current Merkle structure assumes single-root integrity. Sharing branches across tenants breaks the tamper-evidence guarantee without a per-tenant root.",
-          "source": "adversarial-2026-03-15",
-          "confidence": 0.82,
-          "created": "2026-03-15 14:20:33 UTC",
-          "promoted_to": null,
-          "is_counter": true
-        },
-        {
-          "id": "1b0dacfe90b",
-          "hash": "53770031c13cbeafff58cac2c284d314200738ae471b7ccb3ac174ec7491396b",
-          "content": "Product: Adversarial Gardener v1.0 — automated counter-leaf generation using LLM-driven challenge prompts. Runs weekly against all high-confidence leaves. March 2026 run challenged 12 leaves, lowered confidence on 4.",
-          "source": "release-2026-03",
-          "confidence": 0.87,
-          "created": "2026-03-20 10:30:00 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "e41ef71b53f",
-          "hash": "62b46dfecd0b3a765948d5f644e20de646d6ed19d778fbbbc1dfee8e3084a03b",
-          "content": "Product: Document Ingestion pipeline supports PDF, TXT, and DOCX. Extracts 10-20 factual claims per document via LLM. Each claim committed as a Merkle-anchored leaf with source provenance.",
-          "source": "architecture-doc-2026-01",
-          "confidence": 0.89,
-          "created": "2026-01-08 13:22:55 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "15dbf61d7e5",
-          "hash": "71b9cfd8ef5cf468bfa6e4dc4acb46b8f8a56f2aa7c40394120112ccbf242d18",
-          "content": "Product: Docker self-contained demo image published to internal registry. Includes Ollama, pre-loaded models, demo tree with 45 leaves, and all API endpoints. Boot time: ~30 seconds on M2 Mac.",
-          "source": "release-2026-03-20",
-          "confidence": 0.85,
-          "created": "2026-03-20 08:45:12 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "da528ab12e0",
-          "hash": "da642c66d373446d57a512c7639ab6a7deb3198e31bdbe24c2b13e1aa7f574e9",
-          "content": "Product: Belief History module tracks all confidence changes per leaf over time. Supports version diffing, timeline visualization, and rollback to previous confidence states.",
-          "source": "release-2026-03-10",
-          "confidence": 0.88,
-          "created": "2026-03-10 11:30:45 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "4c480d09af0",
-          "hash": "459772f0a962cdbe2591da8758c04d543cf3e524dfccf73daba956d7986d22ce",
-          "content": "Product: Knowledge Synapses graph connects related leaves with typed relations: SUPPORTS, CONTRADICTS, REFINES, DERIVES_FROM. Used by Belief Traversal for network-aware confidence scoring.",
-          "source": "architecture-doc-2026-02",
-          "confidence": 0.9,
-          "created": "2026-02-05 10:15:22 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        }
-      ]
-    },
-    "risk": {
-      "hash": "4e7402de9142acde4563c6bdc97144aa93fb906e3be793c2c16c7dd6de73cd53",
-      "leaves": [
-        {
-          "id": "275b5bc0ba93",
-          "hash": "275b5bc0ba936746db824dc5a1f3dcb6b61a8cf23b678f64ba5a5f735482b2b5",
-          "content": "Acme Corp renewal risk: benchmark report not yet delivered. If report shows degraded performance vs. original demo, renewal probability drops significantly. Mitigation: schedule internal test run this week.",
-          "source": "session-2026-03-10",
-          "confidence": 0.78,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "54cc0d2517a7",
-          "hash": "54cc0d2517a78326044af904eeeea778dc77fa12b24a8a1f1feb411b9576c824",
-          "content": "Brightfield competitive risk: actively evaluating a lower-cost alternative. Price gap is approximately 20%. Value proposition must be demonstrated concretely — raw capability comparison alone will not win this account.",
-          "source": "session-2026-01-20",
-          "confidence": 0.72,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "01e2435862c6",
-          "hash": "01e2435862c6fb8a3d97ce1193ec2e9ed3a20eaf16611f098d442425cc6e38e9",
-          "content": "COUNTER: [54cc0d2517a7] Confidence 0.72 on competitive risk assessment is based on a single conversation. Customer stated they were 'evaluating' — this could be a negotiation signal rather than a genuine competitive threat. Recommend direct follow-up to clarify timeline and decision criteria before adjusting strategy.",
-          "source": "adversarial-2026-03-20",
-          "confidence": 0.75,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "a8c2e5f31b47",
-          "hash": "ab003eec06ac8c6bc113f72ea20a351ca6ff94722f7bf98a556a7665edfeb320",
-          "content": "Single-point-of-failure risk: knowledge tree currently stored as single JSON file on local disk. Disk failure or accidental deletion results in total data loss. Mitigation: implement automated nightly backup to encrypted S3 bucket.",
-          "source": "risk-review-2026-02-15",
+          "id": "7f56128ec5dd",
+          "hash": "7f56128ec5dded316c18d64779d60c104d45fb7b2638871d73b424fa51d46f8b",
+          "content": "НЕВА: специальный комплаенс-режим — все решения о блокировке транзакций проходят human-in-the-loop для сумм >5М руб. Автоматическая блокировка только для паттернов с confidence >0.95 и суммой <1М руб.",
+          "source": "neva-compliance-2026-02",
           "confidence": 0.93,
-          "created": "2026-03-23 12:49:23 UTC",
+          "created": "2026-02-10 09:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "b9d4f6a72c58",
-          "hash": "5e66e12a0ad712ac00d2c2d85727e181c0723ac5cf77c4cb1aec37ce037202f6",
-          "content": "Model dependency risk: nomic-embed-text model hosted via Ollama could be deprecated or have breaking changes. Mitigation: pin model version in setup.sh and maintain fallback to keyword search.",
-          "source": "risk-review-2026-03-01",
-          "confidence": 0.84,
-          "created": "2026-03-23 12:49:23 UTC",
+          "id": "5bc2d3dba75a",
+          "hash": "5bc2d3dba75a7bd46cf32f1c011155da517f7a3fbc3a88a536b1aa9161ebc205",
+          "content": "Персональные данные: ВЕКТОР и АРХИВ обрабатывают ПДн клиентов. Реализовано: анонимизация в pipeline, Data Protection Impact Assessment (DPIA) проведён, уведомление в Роскомнадзор подано. Соответствие 152-ФЗ подтверждено.",
+          "source": "pd-compliance-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-15 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "c1e7a3b84d69",
-          "hash": "cef9b6d2948a9d00cd238c27c005d0a55a84b39d181028ee1f4d3b69229defbf",
-          "content": "Scalability ceiling: current JSON-file-based storage will degrade beyond ~50,000 leaves. Estimated threshold based on file I/O benchmarks. Migration path to SQLite or embedded DB should be designed before any client exceeds 20,000 leaves.",
-          "source": "benchmark-2026-03-14",
-          "confidence": 0.87,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "d3f8b2c95e71",
-          "hash": "159a93e8658579b5c171c5470ad3e8118cf8980d894fac41f68cebf765c6a8b6",
-          "content": "Regulatory risk: upcoming EU AI Act (effective Aug 2026) may classify knowledge tree systems as 'limited risk AI'. Requires transparency obligations — users must be informed when interacting with AI-curated knowledge. Legal review initiated.",
-          "source": "compliance-review-2026-03-05",
-          "confidence": 0.76,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "e6a4d1f07b83",
-          "hash": "91be2143534367b179220f840125a37653e7553b52b1262fa8a1a8a2b08373ae",
-          "content": "Meridian Health onboarding risk: HIPAA compliance validation not yet independently audited. Self-assessment passed but client's legal team may require third-party attestation before Phase 2 expansion.",
-          "source": "session-2026-02-18",
-          "confidence": 0.81,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "f2b5c8d16a94",
-          "hash": "c9c55eb175f07558d61585a0ee23db0d3e045fce1dd76bf750fca367d014a6ff",
-          "content": "Open question: adversarial gardener's counter-leaf generation could be gamed by crafting leaf content that triggers false positives. No exploit demonstrated yet, but the attack surface exists. Recommend fuzzing the gardener with adversarial inputs.",
-          "source": "risk-review-2026-03-15",
-          "confidence": 0.69,
-          "created": "2026-03-23 12:49:23 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "ed2b30c8e35",
-          "hash": "3b2f97e84cb94c63a76b55f5d77a2932b64289a77f4a0b944a51300eee2f70dc",
-          "content": "Risk: single-point-of-failure on Ollama embedding service. If Ollama is down, semantic search degrades to keyword fallback. No automatic failover to alternative embedding providers currently configured.",
-          "source": "risk-review-2026-02",
-          "confidence": 0.85,
-          "created": "2026-02-12 09:30:15 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "8d01c010bcd",
-          "hash": "40107e947599ffdea3ac4ceb62daa05b10b62bb25eac996016057d26510327cf",
-          "content": "Risk: key-person dependency on lead engineer for Merkle tree internals. Only one team member can debug hash verification failures end-to-end. Knowledge transfer sessions scheduled for Q2 2026.",
-          "source": "risk-review-2026-01",
-          "confidence": 0.82,
-          "created": "2026-01-28 14:20:33 UTC",
-          "promoted_to": null,
-          "is_counter": false
-        },
-        {
-          "id": "18c537f9819",
-          "hash": "b192ce3237a727a0b5b34c7fb1d7c8d1149eea10ab63aca8774c702f3be50033",
-          "content": "Risk: client concentration — top 3 clients (Acme, Meridian Health, Vanguard) represent 58% of ARR. Loss of any single account would require immediate cost restructuring.",
-          "source": "finance-review-2026-03",
+          "id": "8d060bfaf8cb",
+          "hash": "8d060bfaf8cb73befb2654c38fe61d1685bcb18fa854e053d4c9bc52d74701be",
+          "content": "Внешний аудит: PwC проводит аудит программы ИИ-агентов. Scope: технические контроли, data governance, model risk management. Дата завершения: Q2 2026. Предварительные findings: 3 medium, 0 critical.",
+          "source": "external-audit-2026-03",
           "confidence": 0.88,
-          "created": "2026-03-05 10:45:22 UTC",
+          "created": "2026-03-01 09:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "d7e08ead11c",
-          "hash": "9e58288ab7113a3abac6cadab8122757a0c34dfcd115984af000f06a8de29ce2",
-          "content": "Risk: regulatory landscape shifting — EU AI Act enforcement begins Aug 2026. PCIS may be classified as high-risk if clients use it for employment or creditworthiness decisions. Legal analysis in progress.",
-          "source": "legal-review-2026-02-28",
-          "confidence": 0.79,
-          "created": "2026-02-28 11:15:40 UTC",
+          "id": "d6f5118db9c0",
+          "hash": "d6f5118db9c03384ac0d71df91c7f32efb17ef3b1aa0ede0657761a2b2e701d2",
+          "content": "Требования ЦБ РФ (проект указания от 15.12.2025): обязательная сертификация ИИ-моделей, используемых в кредитном скоринге и антифроде. НЕВА подпадает под требования. Срок приведения в соответствие: до 01.09.2026.",
+          "source": "regulatory-update-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-28 08:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "6ac9ed6f9db",
-          "hash": "9e9ecc5b0683834e83665262be07b83a0dc4a8c31085b484dfb2a226fddb1e84",
-          "content": "COUNTER: [risk-ollama] Keyword fallback is not a true mitigation — it returns qualitatively different results. Clients relying on semantic search for compliance workflows would experience silent degradation, not a graceful fallback.",
-          "source": "adversarial-2026-03-18",
-          "confidence": 0.83,
-          "created": "2026-03-18 15:30:08 UTC",
+          "id": "3f92bd7e3926",
+          "hash": "3f92bd7e392647fd4f8ec8e887a27bded24c4c2178ab361b26352919e20a4998",
+          "content": "Disaster recovery: RPO = 15 мин, RTO = 2 часа для критических агентов (НЕВА, СИГНАЛ). Для остальных: RPO = 1 час, RTO = 8 часов. Резервный ЦОД в Санкт-Петербурге. DR-drill проведён 20.02.2026 — успешно.",
+          "source": "dr-policy-2026-02",
+          "confidence": 0.93,
+          "created": "2026-02-22 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "12fd38aef748",
+          "hash": "12fd38aef7488490e5c2e0e3c864f10c9ceac6fbce16f221eabf8272ab986db2",
+          "content": "Шифрование: все данные at rest — AES-256 (ГОСТ Р 34.12-2015 / Кузнечик). В transit — TLS 1.3. Ключи управляются через HSM (Thales Luna 7). Ротация ключей: каждые 90 дней.",
+          "source": "encryption-policy-2026-01",
+          "confidence": 0.96,
+          "created": "2026-01-08 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c9e84c7f2a69",
+          "hash": "c9e84c7f2a6942047a11dccfd0612604c15c47dc983a5d68272466a3003451fa",
+          "content": "Explainability: для НЕВА реализован SHAP-based explainability module. Каждое решение о блокировке транзакции сопровождается top-5 факторов. Для ВЕКТОР — attention-based highlighting в обработанных документах.",
+          "source": "explainability-report-2026-02",
+          "confidence": 0.87,
+          "created": "2026-02-18 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "110bdacdbf3b",
+          "hash": "110bdacdbf3b13a88b909e132699bcf9c9d50ecdf1fef7558e7729fe9eac5f61",
+          "content": "Инцидент-менеджмент: за Q1 2026 зафиксировано 3 ИИ-инцидента. Все P3 (medium). Среднее время реагирования: 22 мин. Все инциденты закрыты с RCA. P1/P2 инцидентов: 0.",
+          "source": "incident-stats-2026-03",
+          "confidence": 0.92,
+          "created": "2026-03-15 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "231f59819b2e",
+          "hash": "231f59819b2e0a2fdb789aecd7440e94b2a79e2bc836adc562125dfcce1a068d",
+          "content": "Этика ИИ: создан этический комитет программы (5 членов: юрист, data scientist, бизнес-аналитик, HR-директор, внешний эксперт). Заседания ежемесячно. Рассмотрено 4 кейса за Q1 2026, 1 отклонён (использование face recognition).",
+          "source": "ethics-committee-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-10 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "83b636b10567",
+          "hash": "83b636b105670527ce5c7cf1379a1aea0bf9ac804b369be350dc4f150b4e23fd",
+          "content": "Тестирование на bias: НЕВА — проверка на дискриминацию по географии, сумме, времени суток. Обнаружен статистически значимый bias по часовым поясам (UTC+9..+12 — повышенный false positive rate). Исправление запланировано на sprint 2026-S6.",
+          "source": "bias-testing-2026-03",
+          "confidence": 0.84,
+          "created": "2026-03-08 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "38c831b911cb",
+          "hash": "38c831b911cb3b48d2dbc83892a8f2090d74592c87853f4562b1a704ce84b1ad",
+          "content": "Penetration testing: проведён pentest платформы агентов (март 2026, исполнитель: Positive Technologies). Обнаружено: 2 high (prompt injection в АРХИВ, SSRF в API-gateway), 5 medium, 8 low. High-findings исправлены в течение 48 часов.",
+          "source": "pentest-report-2026-03",
+          "confidence": 0.9,
+          "created": "2026-03-18 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "1959ba601ca8",
+          "hash": "1959ba601ca85a5eb5901d2549253c80740eb4e5b412a573f713eff6bbd0066a",
+          "content": "Логирование и мониторинг: все агенты передают structured logs в ELK-стек. Средний объём логов: 2.1 ТБ/месяц. Retention: 90 дней hot, 365 дней cold (S3-compatible). Alerting: PagerDuty интеграция для P1/P2.",
+          "source": "logging-audit-2026-03",
+          "confidence": 0.91,
+          "created": "2026-03-12 13:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "9ca235072c7b",
+          "hash": "9ca235072c7b873a830c477be5d224d6702e013c375d82088b9e0a6ebeb70f99",
+          "content": "Change management: все изменения в production-агентах проходят через CAB (Change Advisory Board). Частота заседаний: 2 раза в неделю. За Q1 2026: 34 change requests, 31 одобрен, 2 отклонены, 1 отложен. Zero failed changes.",
+          "source": "change-mgmt-2026-03",
+          "confidence": 0.93,
+          "created": "2026-03-15 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5fc3d797459a",
+          "hash": "5fc3d797459aa8d70b3f450df9a7a0db5a8b03036c22892d748c5c035916917b",
+          "content": "COUNTER: [f7031d6467c4] Цикл MRM 3-4 недели — слишком долгий для agile-разработки. Блокирует быстрые итерации агентов. При 9 агентах и средней частоте релизов раз в 2 недели MRM становится бутылочным горлышком. Необходим fast-track для minor updates.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.82,
+          "created": "2026-03-20 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": true
         },
         {
-          "id": "2eabb747250",
-          "hash": "dd8f752a47d6ee2a430ec697562f3dd91c30a378bc13b4a1b84eec9a5eb2033b",
-          "content": "Risk: demo tree divergence from production schema. Demo uses flat JSON; production considering migration to SQLite for performance. Schema mismatch could cause integration test blind spots.",
-          "source": "risk-review-2026-03",
+          "id": "07a9a8d789f1",
+          "hash": "07a9a8d789f15e0f8a0734717c13e0f1ad6b6aba508eab77eb6b2444b847b253",
+          "content": "COUNTER: [8d060bfaf8cb] Предварительные findings аудита PwC (3 medium) — оптимистичная промежуточная оценка. Финальный отчёт исторически содержит на 40-60% больше findings. Рекомендуется начать remediation уже сейчас.",
+          "source": "adversarial-review-2026-03",
           "confidence": 0.8,
-          "created": "2026-03-12 09:55:17 UTC",
+          "created": "2026-03-20 14:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "5301e9ff8f39",
+          "hash": "5301e9ff8f395b183b551d2f66da9aa6a2b1cccde04a20b3d813eaed96a35644",
+          "content": "COUNTER: [b545f9a07aff] Data residency: on-premise GigaChat-Pro получает обновления от вендора через интернет. Процесс обновления модели может содержать telemetry, потенциально передающую метаданные за пределы РФ. Требуется air-gapped update процесс.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.78,
+          "created": "2026-03-20 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "549dc31f4db3",
+          "hash": "549dc31f4db3ba0f48d5eafe74798a4df3ec35aafb140e65d46d14606d9c920d",
+          "content": "COUNTER: [3f92bd7e3926] DR-drill 20.02.2026 не включал сценарий одновременного отказа основного и резервного ЦОД. Также не тестировалась деградация при частичной потере GPU-кластера. Drill покрыл только 60% реалистичных сценариев.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.81,
+          "created": "2026-03-20 14:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        }
+      ]
+    },
+    "decisions": {
+      "hash": "82bbe2ea58cc50526750cd09090ec300935bcc3e372d71f523dc9ea3143956bf",
+      "leaves": [
+        {
+          "id": "1294f5620b62",
+          "hash": "1294f5620b6296e4eeab1210008b36276ee3a5a3a4fbf12f5f4522de4aac864a",
+          "content": "DECISION-001 (2025-11-15): Выбор GigaChat-Pro как базовой LLM для всех агентов программы. Альтернативы: YandexGPT, open-source (LLaMA-3), зарубежные (GPT-4, Claude). Причина: data residency, производительность на русском языке, on-premise deployment. Голосование комитета: 5-1.",
+          "source": "architecture-decision-2025-11",
+          "confidence": 0.94,
+          "created": "2025-11-15 16:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "fbe6e5caf4e",
-          "hash": "e4b29bc199b01518d5911c8af5c881d0d7dc95fdb5961befdead620b1f7652d4",
-          "content": "Risk: LLM model dependency — claim extraction relies on qwen3:14b via Ollama. Model updates could alter extraction quality without warning. No regression test suite for extraction accuracy.",
-          "source": "risk-review-2026-02",
-          "confidence": 0.84,
-          "created": "2026-02-18 13:40:22 UTC",
+          "id": "48aecf571d4f",
+          "hash": "48aecf571d4fada68a80257fe4c1f6a7b3f797e1aafb9ff29ac7ed4ebd3a04f9",
+          "content": "DECISION-002 (2025-12-10): Приоритизация агентов — первая волна: ВЕКТОР, АРХИВ, НЕВА. Критерий: ROI × feasibility score. ВЕКТОР — наибольший финансовый эффект. НЕВА — критическая бизнес-необходимость (антифрод). АРХИВ — высокая готовность данных.",
+          "source": "prioritization-decision-2025-12",
+          "confidence": 0.93,
+          "created": "2025-12-10 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "48df3937c3e",
-          "hash": "616d7314e43373ff39df25a9236db0a4d134f19172bc618e1a37d3eab3e5ea97",
-          "content": "Risk: open-source supply chain — 14 Python dependencies in requirements.txt. Last dependency audit: Feb 2026. One transitive dependency (PyPDF2) is unmaintained; evaluating pypdf as replacement.",
-          "source": "security-review-2026-02",
+          "id": "a71d9161499d",
+          "hash": "a71d9161499d58c102ffe2f974c33bbd1067b7f1f5b2cea0d0332cf078773c36",
+          "content": "DECISION-003 (2026-01-20): Архитектура — микросервисная, каждый агент как независимый сервис в Kubernetes. Общие компоненты: API-gateway, LLM-proxy, vector store (Qdrant), observability stack (Grafana + Prometheus). Отклонена монолитная архитектура.",
+          "source": "architecture-decision-2026-01",
+          "confidence": 0.92,
+          "created": "2026-01-20 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "fa7cda95c3b0",
+          "hash": "fa7cda95c3b012ca95d1101e63429b3abef8f037097073104f3d3b160b4b40c2",
+          "content": "DECISION-004 (2026-01-25): Выбор Qdrant как vector database для semantic search. Альтернативы: Milvus, Weaviate, pgvector. Причина: производительность на масштабе 10М+ векторов, on-premise deployment, активное коммьюнити в РФ.",
+          "source": "tech-decision-2026-01",
+          "confidence": 0.9,
+          "created": "2026-01-25 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "005b0c032dc8",
+          "hash": "005b0c032dc8660b28b6548286e9abe968057c89cd277921436c3ad48f34bd3e",
+          "content": "DECISION-005 (2026-02-05): Отказ от использования face recognition в ПУЛЬС. Этический комитет: риск нарушения приватности сотрудников перевешивает потенциальный эффект (определение усталости по видео). Альтернатива: анализ паттернов работы по логам систем.",
+          "source": "ethics-decision-2026-02",
+          "confidence": 0.97,
+          "created": "2026-02-05 13:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5d9f0a819f99",
+          "hash": "5d9f0a819f99f8194214ba405cecfe9a4b52ac1cf83685636684e83d22bab2a7",
+          "content": "DECISION-006 (2026-02-12): Бюджет программы на 2026 — 280М руб. Утверждён правлением. Распределение: разработка 64%, инфраструктура 20%, лицензии 11%, обучение 5%. Увеличение на 35% vs 2025 (было 207М).",
+          "source": "budget-decision-2026-02",
+          "confidence": 0.95,
+          "created": "2026-02-12 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "edbed7af677d",
+          "hash": "edbed7af677df858cde8fa94214eceaf2b7ed10af9bcec7990ec840b466f9788",
+          "content": "DECISION-007 (2026-02-20): Стратегия тестирования — обязательное A/B тестирование для всех агентов перед production. Минимальная длительность A/B: 4 недели. Control group: не менее 20% от целевой аудитории. Champion/challenger модель.",
+          "source": "testing-strategy-2026-02",
+          "confidence": 0.89,
+          "created": "2026-02-20 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ebd3547730db",
+          "hash": "ebd3547730db655eb5357b441ade95ff157dbb4057b1fd64a559a9f403164b24",
+          "content": "DECISION-008 (2026-03-01): НЕВА — переход на transformer-based модель (замена gradient boosting). Причина: новые паттерны мошенничества требуют анализа последовательностей транзакций, а не отдельных транзакций. Дообучение: Q2 2026.",
+          "source": "model-decision-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-01 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d65ce42b871e",
+          "hash": "d65ce42b871ef8738e00faf75dd76973e947aedbc1cb844f970bc146ed86d071",
+          "content": "DECISION-009 (2026-03-05): Vendor для OCR в АРХИВ — ABBYY FineReader Server. Альтернативы: Tesseract (недостаточная точность на рукописном тексте), Яндекс Vision (нет on-premise). ABBYY: 97.3% accuracy, on-premise, поддержка ГОСТ.",
+          "source": "vendor-decision-2026-03",
+          "confidence": 0.91,
+          "created": "2026-03-05 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "db688730817a",
+          "hash": "db688730817a4a9fb603605d2606e3670530e414960aa1deb37046284c7fbbce",
+          "content": "DECISION-010 (2026-03-10): Запуск АТЛАС отложен на Q3 2026 (был Q2). Причина: недостаток ML-инженеров (RISK-002). Ресурсы перераспределены на ускорение ВЕКТОР (приоритет — максимальный финансовый эффект).",
+          "source": "reprioritization-2026-03",
+          "confidence": 0.9,
+          "created": "2026-03-10 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bab11b8f9ab7",
+          "hash": "bab11b8f9ab7ff71bdf797e7c20fc3466febc3392d6daefbe2e6eed6da69bdcc",
+          "content": "DECISION-011 (2026-03-12): Стандарт отчётности агентов — OpenTelemetry-based метрики для всех агентов. Формат: OTLP/gRPC. Dashboard: Grafana с единым шаблоном. Срок внедрения: до конца Q2 2026.",
+          "source": "observability-decision-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-12 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c1a7e209afd7",
+          "hash": "c1a7e209afd79d5aebd8d3a5ff24b2f7bd523fd3d1cd1737b6e1a8876303274a",
+          "content": "DECISION-012 (2026-03-15): Human-in-the-loop — обязателен для всех агентов с confidence <0.85 на финальном решении. Для НЕВА — порог 0.95 (антифрод). Автоматические решения только при высокой уверенности.",
+          "source": "hitl-policy-2026-03",
+          "confidence": 0.93,
+          "created": "2026-03-15 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "566317e16ff9",
+          "hash": "566317e16ff9790fcf7180de0b4f15dcb28938217320f64969e664f0e9f9e8b1",
+          "content": "DECISION-013 (2026-03-18): Платформа-А (оркестрация) — выбран Apache Airflow + custom orchestrator на FastAPI. Отклонены: Temporal (сложность), Prefect (нет on-premise enterprise), самописное решение (ресурсоёмкость).",
+          "source": "platform-decision-2026-03",
           "confidence": 0.86,
-          "created": "2026-02-22 10:10:55 UTC",
+          "created": "2026-03-18 14:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
         },
         {
-          "id": "0f700da07fd",
-          "hash": "88d4ee5d9c3df14bf804f89b5480c42fa6d199a1c0115cab7f511ccb283f38c4",
-          "content": "Risk: competitive pressure from DocuMind AI, which raised $40M Series B in Jan 2026. Their product targets the same enterprise document processing market but lacks Merkle integrity features.",
-          "source": "market-intel-2026-01",
-          "confidence": 0.77,
-          "created": "2026-01-25 16:30:40 UTC",
+          "id": "f2c4e899f462",
+          "hash": "f2c4e899f462574611d81fbf67cef1d0e8a2a0840611fc3b7a3917af47a2c64c",
+          "content": "DECISION-014 (2026-03-20): Retention-план для ключевых сотрудников программы — утверждён бюджет 15М руб на retention бонусы для 12 критических специалистов. Условие: minimum 18 месяцев commitment. Покрывает ВЕКТОР, НЕВА, АРХИВ тимлидов.",
+          "source": "retention-decision-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-20 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "ad2e1bf1238a",
+          "hash": "ad2e1bf1238a17492b598921840a1e6c9fd097ccbb76a70f0e774be630a145d7",
+          "content": "DECISION-015 (2026-03-22): Для ПРИЗМА — переход на RAG-архитектуру вместо fine-tuning. Причина: данные меняются еженедельно, fine-tuning не успевает за обновлениями. RAG с Qdrant обеспечивает актуальность без переобучения.",
+          "source": "tech-decision-prizma-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-22 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "75d8216530e2",
+          "hash": "75d8216530e20b7ac20050384714f39512b3205c4b2fe870c677c47a3976b3a3",
+          "content": "DECISION-016 (2026-03-24): Блок-Г (недвижимость) — ОРИОН будет интегрирован с IoT-платформой банка (датчики температуры, влажности, энергопотребления в 340 объектах). Vendor IoT: Wialon. Начало интеграции: Q2 2026.",
+          "source": "iot-decision-2026-03",
+          "confidence": 0.82,
+          "created": "2026-03-24 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "cc2c71626de7",
+          "hash": "cc2c71626de79fab9bd37c187b72c4660e50f2a958059529483d210fe7b02a36",
+          "content": "COUNTER: [1294f5620b62] Выбор единственной LLM (GigaChat-Pro) создаёт single point of failure. При деградации модели после обновления все 9 агентов деградируют одновременно. Необходима multi-model strategy хотя бы для критических агентов.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-20 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "668762bc82d5",
+          "hash": "668762bc82d51bc84ad3500aa92f04b31c227de106ef0e08a39c34963e751619",
+          "content": "COUNTER: [fa7cda95c3b0] Qdrant — относительно молодой проект (v1.0 вышел в 2023). Для критической банковской инфраструктуры это риск. pgvector на PostgreSQL — более зрелое решение, хотя и менее производительное. Рекомендуется dual-write стратегия.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.78,
+          "created": "2026-03-20 15:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "6ae68c808a23",
+          "hash": "6ae68c808a23bcd73a09555bf08f5aa9f25b93630ea2a101a71ade5e7aec06a7",
+          "content": "COUNTER: [ebd3547730db] Переход НЕВА на transformer — высокорисковое решение. Текущая gradient boosting модель работает стабильно. Параллельная эксплуатация двух моделей увеличит infra costs на 40%. Champion/challenger на антифроде — это эксперимент на живых деньгах.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-20 15:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "0b2677451e41",
+          "hash": "0b2677451e4130c410d5b753586d6e6d707f570e03f290f07255d5de9bdcf573",
+          "content": "COUNTER: [566317e16ff9] Airflow — batch-ориентированный инструмент, плохо подходит для real-time оркестрации агентов (НЕВА, СИГНАЛ требуют sub-second latency). Temporal был отклонён преждевременно — его сложность оправдана для данного use case.",
+          "source": "adversarial-review-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-20 15:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     }

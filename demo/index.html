@@ -1246,10 +1246,11 @@ async function runBelief() {
       ${data.assessments.map((a, i) => `
         <div class="result-card">
           <div class="result-rank">#${i + 1}</div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:8px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px;margin-bottom:10px;flex-wrap:wrap">
             ${stanceBadge(a.stance)}
             <span class="result-branch">${a.branch}</span>
           </div>
+          <div style="font-size:13px;line-height:1.6;margin-bottom:14px;color:var(--text)">${escapeHtml(a.content || '')}</div>
           <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:16px">
             <div style="text-align:center">
               <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:var(--accent)">${a.net_confidence.toFixed(2)}</div>

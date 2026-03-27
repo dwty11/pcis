@@ -49,8 +49,8 @@ fi
 
 # ── 4. GigaChat adapter check ─────────────────────────────────────────────
 echo "  [3/5] Checking GigaChat adapter (localhost:7860)..."
-GIGACHAT_STATUS=$(curl -s --max-time 2 http://localhost:7860/v1/models 2>/dev/null)
-if echo "$GIGACHAT_STATUS" | grep -q '"object"'; then
+GIGACHAT_STATUS=$(curl -s --max-time 2 http://localhost:7860/health 2>/dev/null)
+if echo "$GIGACHAT_STATUS" | grep -q '"status":"ok"'; then
   echo "  ✓  GigaChat adapter: RUNNING"
 else
   echo "  ⚠  GigaChat adapter not running on localhost:7860"
