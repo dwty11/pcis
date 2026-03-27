@@ -384,6 +384,34 @@ def api_belief():
         syn_path = os.path.join(DEMO_DIR, "demo_synapses.json")
         synapses = load_synapses(syn_path) if os.path.exists(syn_path) else load_synapses()
 
+        # Relevance gate: check semantic similarity before assessing
+        RELEVANCE_THRESHOLD = 0.60
+        try:
+            from core.knowledge_search import search as _search
+            search_results = _search(query, top_k=3, min_score=0.0)
+            if search_results and search_results[0][0] < RELEVANCE_THRESHOLD:
+                return jsonify({"assessments": [{
+                    "leaf_id": "",
+                    "content": "",
+                    "branch": "",
+                    "base_confidence": 0.0,
+                    "net_confidence": 0.0,
+                    "stance": "OUT_OF_SCOPE",
+                    "reasoning": (
+                        f"Query did not match any belief in the knowledge base "
+                        f"(best similarity: {search_results[0][0]:.2f}, threshold: {RELEVANCE_THRESHOLD:.2f}). "
+                        f"Insufficient data to assess."
+                    ),
+                    "support_count": 0,
+                    "contradiction_count": 0,
+                    "superseded": False,
+                    "depth_reached": 0,
+                    "supporting": [],
+                    "contradicting": [],
+                }], "query": query})
+        except Exception:
+            pass
+
         assessments = _query_belief(query, top_k=3, tree=tree, synapses=synapses)
 
         # Enrich each assessment with supporting/contradicting leaf details

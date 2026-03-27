@@ -987,6 +987,7 @@ function renderEpistemicHealth(eh) {
     'CONTESTED': 'var(--orange)',
     'SUPERSEDED': 'var(--red)',
     'NOT_FOUND': 'var(--text-muted)',
+    'OUT_OF_SCOPE': 'var(--text-muted)',
   };
 
   const gardenerText = eh.last_gardener_run
@@ -1198,6 +1199,7 @@ function stanceBadge(stance) {
     'CONTESTED': 'var(--orange)',
     'SUPERSEDED': 'var(--red)',
     'NOT_FOUND': 'var(--text-muted)',
+    'OUT_OF_SCOPE': 'var(--text-muted)',
   };
   const color = colors[stance] || 'var(--text-dim)';
   return `<span style="display:inline-block;padding:3px 12px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:1px;background:${color}20;color:${color};border:1px solid ${color}40">${stance}</span>`;
@@ -1230,6 +1232,16 @@ async function runBelief() {
 
     if (!data.assessments || data.assessments.length === 0) {
       resultsDiv.innerHTML = '<div class="query-empty">No beliefs found matching "' + escapeHtml(query) + '"</div>';
+      return;
+    }
+
+    // OUT_OF_SCOPE: query is outside knowledge base
+    if (data.assessments.length === 1 && data.assessments[0].stance === 'OUT_OF_SCOPE') {
+      resultsDiv.innerHTML = `
+        <div style="padding:20px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;text-align:center">
+          ${stanceBadge('OUT_OF_SCOPE')}
+          <div style="margin-top:14px;font-size:14px;color:var(--text-muted);line-height:1.6">${escapeHtml(data.assessments[0].reasoning)}</div>
+        </div>`;
       return;
     }
 
