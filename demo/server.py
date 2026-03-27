@@ -344,7 +344,11 @@ def api_adversarial():
 @app.route("/api/adversarial-validation")
 def api_gigachat_validation():
     """Return adversarial validation run results."""
-    validation_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
+    validation_file = os.path.join(DEMO_DIR, "external_validation_run.json")
+    if not os.path.exists(validation_file):
+        validation_file = os.path.join(DEMO_DIR, "gigachat_validation_run.json")
+    if not os.path.exists(validation_file):
+        validation_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
     if not os.path.exists(validation_file):
         return jsonify({"status": "not_run", "message": "Run adversarial_validator.py first"})
     with open(validation_file, "r") as f:

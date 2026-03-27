@@ -47,14 +47,14 @@ else
   FAILED=1
 fi
 
-# ── 4. GigaChat adapter check ─────────────────────────────────────────────
-echo "  [3/5] Checking GigaChat adapter (localhost:7860)..."
+# ── 4. External validator check (optional) ────────────────────────────────
+echo "  [3/5] Checking External validator (localhost:7860)..."
 GIGACHAT_STATUS=$(curl -s --max-time 2 http://localhost:7860/health 2>/dev/null)
 if echo "$GIGACHAT_STATUS" | grep -q '"status":"ok"'; then
-  echo "  ✓  GigaChat adapter: RUNNING"
+  echo "  ✓  External validator: RUNNING"
 else
-  echo "  ⚠  GigaChat adapter not running on localhost:7860"
-  echo "     Start it before demo: GigaChat tab will fail without it"
+  echo "  ⚠  External validator not running on localhost:7860"
+  echo "     Start it before demo: External Validation tab will fail without it"
 fi
 
 # ── 5. Run 24 tests ───────────────────────────────────────────────────────

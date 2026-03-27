@@ -706,7 +706,7 @@ body {
   <div class="tab" data-tab="adversarial">Adversarial</div>
   <div class="tab" data-tab="history">History</div>
   <div class="tab" data-tab="ingest">Ingest</div>
-  <div class="tab" data-tab="gigachat">GigaChat Validation</div>
+  <div class="tab" data-tab="gigachat">External Validation</div>
 </div>
 
 <div class="content">
@@ -866,9 +866,9 @@ body {
   <!-- ══════ GIGACHAT VALIDATION SCREEN ══════ -->
   <div class="screen" id="screen-gigachat">
     <div style="margin-bottom:28px">
-      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">GigaChat Adversarial Validation — March 2026</h2>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">External Adversarial Validation</h2>
       <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
-        Independent adversarial pass executed on GigaChat-Pro inside a closed perimeter.
+        Independent adversarial pass executed by an external LLM validator.
         No external data sent — only knowledge entries from the local tree.
       </p>
     </div>
@@ -876,7 +876,7 @@ body {
     <div id="gcMerkle" style="margin-bottom:28px"></div>
     <div class="section-title">Adversarial Challenges</div>
     <div id="gcList">
-      <div class="loading"><div class="spinner"></div> Loading GigaChat validation data...</div>
+      <div class="loading"><div class="spinner"></div> Loading external validation data...</div>
     </div>
   </div>
 
@@ -1577,7 +1577,7 @@ async function loadGigaChat() {
       const challenge = rawContent.startsWith('COUNTER: ') ? rawContent.replace(/^COUNTER: \[[^\]]+\]\s*\n?\n?/, '') : rawContent;
       return `
         <div class="adversarial-card" style="border-left-color:var(--purple)">
-          <div class="adv-label" style="color:var(--purple)">GigaChat Challenge</div>
+          <div class="adv-label" style="color:var(--purple)">External Challenge</div>
           <div class="adv-original">
             <div class="adv-original-label">Original Claim</div>
             ${originalClip}
@@ -1594,7 +1594,7 @@ async function loadGigaChat() {
     }).join('');
 
   } catch (e) {
-    document.getElementById('gcList').innerHTML = '<div class="query-empty">Error loading GigaChat validation data: ' + e.message + '</div>';
+    document.getElementById('gcList').innerHTML = '<div class="query-empty">Error loading external validation data: ' + e.message + '</div>';
   }
 }
 
