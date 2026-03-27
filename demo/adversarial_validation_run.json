@@ -1,6 +1,6 @@
 {
-  "provider": "gigachat",
-  "model": "GigaChat",
+  "provider": "external",
+  "model": "external-validator",
   "run_date": "2026-03-24",
   "leaves_challenged": 9,
   "counters_generated": 9,
@@ -15,7 +15,7 @@
       "confidence": 0.77,
       "created": "2026-03-24 07:30:54 UTC",
       "hash": "2e440d3eb526",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "b00a551888e6",
         "branch": "clients",
@@ -31,7 +31,7 @@
       "confidence": 0.77,
       "created": "2026-03-24 07:30:54 UTC",
       "hash": "87c5f648ca55",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "b73cb993ad0e",
         "branch": "clients",
@@ -47,7 +47,7 @@
       "confidence": 0.86,
       "created": "2026-03-24 07:30:54 UTC",
       "hash": "82fe231fce98",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "c21c5d857e30",
         "branch": "products",
@@ -63,7 +63,7 @@
       "confidence": 0.83,
       "created": "2026-03-24 07:30:54 UTC",
       "hash": "1df98f51d8d0",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "267107a688c8",
         "branch": "lessons",
@@ -79,7 +79,7 @@
       "confidence": 0.84,
       "created": "2026-03-24 07:30:54 UTC",
       "hash": "a98d4993bb67",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "71eb7255c24e",
         "branch": "compliance",
@@ -95,7 +95,7 @@
       "confidence": 0.80,
       "created": "2026-03-24 07:31:12 UTC",
       "hash": "c4f917e2a3b1",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "c22d36fc0bf6",
         "branch": "lessons",
@@ -111,7 +111,7 @@
       "confidence": 0.88,
       "created": "2026-03-24 07:31:12 UTC",
       "hash": "7d3ae50fb829",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "6c1d120c878a",
         "branch": "compliance",
@@ -127,7 +127,7 @@
       "confidence": 0.82,
       "created": "2026-03-24 07:31:12 UTC",
       "hash": "e19b4c6d80f3",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "3c5594c198e4",
         "branch": "products",
@@ -143,7 +143,7 @@
       "confidence": 0.79,
       "created": "2026-03-24 07:31:12 UTC",
       "hash": "5fa2d1387c04",
-      "source": "adversarial-gigachat-2026-03-24",
+      "source": "adversarial-external-2026-03-24",
       "original": {
         "id": "54cc0d2517a7",
         "branch": "risk",
