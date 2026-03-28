@@ -47,7 +47,13 @@ from knowledge_tree import (
 )
 from knowledge_search import get_embedding, cosine_similarity, search as _ks_search
 
-BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+# PCIS_BASE_DIR is required. No silent fallback — fail loud, not wrong.
+_base_dir_env = os.environ.get("PCIS_BASE_DIR")
+if not _base_dir_env:
+    print("FATAL: PCIS_BASE_DIR is not set. Gardener refuses to run without an explicit base directory.")
+    print("Set it: export PCIS_BASE_DIR=/path/to/your/pcis/installation")
+    sys.exit(1)
+BASE_DIR = _base_dir_env
 TREE_FILE = os.environ.get("PCIS_TREE_FILE", os.path.join(BASE_DIR, "data", "tree.json"))
 GARDEN_LOG = os.path.join(BASE_DIR, "memory", "gardener-log.md")
 GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
