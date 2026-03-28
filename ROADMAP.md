@@ -32,6 +32,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [x] Pruning protocol — flags stale and low-confidence leaves for review
 - [x] Cross-branch synapses — typed edges (SUPPORTS / CONTRADICTS / REFINES / DERIVES_FROM / SUPERSEDES), Merkle-chained
 - [x] Belief traversal — BFS confidence assessment, stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), plain-English reasoning
+- [x] Semantic search — embedding-based query via Ollama + nomic-embed-text, keyword fallback when unavailable
 - [x] Model-agnostic design — swap LLM without touching memory layer
 - [x] Demo UI — five-tab Flask app, runs locally in 60 seconds
 
@@ -42,7 +43,6 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention
 - [x] Docker image — `docker compose up` with no local Python setup (ollama-init pulls model on first run)
 - [ ] Proper Merkle tree — balanced binary tree with branch proofs, not just root hash
-- [ ] Semantic search — embedding-based query, not keyword match
 - [ ] Config validation — helpful errors when config.json is missing or malformed
 - [x] Belief decay — exponential decay (half-life 180 days), constraints/state branches exempt, CLI `--decay [--dry-run]`
 - [ ] LangChain adapter — PCIS as a memory provider for LangChain agents
