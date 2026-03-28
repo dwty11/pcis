@@ -40,6 +40,7 @@ log = logging.getLogger("pcis.gardener")
 
 # Ensure core/ is importable
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from knowledge_tree import (
     compute_root_hash, compute_branch_hash, hash_leaf as _kt_hash_leaf,
     save_tree, add_knowledge as _kt_add_knowledge, tree_lock, now_utc,
