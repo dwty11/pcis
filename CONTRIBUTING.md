@@ -11,10 +11,9 @@ PCIS is a v1.0 project — the architecture is solid, the implementation has kno
 **Feature requests** — check [ROADMAP.md](ROADMAP.md) first. If it's on the roadmap, +1 it in issues. If it's not, open a discussion.
 
 **Pull requests** — welcome. Focus areas where PRs have the most impact:
-- Test coverage — 58 tests cover core tree, synapses, and belief traversal; integration tests and edge cases welcome
+- Test coverage — 128 tests cover core tree, synapses, belief traversal, search API, and upload API; integration tests and edge cases welcome
 - Docker setup
 - LangChain / agent framework adapters
-- Semantic search implementation
 
 **Using PCIS in a real project** — tell us. Open an issue titled "Using PCIS for [X]" and describe your use case. This is the most valuable signal we can get right now.
 
