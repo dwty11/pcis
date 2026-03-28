@@ -273,6 +273,15 @@ Drop-in behavioral guides for AI agents using PCIS. Copy the relevant SKILL.md i
 
 ---
 
+
+## Operational Safety
+
+In March 2026, a misconfigured environment variable caused the gardener to write counter-leaves into a stale copy of the knowledge tree instead of the canonical one. The overly broad cleanup that followed removed 37 legitimate leaves from the stale copy.
+
+The canonical tree was never touched. Merkle integrity caught the divergence. Recovery took minutes.
+
+This incident led to one architectural change: the gardener now refuses to run without an explicit `PCIS_BASE_DIR`. No silent fallback. If it doesn't know which tree it's operating on, it exits with an error. The system fails loud, not wrong.
+
 ## Known Limitations
 
 - **Leaf ID format transition** — new leaves use UUID4 (128-bit) IDs for collision safety at scale. Existing trees with legacy 12-char hex IDs load and display correctly; no migration required.
