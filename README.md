@@ -113,7 +113,7 @@ It fails. Undo the change. It passes. That's Merkle integrity — one changed by
 **Boot — Merkle integrity check, computed in real time:**
 ![Boot - Merkle Verified](docs/screenshots/boot-verified.png)
 
-**Knowledge Tree — 5 branches, 19 leaves, Merkle root visible:**
+**Knowledge Tree — 5 branches, 103 leaves, Merkle root visible:**
 ![Knowledge Tree](docs/screenshots/tree.png)
 
 **Query — answers pinned to verified leaves with SHA-256 hashes:**
