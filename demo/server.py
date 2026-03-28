@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# ⚠️  DO NOT run this file directly for demos.
+# Use: bash start_demo.sh (from repo root)
+# Direct invocation reads data/tree.json if it exists — start_demo.sh reads demo/demo_tree.json.
 """
 PCIS Demo Server
 Self-contained demo: uses demo_tree.json for all endpoints.
