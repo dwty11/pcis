@@ -13,6 +13,7 @@ fi
 pip install -r requirements.txt
 mkdir -p data
 cp demo/demo_tree.json data/tree.json
+echo '[]' > data/belief-history.json
 
 # Pre-pull the embedding model so first semantic search doesn't silently fail
 if command -v ollama &>/dev/null; then
