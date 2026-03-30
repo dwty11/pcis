@@ -11,4 +11,3 @@ build/
 pcis.egg-info/
 demo/demo_search_index.json
 memory/
-demo/demo_tree_lanit.json
