@@ -220,7 +220,7 @@ The validator supports four providers — set `llm_provider` in `config.json`:
 |----------|---------------|---------|
 | Anthropic | `"anthropic"` | `llm_api_key` in config.json or `ANTHROPIC_API_KEY` env var |
 | OpenAI | `"openai"` | `llm_api_key` in config.json or `OPENAI_API_KEY` env var |
-| GigaChat | `"gigachat"` | `GIGACHAT_KEY` env var — requires a local OpenAI-compatible adapter running on `localhost:7860` that handles Sber OAuth internally |
+| GigaChat | `"gigachat"` | `GIGACHAT_KEY` env var — requires a local OpenAI-compatible adapter running on `localhost:7860` that handles GigaChat OAuth internally |
 | Ollama (local, default) | `"ollama"` | No key required — runs against `http://localhost:11434` |
 
 If no provider is configured, defaults to Ollama. Falls back to pre-generated challenges if no API key is found.
@@ -297,4 +297,4 @@ Converts to Apache 2.0 on 2030-03-20.
 Commercial inquiries: idwty@proton.me  
 See [LICENSE](LICENSE) for full terms.
 
-Registered as a Computer Program (Программа для ЭВМ) with Rospatent. Registration No. 2026617854, registered 2026-03-20.
+Registered as a Computer Program with Rospatent. Registration No. 2026617854, registered 2026-03-20.

@@ -167,7 +167,7 @@ class TestDemoTreeIntegrity(unittest.TestCase):
     def test_no_personal_data_leakage(self):
         """Ensure no personal paths or identifiers leaked into demo tree."""
         raw = json.dumps(self.tree).lower()
-        for term in ["whis", "openclaw", "/users/", "sberbank", "personal_name"]:
+        for term in ["workspace_path", "/users/", "internal_codename", "personal_name"]:
             self.assertNotIn(term, raw, f"Personal data leak: '{term}' found in demo_tree.json")
 
 
