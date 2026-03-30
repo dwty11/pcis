@@ -195,6 +195,118 @@ const GRAPH_DATA = {
       "source": "session-2026-03-03",
       "confidence": 1.0,
       "created": "2026-03-03 16:13:47 GMT+3"
+    },
+    {
+      "id": "c53ec5044ba4",
+      "content": "PCIS UX principle locked: no commands, automatic extraction from natural conversation, 3 levels (auto/confirm/optional). Pilot metric: correction tracking week over week. Correction curve shown at week-8 meeting.",
+      "branch": "pcis",
+      "source": "session-2026-03-17",
+      "confidence": 1.0,
+      "created": "2026-03-17 12:08:46 GMT+3"
+    },
+    {
+      "id": "496d6c07-0726-4d66-8d9f-bea798b9b21b",
+      "content": "Claiming Phase 1 completion relies on self-reported metrics without independent verification of outcomes",
+      "branch": "pcis",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.6,
+      "created": "2026-03-26 08:29:00 UTC"
+    },
+    {
+      "id": "31125ea6-e14f-48a4-9953-87512e2031f2",
+      "content": "The PCIS demo timeline assumes stakeholder alignment without documented confirmation from technical or business teams",
+      "branch": "pcis",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.5,
+      "created": "2026-03-26 08:54:41 UTC"
+    },
+    {
+      "id": "28006daf-180c-4bf6-8b3c-248cffd5ac19",
+      "content": "Adding GigaChat to the provider table without testing could introduce unverified compatibility issues with existing PCIS workflows",
+      "branch": "pcis",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.6,
+      "created": "2026-03-26 08:58:06 UTC"
+    },
+    {
+      "id": "9eca435b-200e-4aca-8ac9-795a406808a7",
+      "content": "Adding GigaChat to the provider table without prior integration testing could mask incompatibilities with existing PCIS workflows, risking deployment failures",
+      "branch": "pcis",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.6,
+      "created": "2026-03-26 08:59:57 UTC"
+    },
+    {
+      "id": "6644bb68-f298-4c8f-a59f-145450f6a3c2",
+      "content": "Dependence on unverified BSL 1.1 license for public repo may create legal risks if compliance checks are skipped",
+      "branch": "pcis",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.6,
+      "created": "2026-03-26 09:00:00 UTC"
+    },
+    {
+      "id": "340ebcb10bac",
+      "content": "public repo HEAD: d3d8e43 \u2014 docs: add GigaChat to provider table in README (dwty11/pcis, pushed 2026-03-24)",
+      "branch": "state",
+      "source": "session-2026-03-24",
+      "confidence": 1.0,
+      "created": "2026-03-24 09:17:57 GMT+3"
+    },
+    {
+      "id": "a935d7bfb2a0",
+      "content": "Phase 1 complete: adversarial_validator wired (Anthropic/OpenAI/GigaChat/Ollama), constraints branch live, whis_preload unconditional load fixed",
+      "branch": "state",
+      "source": "session-2026-03-24",
+      "confidence": 1.0,
+      "created": "2026-03-24 09:17:58 GMT+3"
+    },
+    {
+      "id": "bfb0313e56e1",
+      "content": "Phase 2 next milestone: PCIS demo Thursday \u2014 startup checklist includes 'start GigaChat adapter on localhost:7860'",
+      "branch": "state",
+      "source": "session-2026-03-24",
+      "confidence": 1.0,
+      "created": "2026-03-24 09:17:58 GMT+3"
+    },
+    {
+      "id": "add8c9da3b51",
+      "content": "PCIS repo: ~/Documents/Stuff/pcis-deploy (local), github.com/dwty11/pcis (public, BSL 1.1)",
+      "branch": "state",
+      "source": "session-2026-03-24",
+      "confidence": 1.0,
+      "created": "2026-03-24 09:17:58 GMT+3"
+    },
+    {
+      "id": "c0e2980e-8ef7-4cee-a142-0958f25de4b7",
+      "content": "Adding GigaChat to the provider table without testing could introduce compatibility issues or unanticipated dependencies.",
+      "branch": "state",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.6,
+      "created": "2026-03-26 08:13:42 UTC"
+    },
+    {
+      "id": "fc924f4c-48a6-492c-8e2b-e8c41b5ef642",
+      "content": "Claiming Phase 1 completion relies on self-reported metrics without independent verification of outcomes.",
+      "branch": "state",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.5,
+      "created": "2026-03-26 08:13:44 UTC"
+    },
+    {
+      "id": "c2328f15-7288-4f0e-8522-a3799732737a",
+      "content": "The demo timeline for Phase 2 assumes a confirmed schedule without evidence of stakeholder alignment",
+      "branch": "state",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.5,
+      "created": "2026-03-26 08:20:02 UTC"
+    },
+    {
+      "id": "02f16a1b-06dd-4dfd-afc3-330000c18b1b",
+      "content": "Assuming localhost:7860 is sufficient for Phase 2 demo ignores potential infrastructure limitations in non-local environments",
+      "branch": "state",
+      "source": "gardener-2026-03-26",
+      "confidence": 0.7,
+      "created": "2026-03-26 08:59:59 UTC"
     }
   ],
   "edges": [
@@ -204,11 +316,46 @@ const GRAPH_DATA = {
       "to": "74827c504601",
       "relation": "SUPPORTS",
       "note": "Both are about epistemic discipline \u2014 data verification and test honesty reinforce each other"
+    },
+    {
+      "id": "cafc32c9-a262-45c8-a111-56ecfe81b62d",
+      "from": "496d6c07-0726-4d66-8d9f-bea798b9b21b",
+      "to": "c53ec5044ba4",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge"
+    },
+    {
+      "id": "2998f008-b111-4333-b192-e571fbfeda43",
+      "from": "31125ea6-e14f-48a4-9953-87512e2031f2",
+      "to": "bfb0313e56e1",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge"
+    },
+    {
+      "id": "1b23d213-a1df-4241-94b4-34c849cb3d24",
+      "from": "28006daf-180c-4bf6-8b3c-248cffd5ac19",
+      "to": "c0e2980e-8ef7-4cee-a142-0958f25de4b7",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge"
+    },
+    {
+      "id": "d593b521-19f3-46d3-9ee3-e7c95522f6c1",
+      "from": "9eca435b-200e-4aca-8ac9-795a406808a7",
+      "to": "add8c9da3b51",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge"
+    },
+    {
+      "id": "4a74498a-56e9-405b-9453-a6212b469c26",
+      "from": "6644bb68-f298-4c8f-a59f-145450f6a3c2",
+      "to": "add8c9da3b51",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge"
     }
   ],
-  "root_hash": "df883ba8811874cd63ecbe96e9ccf34b980832aea1147944467309638fd5a713",
-  "synapse_count": 1,
-  "node_count": 2
+  "root_hash": "7c71b2496eeb332251f046c4a96daac38e76721f673940e94454b373bfa4992a",
+  "synapse_count": 6,
+  "node_count": 16
 };
 
 const RELATION_COLORS = {
