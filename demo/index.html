@@ -874,7 +874,10 @@ body {
     </div>
     <div class="stats-row" id="gcStats"></div>
     <div id="gcMerkle" style="margin-bottom:28px"></div>
-    <div class="section-title">Adversarial Challenges</div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:0">Adversarial Challenges</div>
+      <button id="btnRunValidation" onclick="runLiveValidation()" style="padding:6px 18px;border-radius:6px;border:1px solid var(--purple);background:rgba(167,139,250,0.1);color:var(--purple);font-size:13px;font-weight:600;cursor:pointer">Run Live Validation</button>
+    </div>
     <div id="gcList">
       <div class="loading"><div class="spinner"></div> Loading external validation data...</div>
     </div>
@@ -1583,23 +1586,28 @@ async function loadGigaChat() {
     }
 
     list.innerHTML = data.counters.map(c => {
-      const rawContent = c.counter_content || c.content || '';
+      const rawContent = c.counter_content || c.challenge || c.content || '';
       const originalText = (c.original && c.original.content) ? c.original.content : (c.original_content || '');
       const originalClip = originalText ? escapeHtml(originalText.slice(0, 100)) + (originalText.length > 100 ? '...' : '') : 'N/A';
       const challenge = rawContent.startsWith('COUNTER: ') ? rawContent.replace(/^COUNTER: \[[^\]]+\]\s*\n?\n?/, '') : rawContent;
+      const branch = c.branch || 'N/A';
+      const hash = c.hash || '';
+      const hashClip = hash ? hash.slice(0, 24) + '...' : 'N/A';
+      const source = c.source || 'N/A';
+      const challengedId = c.challenged_id || '';
       return `
         <div class="adversarial-card" style="border-left-color:var(--purple)">
           <div class="adv-label" style="color:var(--purple)">External Challenge</div>
           <div class="adv-original">
-            <div class="adv-original-label">Original Claim</div>
+            <div class="adv-original-label">Original Claim${challengedId ? ' (' + escapeHtml(challengedId) + ')' : ''}</div>
             ${originalClip}
           </div>
           <div class="adv-counter">${escapeHtml(challenge)}</div>
           <div class="adv-meta">
-            <span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${c.branch}</span>
+            <span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${escapeHtml(branch)}</span>
             <span>confidence: ${c.confidence}</span>
-            <span style="color:var(--purple)">${c.hash.slice(0,24)}...</span>
-            <span>source: ${c.source}</span>
+            <span style="color:var(--purple)">${hashClip}</span>
+            <span>source: ${escapeHtml(source)}</span>
           </div>
         </div>
       `;
@@ -1607,6 +1615,24 @@ async function loadGigaChat() {
 
   } catch (e) {
     document.getElementById('gcList').innerHTML = '<div class="query-empty">Error loading external validation data: ' + e.message + '</div>';
+  }
+}
+
+async function runLiveValidation() {
+  const btn = document.getElementById('btnRunValidation');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  try {
+    const res = await fetch('/api/run-validation', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Validation failed');
+    gcLoaded = false;
+    await loadGigaChat();
+  } catch (e) {
+    alert('Live validation error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Live Validation';
   }
 }
 
