@@ -1,8 +1,8 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "5f0708714c8812f358e2e089458bb41ea8219ca6bc902a5e5b772159f5eecce5",
-  "last_updated": "2026-03-28 12:00:00 UTC",
+  "root_hash": "3507a6ec71109d80280212450518b38049ac28e2bcba5add592e8161d169905f",
+  "last_updated": "2026-03-28 13:30:19 UTC",
   "branches": {
     "projects": {
       "hash": "6c91266b46cd71051cf53e85f41dee2fb7accbf3ef9a75ce841447a2047e2741",
@@ -210,7 +210,7 @@
       ]
     },
     "risks": {
-      "hash": "084880324a0993cc2099906ea6326241e6620ae82e497fcc83e5e610e9ca69b9",
+      "hash": "077e15eb58f3dc774bf2a15f5d340f2559b86c58f73dc85db401cc37d5a27201",
       "leaves": [
         {
           "id": "0ad6aa95e44d",
@@ -411,11 +411,21 @@
           "created": "2026-03-15 12:30:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "da87a08bbad",
+          "content": "COUNTER: ATLAS deployment metrics rely on self-reported accuracy figures without third-party audit — confidence in 94.2% claim may be overstated",
+          "confidence": 0.72,
+          "source": "gardener-2026-03-28",
+          "timestamp": "2026-03-28T13:30:19Z",
+          "branch": "risks",
+          "hash": "e6c01e1ab474f47290bdb1785fa48abfdc229af0ffcbbb1222e92d3e9807ba49",
+          "created": "2026-03-28T13:30:19Z"
         }
       ]
     },
     "decisions": {
-      "hash": "d65d6804c04953230b6cb97dff3c338208852385e77716698bab2fd2ee081fb4",
+      "hash": "384b8d1c9f607d850a8a4497b9bb08499f586c7cbe1d17e4a9909eac942cddeb",
       "leaves": [
         {
           "id": "809bcf98d393",
@@ -616,11 +626,21 @@
           "created": "2026-03-18 14:30:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "59d2028acc5",
+          "content": "COUNTER: LangGraph selection for multi-agent orchestration assumes vendor stability — no documented fallback if framework deprecates key APIs",
+          "confidence": 0.75,
+          "source": "gardener-2026-03-28",
+          "timestamp": "2026-03-28T13:30:19Z",
+          "branch": "decisions",
+          "hash": "e613e33f8e1aece04c3d8f7692cb5d901f111a98822b0c6998c38ce5031a765a",
+          "created": "2026-03-28T13:30:19Z"
         }
       ]
     },
     "compliance": {
-      "hash": "18fbb2460a9763720f4ea64a770226f76f3c2ecec4e1275f561863ed4576a411",
+      "hash": "b5251068f08677dfeaaf93b0a784e7d5b987db8fcdbd9d022f762f39ae1c6dce",
       "leaves": [
         {
           "id": "48e0c3176ec6",
@@ -821,6 +841,16 @@
           "created": "2026-03-25 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "b2f1cbe2738",
+          "content": "COUNTER: EU AI Act compliance timeline assumes stable regulatory interpretation — contested classification of SENTINEL as 'limited risk' may face challenge",
+          "confidence": 0.68,
+          "source": "gardener-2026-03-28",
+          "timestamp": "2026-03-28T13:30:19Z",
+          "branch": "compliance",
+          "hash": "b6aca5b13d7ae4538ab4f080f77c71d139ed5b9b5bba69283c87561378a17206",
+          "created": "2026-03-28T13:30:19Z"
         }
       ]
     },

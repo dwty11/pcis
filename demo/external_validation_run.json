@@ -1,10 +1,31 @@
 {
-  "run_date": null,
-  "provider": "external",
-  "model": "external-validator",
-  "entries_challenged": 0,
-  "merkle_root_before": null,
-  "merkle_root_after": null,
-  "counters": [],
-  "status": "placeholder"
+  "run_date": "2026-03-28T19:30:57.219147+00:00",
+  "model": "qwen3:14b",
+  "provider": "local-qwen",
+  "entries_challenged": 3,
+  "counters": [
+    {
+      "challenged_id": "7d3a4beb2acd",
+      "challenge": "This belief assumes that explicit scheduling is the sole solution, ignoring potential alternatives like dynamic resource allocation or workload prioritization. It also overlooks whether the 80% GPU usage was truly \"unsustainable\" or if the degradation in response times could have been mitigated through better infrastructure scaling or job prioritization rather than rigid quotas.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "lessons"
+    },
+    {
+      "challenged_id": "5b60b28a9005",
+      "challenge": "The decision assumes the consent framework is irreconcilable with AI training, but could the committee have explored narrower interpretations of \"use cases\" or updated the framework to explicitly include AI training without compromising privacy? Additionally, synthetic data may not fully replicate real-world data patterns, risking model performance gaps that could undermine the proposal's value.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "decisions"
+    },
+    {
+      "challenged_id": "83e69c8d4ea3",
+      "challenge": "The belief overlooks potential risks in ASR accuracy during the proof-of-concept phase, which could compromise sentiment and compliance analysis if transcription errors are high, and assumes the $1.2M budget adequately accounts for long-term ASR licensing, scalability, and integration costs beyond initial development.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "projects"
+    }
+  ],
+  "merkle_root_before": "3507a6ec71109d80280212450518b38049ac28e2bcba5add592e8161d169905f",
+  "merkle_root_after": "3507a6ec71109d80280212450518b38049ac28e2bcba5add592e8161d169905f"
 }

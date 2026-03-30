@@ -12,11 +12,13 @@ import hashlib
 import json
 import logging
 import os
+import random
 import re
 import subprocess
 import sys
 import tempfile
 import threading
+import urllib.request
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, redirect, request, send_file
 
@@ -80,11 +82,6 @@ def hub():
 @app.route("/demo")
 def demo():
     return send_file("index.html")
-
-
-@app.route("/sokrat.html")
-def sokrat():
-    return send_file("compliance-demo.html")
 
 
 @app.route("/api/health")
@@ -377,6 +374,76 @@ def api_gigachat_validation():
                         counter["original_content"] = leaf["content"]
                         break
     return jsonify(data)
+
+
+@app.route("/api/run-validation", methods=["POST"])
+def api_run_validation():
+    """Run on-demand adversarial validation using local Ollama (qwen3:14b)."""
+    try:
+        tree = load_tree()
+
+        # Collect all non-counter leaves
+        candidates = []
+        for branch_name, branch in tree["branches"].items():
+            for leaf in branch["leaves"]:
+                if not leaf["content"].startswith("COUNTER:"):
+                    candidates.append((branch_name, leaf))
+
+        if len(candidates) < 3:
+            return jsonify({"error": "Not enough non-counter leaves to challenge"}), 400
+
+        chosen = random.sample(candidates, 3)
+
+        # Get current root hash
+        merkle_root_before = tree.get("root_hash", "")
+
+        counters = []
+        for branch_name, leaf in chosen:
+            prompt = (
+                "You are an adversarial reviewer. Challenge this belief in "
+                "1-2 sentences, focusing on what could be wrong or missing: "
+                + leaf["content"]
+            )
+            payload = json.dumps({"model": "qwen3:14b", "prompt": prompt, "stream": False}).encode()
+            req = urllib.request.Request(
+                "http://localhost:11434/api/generate",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read().decode())
+            challenge_text = result.get("response", "").strip()
+
+            counters.append({
+                "challenged_id": leaf["id"],
+                "challenge": challenge_text,
+                "confidence": 0.6,
+                "model": "qwen3:14b",
+                "branch": branch_name,
+            })
+
+        # Build the result document
+        run_data = {
+            "run_date": datetime.now(TZ_UTC).isoformat(),
+            "model": "qwen3:14b",
+            "provider": "local-qwen",
+            "entries_challenged": 3,
+            "counters": counters,
+            "merkle_root_before": merkle_root_before,
+            "merkle_root_after": merkle_root_before,
+        }
+
+        out_path = os.path.join(DEMO_DIR, "external_validation_run.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(run_data, f, ensure_ascii=False, indent=2)
+
+        return jsonify(run_data)
+
+    except urllib.error.URLError as e:
+        return jsonify({"error": f"Cannot reach Ollama: {e}"}), 502
+    except Exception as e:
+        logger.exception("Live validation failed")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/belief", methods=["POST"])
