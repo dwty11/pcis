@@ -17,6 +17,10 @@ A RAG system indexes the world. PCIS indexes the agent's mind.
 
 ---
 
+Built by [@dwty_11](https://x.com/dwty_11)
+
+---
+
 Current agents amnesia on every restart → contradictions, lost context, no audit trail.  
 PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-challenging adversarial gardener**.
 
