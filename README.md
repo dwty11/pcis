@@ -24,6 +24,14 @@ PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-
 
 ---
 
+## Self-Improving Knowledge Loop
+
+PCIS doesn't just store knowledge — it maintains it. Four components run continuously to keep the tree honest. The **Adversarial Gardener** makes a nightly pass where an external LLM challenges high-confidence beliefs, searching for contradictions and weak reasoning; when a challenge holds, a COUNTER leaf enters the tree and confidence updates propagate. The **Gap-scan** reads session logs, extracts significant facts and decisions, and cross-checks them against the existing tree — anything missing is staged for addition. **Belief Decay** degrades confidence on stale leaves over time, so the tree stays sharp, not just big. And the **External Validator** — a second LLM, running outside the system with no shared context — audits the tree independently, catching blind spots the gardener can't see from inside.
+
+Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed. You don't just get a self-improving agent. You get cryptographic proof of what changed, when, and why.
+
+---
+
 ## Try it in 60 seconds
 
 ```bash
