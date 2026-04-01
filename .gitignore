@@ -11,3 +11,4 @@ build/
 pcis.egg-info/
 demo/demo_search_index.json
 memory/
+demo/hub.html
