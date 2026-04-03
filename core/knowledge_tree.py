@@ -19,6 +19,8 @@ Usage:
     python3 knowledge_tree.py --links <leaf_id>
     python3 knowledge_tree.py --assess <leaf_id>
     python3 knowledge_tree.py --query-belief <natural language query>
+    python3 knowledge_tree.py --proof <leaf_id>
+    python3 knowledge_tree.py --verify-proof <proof.json>
     python3 knowledge_tree.py --decay [--half-life 180] [--dry-run]
 
 Examples:
@@ -58,12 +60,113 @@ def hash_leaf(content, branch, timestamp):
     return hashlib.sha256(data.encode()).hexdigest()
 
 
+def _merkle_tree_from_hashes(sorted_hashes):
+    """Build a binary Merkle tree from sorted leaf hashes.
+
+    Returns (root_hash, levels) where levels[0] = leaf hashes,
+    levels[-1] = [root_hash].  Odd-length levels duplicate the last
+    element before pairing (standard Merkle convention).
+    """
+    if not sorted_hashes:
+        root = hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
+        return root, [[root]]
+    level = list(sorted_hashes)
+    levels = [level]
+    while len(level) > 1:
+        next_level = []
+        for i in range(0, len(level), 2):
+            left = level[i]
+            right = level[i + 1] if i + 1 < len(level) else level[i]
+            next_level.append(
+                hashlib.sha256((left + right).encode()).hexdigest()
+            )
+        level = next_level
+        levels.append(level)
+    return level[0], levels
+
+
 def compute_branch_hash(leaves):
     if not leaves:
         return hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
-    leaf_hashes = [leaf["hash"] for leaf in leaves]
-    combined = "|".join(sorted(leaf_hashes))
-    return hashlib.sha256(combined.encode()).hexdigest()
+    leaf_hashes = sorted(leaf["hash"] for leaf in leaves)
+    root, _ = _merkle_tree_from_hashes(leaf_hashes)
+    return root
+
+
+def generate_proof(tree, branch_name, leaf_id):
+    """Generate a Merkle inclusion proof for a specific leaf.
+
+    Returns a dict with:
+      leaf_hash   — the hash of the target leaf
+      branch      — branch name
+      proof       — list of {"hash": ..., "position": "left"|"right"} siblings
+      branch_root — expected branch Merkle root
+
+    The proof allows anyone to verify that *leaf_hash* is included in
+    *branch_root* without possessing the full tree.
+    """
+    if branch_name not in tree.get("branches", {}):
+        raise ValueError(f"branch '{branch_name}' not found in tree")
+    branch = tree["branches"][branch_name]
+    # Find the target leaf
+    target_leaf = None
+    for leaf in branch["leaves"]:
+        if leaf["id"] == leaf_id:
+            target_leaf = leaf
+            break
+    if target_leaf is None:
+        raise ValueError(f"leaf '{leaf_id}' not found in branch '{branch_name}'")
+
+    leaf_hashes = sorted(leaf["hash"] for leaf in branch["leaves"])
+    _, levels = _merkle_tree_from_hashes(leaf_hashes)
+
+    # Find the leaf's position in the sorted order
+    target_hash = target_leaf["hash"]
+    try:
+        idx = leaf_hashes.index(target_hash)
+    except ValueError:
+        raise ValueError(f"leaf hash not found in branch — tree may be corrupt")
+
+    proof_path = []
+    for level in levels[:-1]:  # walk from leaves up to (but not including) root
+        if idx % 2 == 0:
+            # Target is left child — sibling is on the right
+            sibling_idx = idx + 1 if idx + 1 < len(level) else idx
+            proof_path.append({
+                "hash": level[sibling_idx],
+                "position": "right",
+            })
+        else:
+            # Target is right child — sibling is on the left
+            proof_path.append({
+                "hash": level[idx - 1],
+                "position": "left",
+            })
+        idx = idx // 2  # move to parent index in next level
+
+    return {
+        "leaf_id": leaf_id,
+        "leaf_hash": target_hash,
+        "branch": branch_name,
+        "proof": proof_path,
+        "branch_root": levels[-1][0],
+    }
+
+
+def verify_proof(leaf_hash, proof, expected_root):
+    """Verify a Merkle inclusion proof.
+
+    Given a leaf hash and a proof path (from generate_proof), recompute the
+    root and check it matches *expected_root*.  Returns True if valid.
+    """
+    current = leaf_hash
+    for step in proof:
+        sibling = step["hash"]
+        if step["position"] == "left":
+            current = hashlib.sha256((sibling + current).encode()).hexdigest()
+        else:
+            current = hashlib.sha256((current + sibling).encode()).hexdigest()
+    return current == expected_root
 
 
 def compute_root_hash(tree):
@@ -509,6 +612,59 @@ if __name__ == "__main__":
         if not dry_run and summary['updated'] > 0:
             tree = load_tree()
             print(f"   New root: {tree['root_hash'][:24]}...")
+    elif args[0] == "--proof":
+        if len(args) < 2:
+            print("Usage: --proof <leaf_id>")
+            sys.exit(1)
+        leaf_id = args[1]
+        tree = load_tree()
+        # Find which branch the leaf is in
+        branch_name = None
+        for bname, branch in tree["branches"].items():
+            for leaf in branch["leaves"]:
+                if leaf["id"] == leaf_id:
+                    branch_name = bname
+                    break
+            if branch_name:
+                break
+        if not branch_name:
+            print(f"Error: leaf '{leaf_id}' not found in any branch.")
+            sys.exit(1)
+        proof = generate_proof(tree, branch_name, leaf_id)
+        # Verify it ourselves
+        valid = verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        print(f"\nMerkle Inclusion Proof")
+        print(f"   Leaf:   {proof['leaf_id']}")
+        print(f"   Hash:   {proof['leaf_hash'][:24]}...")
+        print(f"   Branch: {proof['branch']}")
+        print(f"   Root:   {proof['branch_root'][:24]}...")
+        print(f"   Steps:  {len(proof['proof'])}")
+        print(f"   Valid:  {'YES' if valid else 'FAILED'}")
+        # Output JSON for external verification
+        out_path = args[2] if len(args) > 2 else None
+        if out_path:
+            with open(out_path, 'w') as f:
+                json.dump(proof, f, indent=2)
+            print(f"   Saved:  {out_path}")
+        else:
+            print(f"\n{json.dumps(proof, indent=2)}")
+    elif args[0] == "--verify-proof":
+        if len(args) < 2:
+            print("Usage: --verify-proof <proof.json>")
+            sys.exit(1)
+        try:
+            with open(args[1]) as f:
+                proof = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error loading proof: {e}")
+            sys.exit(1)
+        valid = verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        print(f"\nProof Verification: {'PASS' if valid else 'FAIL'}")
+        print(f"   Leaf hash:   {proof['leaf_hash'][:24]}...")
+        print(f"   Branch root: {proof['branch_root'][:24]}...")
+        print(f"   Steps:       {len(proof['proof'])}")
+        if not valid:
+            sys.exit(1)
     elif args[0] == "--help":
         print(__doc__)
     else:

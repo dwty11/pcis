@@ -462,6 +462,165 @@ class TestVerifyTreeIntegrity(unittest.TestCase):
         self.assertTrue(any("content-hash mismatch" in e for e in errors))
 
 
+class TestMerkleProofs(unittest.TestCase):
+    """Merkle inclusion proofs: generate, verify, and detect tampering."""
+
+    def _tree_with_leaves(self, n=5):
+        """Build a tree with n leaves in the 'technical' branch."""
+        tree = {"version": 1, "instance": "test", "root_hash": "",
+                "last_updated": "", "branches": {}}
+        for i in range(n):
+            kt.add_knowledge(tree, "technical", f"fact number {i}", "test", 0.8)
+        tree["branches"]["technical"]["hash"] = kt.compute_branch_hash(
+            tree["branches"]["technical"]["leaves"])
+        tree["root_hash"] = kt.compute_root_hash(tree)
+        return tree
+
+    def test_proof_verifies_for_every_leaf(self):
+        """Every leaf in a branch should produce a valid proof."""
+        tree = self._tree_with_leaves(7)
+        for leaf in tree["branches"]["technical"]["leaves"]:
+            proof = kt.generate_proof(tree, "technical", leaf["id"])
+            self.assertTrue(
+                kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"]),
+                f"Proof failed for leaf {leaf['id']}"
+            )
+
+    def test_proof_fails_on_wrong_leaf_hash(self):
+        """Proof must fail if the leaf hash is tampered."""
+        tree = self._tree_with_leaves(4)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        fake_hash = hashlib.sha256(b"tampered").hexdigest()
+        self.assertFalse(
+            kt.verify_proof(fake_hash, proof["proof"], proof["branch_root"])
+        )
+
+    def test_proof_fails_on_wrong_root(self):
+        """Proof must fail if verified against a different root."""
+        tree = self._tree_with_leaves(4)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        fake_root = hashlib.sha256(b"wrong_root").hexdigest()
+        self.assertFalse(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], fake_root)
+        )
+
+    def test_proof_single_leaf_branch(self):
+        """A branch with one leaf should produce a zero-step proof."""
+        tree = self._tree_with_leaves(1)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        self.assertEqual(len(proof["proof"]), 0)
+        # The leaf hash IS the root
+        self.assertTrue(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        )
+
+    def test_proof_two_leaves(self):
+        """Two-leaf branch should produce a one-step proof."""
+        tree = self._tree_with_leaves(2)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        self.assertEqual(len(proof["proof"]), 1)
+        self.assertTrue(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        )
+
+    def test_proof_large_branch(self):
+        """Proof depth is log2(n) for a branch with many leaves."""
+        import math
+        tree = self._tree_with_leaves(32)
+        leaf_id = tree["branches"]["technical"]["leaves"][15]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        self.assertTrue(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        )
+        # Proof depth should be ceil(log2(32)) = 5
+        self.assertEqual(len(proof["proof"]), int(math.ceil(math.log2(32))))
+
+    def test_proof_nonexistent_leaf_raises(self):
+        """Requesting a proof for a missing leaf should raise ValueError."""
+        tree = self._tree_with_leaves(3)
+        with self.assertRaises(ValueError):
+            kt.generate_proof(tree, "technical", "nonexistent-id")
+
+    def test_proof_nonexistent_branch_raises(self):
+        """Requesting a proof for a missing branch should raise ValueError."""
+        tree = self._tree_with_leaves(3)
+        with self.assertRaises(ValueError):
+            kt.generate_proof(tree, "no_such_branch", "any-id")
+
+    def test_proof_survives_other_branch_changes(self):
+        """A proof for branch A should still verify after branch B changes."""
+        tree = self._tree_with_leaves(4)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+
+        # Add leaves to a different branch — technical branch root unchanged
+        kt.add_knowledge(tree, "lessons", "new lesson", "test", 0.7)
+        tree["branches"]["lessons"]["hash"] = kt.compute_branch_hash(
+            tree["branches"]["lessons"]["leaves"])
+
+        self.assertTrue(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+        )
+
+    def test_proof_invalidated_by_leaf_removal(self):
+        """Removing a leaf from the branch changes the root, invalidating old proofs."""
+        tree = self._tree_with_leaves(4)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        old_root = proof["branch_root"]
+
+        # Remove a different leaf — the branch root must change
+        other_id = tree["branches"]["technical"]["leaves"][1]["id"]
+        kt.prune_leaf(tree, "technical", other_id)
+
+        new_root = tree["branches"]["technical"]["hash"]
+        self.assertNotEqual(old_root, new_root)
+        # Old proof no longer matches new root
+        self.assertFalse(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], new_root)
+        )
+
+
+class TestBinaryMerkleTreeStructure(unittest.TestCase):
+    """Verify that compute_branch_hash now uses a proper binary tree."""
+
+    def test_single_leaf_is_identity(self):
+        """One leaf: branch hash equals the leaf hash."""
+        h = hashlib.sha256(b"only-leaf").hexdigest()
+        leaves = [{"hash": h}]
+        root = kt.compute_branch_hash(leaves)
+        self.assertEqual(root, h)
+
+    def test_two_leaves_is_pair_hash(self):
+        """Two leaves: root = H(sorted_left + sorted_right)."""
+        h1 = hashlib.sha256(b"alpha").hexdigest()
+        h2 = hashlib.sha256(b"beta").hexdigest()
+        leaves = [{"hash": h1}, {"hash": h2}]
+        root = kt.compute_branch_hash(leaves)
+
+        pair = sorted([h1, h2])
+        expected = hashlib.sha256((pair[0] + pair[1]).encode()).hexdigest()
+        self.assertEqual(root, expected)
+
+    def test_three_leaves_duplicates_odd_one(self):
+        """Three leaves: the third is duplicated to make an even pair."""
+        h1 = hashlib.sha256(b"a").hexdigest()
+        h2 = hashlib.sha256(b"b").hexdigest()
+        h3 = hashlib.sha256(b"c").hexdigest()
+        leaves = [{"hash": h1}, {"hash": h2}, {"hash": h3}]
+        root = kt.compute_branch_hash(leaves)
+
+        s = sorted([h1, h2, h3])
+        left_pair = hashlib.sha256((s[0] + s[1]).encode()).hexdigest()
+        right_pair = hashlib.sha256((s[2] + s[2]).encode()).hexdigest()
+        expected = hashlib.sha256((left_pair + right_pair).encode()).hexdigest()
+        self.assertEqual(root, expected)
+
+
 if __name__ == "__main__":
     print("PCIS Core Test Suite\n" + "="*40)
     unittest.main(verbosity=2)

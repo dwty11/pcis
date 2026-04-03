@@ -42,7 +42,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 
 - [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention
 - [x] Docker image — `docker compose up` with no local Python setup (ollama-init pulls model on first run)
-- [ ] Proper Merkle tree — balanced binary tree with branch proofs, not just root hash
+- [x] Proper Merkle tree — binary tree with inclusion proofs (`generate_proof` / `verify_proof`), `--proof` and `--verify-proof` CLI commands (141 tests)
 - [ ] Config validation — helpful errors when config.json is missing or malformed
 - [x] Belief decay — exponential decay (half-life 180 days), constraints/state branches exempt, CLI `--decay [--dry-run]`
 - [ ] LangChain adapter — PCIS as a memory provider for LangChain agents

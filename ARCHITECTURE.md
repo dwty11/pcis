@@ -4,7 +4,9 @@
 PCIS stores agent knowledge as a structured tree of leaves, not a flat log or vector index. Each leaf carries a fact, a branch tag, a confidence score, a source reference, and a timestamp. Knowledge is organized by domain, queryable by semantic search, and human-readable at every level. The tree persists across sessions — the agent wakes up knowing what it knew when it last ran.
 
 ## 2. Merkle Integrity Verification
-Every state of the knowledge tree is fingerprinted using a cryptographic hash chain. When the agent boots, it computes the current root hash and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption. This makes the agent's memory tamper-evident and auditable: you can prove what the agent knew at any point in time.
+Every state of the knowledge tree is fingerprinted using a cryptographic hash chain. Leaf hashes are combined pairwise into a binary Merkle tree at the branch level, and branch roots are combined the same way into the tree root. When the agent boots, it recomputes the root hash from content up and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption.
+
+Beyond tamper detection, the binary tree structure enables **Merkle inclusion proofs**: `generate_proof(tree, branch, leaf_id)` produces a compact proof path (list of sibling hashes) that a third party can use to verify a specific leaf existed in the tree at a given state — without possessing the full tree. `verify_proof(leaf_hash, proof, expected_root)` is a standalone function with zero dependencies on the tree. This upgrades the compliance story from "tamper-evident" to "cryptographically provable inclusion."
 
 ## 3. Adversarial Pass via External LLM
 PCIS runs a periodic adversarial pass where an external LLM is given existing knowledge leaves and asked to challenge them. The adversary is not looking for errors — it is looking for contradictions, outdated assumptions, and knowledge that no longer holds given new context. Where challenges succeed, COUNTER leaves are generated and staged for review. The tree is not blindly updated — it is pressure-tested.
@@ -66,11 +68,15 @@ This means the root hash is a model-agnostic identity. An agent can switch under
 
 Four critical functions:
 - `hash_leaf` — SHA-256 from content + branch + timestamp
-- `compute_branch_hash` — sorts all leaf hashes in a branch and hashes them together
+- `compute_branch_hash` — builds a binary Merkle tree from sorted leaf hashes (pairwise combination, odd leaves duplicated)
 - `compute_root_hash` — takes all branch hashes, iteratively pairs and hashes upward in a binary tree until one root remains
 - `tree_lock()` — context manager wrapping the full read-modify-write cycle under an exclusive file lock: load → mutate → write, all atomic
 
-Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees`, and a CLI for `--add`, `--show`, `--prune`, `--diff`, `--export`, `--root`. Tree persists as `data/tree.json`.
+Two proof functions:
+- `generate_proof(tree, branch, leaf_id)` — returns a Merkle inclusion proof (sibling hashes + positions from leaf to branch root)
+- `verify_proof(leaf_hash, proof, expected_root)` — standalone verification, no tree access needed
+
+Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees`, and a CLI for `--add`, `--show`, `--prune`, `--diff`, `--export`, `--root`, `--proof`, `--verify-proof`. Tree persists as `data/tree.json`.
 
 ---
 
@@ -119,7 +125,7 @@ All prune actions logged to `data/prune-log.json`.
 
 ### Tests (`tests/test_pcis.py`)
 
-19 tests across 7 classes (18 original + identity portability):
+32 tests across 9 classes:
 
 | Class | What it verifies |
 |-------|-----------------|
@@ -130,6 +136,8 @@ All prune actions logged to `data/prune-log.json`.
 | `TestAddKnowledgeValidation` | Empty and oversized content rejected with `ValueError` |
 | `TestConcurrentSaveTree` | Two threads × 5 writes under `tree_lock()` → exactly 10 leaves, zero data loss |
 | `TestIdentityPortability` | Root hash identical across model configs — model-agnostic identity enforced |
+| `TestMerkleProofs` | Inclusion proofs: generate, verify, tampered-hash rejection, wrong-root rejection, cross-branch isolation, invalidation on leaf removal, depth = ceil(log₂(n)) |
+| `TestBinaryMerkleTreeStructure` | Structural assertions: single leaf = identity, two leaves = pair hash, odd-leaf duplication |
 
 Run with: `python -m pytest tests/ -v`
 
