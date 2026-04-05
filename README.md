@@ -45,21 +45,13 @@ bash setup.sh
 python demo/server.py
 ```
 
-Open `http://localhost:5555` — five tabs showing the full architecture live.
+Open `http://localhost:5555` — nine tabs showing the full architecture live.
 
 ---
 
 ## Quick Start (Docker)
 
-Zero local setup. Requires only Docker + internet.
-
-```bash
-git clone https://github.com/dwty11/pcis.git
-cd pcis
-docker compose up
-```
-
-Open [http://localhost:5555](http://localhost:5555) — the demo loads a pre-seeded knowledge tree with 45 beliefs across 5 branches. The `qwen3:14b` model pulls automatically on first run (may take a few minutes depending on bandwidth).
+> **Docker support is planned for v2.0.** For now, use the Python setup above.
 
 ---
 
@@ -183,10 +175,14 @@ This architecture maps directly onto the stability-plasticity tradeoff that make
 | Tab | What it shows |
 |-----|---------------|
 | **Boot** | Live Merkle root computation — pass or fail, computed in real time |
+| **Search** | Semantic search across verified leaves — results pinned to SHA-256 hashes |
 | **Knowledge Tree** | Browse the verified knowledge structure, branch by branch |
-| **Query** | Ask questions — answers pinned to specific verified leaves |
+| **Query** | Ask questions — answers grounded in specific verified leaves |
+| **Belief** | Belief traversal — confidence score, stance classification, evidence chain |
 | **Adversarial** | Counter-leaves generated automatically by challenging high-confidence entries |
-| **External LLM Validation** | Full validation run with before/after Merkle roots |
+| **History** | Full audit trail — every confidence update, counter-argument, and decay event |
+| **Ingest** | Add new knowledge to the tree from text or file |
+| **External Validation** | External LLM validation run with before/after Merkle roots |
 
 The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero personal data.
 

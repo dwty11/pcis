@@ -119,7 +119,7 @@ All prune actions logged to `data/prune-log.json`.
 
 **`demo/demo_tree.json`** — Synthetic knowledge tree: 5 branches, 19 leaves, zero personal data (enforced by a test). Used to seed `data/tree.json` and drive the demo server.
 
-**`demo/index.html`** — Single-file frontend. Five tabs: Boot (live Merkle verification), Knowledge Tree (branch browser), Query (keyword search), Adversarial (counter-leaves with originals), External LLM Validation. Dark theme, vanilla JS, no framework.
+**`demo/index.html`** — Single-file frontend. Nine tabs: Boot (live Merkle verification), Search (semantic search with hash-pinned results), Knowledge Tree (branch browser), Query (keyword search), Belief (traversal engine — confidence, stance, evidence chain), Adversarial (counter-leaves with originals), History (full audit trail), Ingest (add knowledge from text or file), External Validation. Dark theme, vanilla JS, no framework.
 
 ---
 
