@@ -34,6 +34,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [x] Belief traversal — BFS confidence assessment, stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), plain-English reasoning
 - [x] Semantic search — embedding-based query via Ollama + nomic-embed-text, keyword fallback when unavailable
 - [x] Model-agnostic design — swap LLM without touching memory layer
+- [x] Belief version history — append-only log of every confidence change, counter-argument, and update; full audit trail via belief_history.py
 - [x] Demo UI — nine-tab Flask app, runs locally in 60 seconds
 
 ---
@@ -53,7 +54,6 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment
 - [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only
 - [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation agents; probability redistribution is automatic and auditable
-- [ ] **Belief version history** — every update, counter-argument, and confidence change is a versioned commit; full epistemic audit trail
 - [ ] **Structural reorganization** — periodic graph reclustering as knowledge domains shift; dead branches collapsed, emergent domains surfaced
 - [ ] Role-based access to tree branches (read/write/admin)
 - [ ] Distributed Merkle tree — multiple nodes, consensus on root hash
