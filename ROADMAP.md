@@ -34,7 +34,7 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [x] Belief traversal — BFS confidence assessment, stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), plain-English reasoning
 - [x] Semantic search — embedding-based query via Ollama + nomic-embed-text, keyword fallback when unavailable
 - [x] Model-agnostic design — swap LLM without touching memory layer
-- [x] Demo UI — five-tab Flask app, runs locally in 60 seconds
+- [x] Demo UI — nine-tab Flask app, runs locally in 60 seconds
 
 ---
 
