@@ -586,28 +586,34 @@ class TestMerkleProofs(unittest.TestCase):
 
 
 class TestBinaryMerkleTreeStructure(unittest.TestCase):
-    """Verify that compute_branch_hash now uses a proper binary tree."""
+    """Verify that compute_branch_hash uses a proper binary tree with domain separation."""
 
-    def test_single_leaf_is_identity(self):
-        """One leaf: branch hash equals the leaf hash."""
+    def test_single_leaf_domain_separated(self):
+        """One leaf: branch hash = H(0x00 || leaf_hash), not the leaf hash itself."""
         h = hashlib.sha256(b"only-leaf").hexdigest()
         leaves = [{"hash": h}]
         root = kt.compute_branch_hash(leaves)
-        self.assertEqual(root, h)
+        # Domain separation: leaf gets 0x00 prefix
+        expected = hashlib.sha256(b'\x00' + h.encode()).hexdigest()
+        self.assertEqual(root, expected)
+        # Must NOT equal the raw leaf hash (domain separation working)
+        self.assertNotEqual(root, h)
 
-    def test_two_leaves_is_pair_hash(self):
-        """Two leaves: root = H(sorted_left + sorted_right)."""
+    def test_two_leaves_domain_separated(self):
+        """Two leaves: domain-separated leaves combined with 0x01 internal prefix."""
         h1 = hashlib.sha256(b"alpha").hexdigest()
         h2 = hashlib.sha256(b"beta").hexdigest()
         leaves = [{"hash": h1}, {"hash": h2}]
         root = kt.compute_branch_hash(leaves)
 
         pair = sorted([h1, h2])
-        expected = hashlib.sha256((pair[0] + pair[1]).encode()).hexdigest()
+        ds0 = hashlib.sha256(b'\x00' + pair[0].encode()).hexdigest()
+        ds1 = hashlib.sha256(b'\x00' + pair[1].encode()).hexdigest()
+        expected = hashlib.sha256(b'\x01' + (ds0 + ds1).encode()).hexdigest()
         self.assertEqual(root, expected)
 
-    def test_three_leaves_duplicates_odd_one(self):
-        """Three leaves: the third is duplicated to make an even pair."""
+    def test_three_leaves_uses_pad_not_duplicate(self):
+        """Three leaves: odd leaf paired with MERKLE_PAD, not with itself."""
         h1 = hashlib.sha256(b"a").hexdigest()
         h2 = hashlib.sha256(b"b").hexdigest()
         h3 = hashlib.sha256(b"c").hexdigest()
@@ -615,10 +621,47 @@ class TestBinaryMerkleTreeStructure(unittest.TestCase):
         root = kt.compute_branch_hash(leaves)
 
         s = sorted([h1, h2, h3])
-        left_pair = hashlib.sha256((s[0] + s[1]).encode()).hexdigest()
-        right_pair = hashlib.sha256((s[2] + s[2]).encode()).hexdigest()
-        expected = hashlib.sha256((left_pair + right_pair).encode()).hexdigest()
+        ds = [hashlib.sha256(b'\x00' + x.encode()).hexdigest() for x in s]
+        left_pair = hashlib.sha256(b'\x01' + (ds[0] + ds[1]).encode()).hexdigest()
+        right_pair = hashlib.sha256(b'\x01' + (ds[2] + kt.MERKLE_PAD).encode()).hexdigest()
+        expected = hashlib.sha256(b'\x01' + (left_pair + right_pair).encode()).hexdigest()
         self.assertEqual(root, expected)
+
+
+class TestNoDuplicateLeafCollision(unittest.TestCase):
+    """CVE-2012-2459: [a, b, c] and [a, b, c, c] must produce different roots."""
+
+    def test_no_duplicate_leaf_collision(self):
+        a = hashlib.sha256(b"leaf_a").hexdigest()
+        b = hashlib.sha256(b"leaf_b").hexdigest()
+        c = hashlib.sha256(b"leaf_c").hexdigest()
+
+        root_abc, _ = kt._merkle_tree_from_hashes([a, b, c])
+        root_abcc, _ = kt._merkle_tree_from_hashes([a, b, c, c])
+
+        self.assertNotEqual(
+            root_abc, root_abcc,
+            "Trees [a,b,c] and [a,b,c,c] produced the same root — "
+            "CVE-2012-2459 duplicate-leaf collision present"
+        )
+
+
+class TestDomainSeparation(unittest.TestCase):
+    """RFC 6962: domain-separated leaf hash != raw sha256 of the same content."""
+
+    def test_domain_separation(self):
+        content = "leaf_content"
+        raw_hash = hashlib.sha256(content.encode()).hexdigest()
+        # Domain-separated leaf: sha256(0x00 || raw_hash)
+        domain_sep = hashlib.sha256(b'\x00' + raw_hash.encode()).hexdigest()
+        self.assertNotEqual(
+            raw_hash, domain_sep,
+            "Domain separation had no effect — second-preimage risk"
+        )
+        # Verify _merkle_tree_from_hashes applies it
+        root, levels = kt._merkle_tree_from_hashes([raw_hash])
+        self.assertEqual(root, domain_sep)
+        self.assertNotEqual(root, raw_hash)
 
 
 if __name__ == "__main__":

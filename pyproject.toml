@@ -10,7 +10,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [
-    { name = "dwty11", email = "idwty@proton.me" }
+    { name = "Jan Imamniyazov", email = "idwty@proton.me" }
 ]
 keywords = ["ai", "agents", "memory", "knowledge-graph", "identity", "llm"]
 classifiers = [

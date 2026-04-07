@@ -855,9 +855,14 @@ def _maybe_reindex():
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="PCIS Demo Server")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=5555)
+    args = parser.parse_args()
+
     _maybe_reindex()
-    host = "0.0.0.0"
     print(f"\n  PCIS Demo Server")
     print(f"  Tree: {DEMO_TREE_FILE}")
-    print(f"  http://localhost:5555\n")
-    app.run(host=host, port=5555, debug=False)
+    print(f"  http://{args.host}:{args.port}\n")
+    app.run(host=args.host, port=args.port, debug=False)
