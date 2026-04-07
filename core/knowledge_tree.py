@@ -25,7 +25,7 @@ Usage:
 
 Examples:
     python3 knowledge_tree.py --add technical "REST endpoints should use plural nouns" --source "style-guide" --confidence 0.85
-    python3 knowledge_tree.py --add lessons "Skimming time-sensitive data is a trust violation" --source "session-2026-03-03"
+    python3 knowledge_tree.py --add lessons "Skimming time-sensitive data is a trust violation" --source "example"
     python3 knowledge_tree.py --show technical
     python3 knowledge_tree.py --root
     python3 knowledge_tree.py --diff /path/to/other/knowledge_tree.json
@@ -37,10 +37,12 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import sys
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
@@ -382,6 +384,154 @@ def diff_trees(tree_a, tree_b):
                     if l["id"] in only_b
                 ]
     return result
+
+# --- .belief export/import ---------------------------------------------
+
+_STOP_WORDS_BELIEF = frozenset(
+    "a an the is are was were be been being have has had do does did "
+    "will would shall should may might can could i you he she it we they "
+    "me him her us them my your his its our their this that and but or "
+    "not so if in on at to for of with by from".split()
+)
+
+
+def _extract_keywords(content: str, n: int = 3) -> str:
+    """Return the first *n* significant words from *content*."""
+    words = re.findall(r"[A-Za-z0-9_]+", content)
+    sig = [w for w in words if w.lower() not in _STOP_WORDS_BELIEF]
+    return ",".join(sig[:n])
+
+
+def _leaf_flags(content: str, confidence: float) -> str:
+    """Compute .belief flag field for a leaf."""
+    flags = []
+    if confidence >= 0.9:
+        flags.append("CORE")
+    if content.startswith("COUNTER:"):
+        flags.append("COUNTER")
+    return ",".join(flags)
+
+
+def export_belief(tree: dict, path: str, agent_name: str = "pcis") -> None:
+    """Serialize *tree* to the compressed Zettel .belief format.
+
+    Parameters
+    ----------
+    tree : dict
+        A loaded PCIS knowledge tree.
+    path : str
+        Destination file path (typically ending in ``.belief``).
+    agent_name : str
+        Agent identifier written into the header line.
+    """
+    date_str = datetime.now(TZ_UTC).strftime("%Y-%m-%d")
+    lines: list[str] = [f"BELIEF|{agent_name}|{date_str}|v1"]
+
+    # Map leaf-id → Zettel label for synapse output later
+    leaf_id_to_z: dict[str, str] = {}
+    z_counter = 0
+
+    for branch_name in sorted(tree.get("branches", {}).keys()):
+        branch = tree["branches"][branch_name]
+        for leaf in branch.get("leaves", []):
+            z_counter += 1
+            z_label = f"Z{z_counter}"
+            leaf_id_to_z[leaf["id"]] = z_label
+
+            content = leaf["content"]
+            truncated = content[:80]
+            keywords = _extract_keywords(content)
+            conf = leaf.get("confidence", 0.7)
+            flags = _leaf_flags(content, conf)
+
+            lines.append(
+                f'{z_label}:{branch_name}|{keywords}|"{truncated}"|{conf}|{flags}'
+            )
+
+    # Synapses (optional — file may not exist)
+    try:
+        from core.knowledge_synapses import load_synapses
+        synapses = load_synapses()
+        for s in synapses.get("synapses", []):
+            z_from = leaf_id_to_z.get(s["from_leaf"])
+            z_to = leaf_id_to_z.get(s["to_leaf"])
+            if z_from and z_to:
+                lines.append(f"L:{z_from}<->{z_to}|{s['relation']}")
+    except Exception:
+        pass
+
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def load_belief(path: str) -> dict:
+    """Reconstruct a KnowledgeTree dict from a ``.belief`` file.
+
+    Content beyond 80 characters is lost during export, but branch,
+    confidence, and structure are preserved losslessly.
+
+    Parameters
+    ----------
+    path : str
+        Path to the ``.belief`` file.
+
+    Returns
+    -------
+    dict
+        A tree dict compatible with the rest of the PCIS API.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        raw_lines = f.read().splitlines()
+
+    if not raw_lines:
+        raise ValueError("Empty .belief file")
+
+    header = raw_lines[0]
+    parts = header.split("|")
+    if parts[0] != "BELIEF" or len(parts) < 4:
+        raise ValueError(f"Invalid .belief header: {header}")
+
+    tree: dict = {
+        "version": 1,
+        "created": now_utc(),
+        "last_updated": now_utc(),
+        "root_hash": "",
+        "instance": "imported",
+        "branches": {},
+    }
+
+    for line in raw_lines[1:]:
+        if line.startswith("L:"):
+            # Synapse lines — skip during tree reconstruction
+            continue
+
+        # Parse Zettel line: Z{n}:{branch}|{keywords}|"{content}"|{confidence}|{flags}
+        m = re.match(r'^Z\d+:([^|]+)\|[^|]*\|"([^"]*)"\|([^|]+)\|(.*)$', line)
+        if not m:
+            continue
+
+        branch_name = m.group(1)
+        content = m.group(2)
+        confidence = float(m.group(3))
+
+        if branch_name not in tree["branches"]:
+            tree["branches"][branch_name] = {
+                "hash": hashlib.sha256(b"EMPTY_BRANCH").hexdigest(),
+                "leaves": [],
+            }
+
+        add_knowledge(tree, branch_name, content, source="belief-import", confidence=confidence)
+
+    # Recompute hashes
+    for branch_name in tree["branches"]:
+        tree["branches"][branch_name]["hash"] = compute_branch_hash(
+            tree["branches"][branch_name]["leaves"]
+        )
+    tree["root_hash"] = compute_root_hash(tree)
+
+    return tree
+
 
 # --- CLI ---------------------------------------------------------------
 
