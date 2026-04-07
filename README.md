@@ -5,7 +5,7 @@
 
 Most AI memory projects solve retrieval. PCIS solves something harder: giving an AI a persistent self.
 
-The knowledge tree is not a database. It is a belief system — what the agent knows, how confident it is, and cryptographic proof of the state at any point in time. The adversarial gardener actively challenges high-confidence beliefs using an external LLM, searching for contradictions and weaknesses. When a challenge holds, it enters the tree as a COUNTER leaf and the confidence updates. The Merkle root means nothing changes silently. Together they produce something that didn't exist before: an AI that carries its own epistemic identity across every session, every model swap, every restart — and that has been stress-tested, not just populated.
+The knowledge tree is not a database. It is a belief system — what the agent knows, how confident it is, and a Merkle-anchored record of what it believed and when. The adversarial gardener actively challenges high-confidence beliefs using an external LLM, searching for contradictions and weaknesses. When a challenge holds, it enters the tree as a COUNTER leaf and the confidence updates. The Merkle root detects accidental corruption and unauthorized changes — anyone who can modify the data file cannot do so silently. Together they produce something that didn't exist before: an AI that carries its own epistemic identity across every session, every model swap, every restart — and that has been stress-tested, not just populated.
 
 This repository is the foundation. Build on it, and your AI won't just remember — it will know what it believes, why, and how those beliefs have held up under challenge.
 
@@ -17,7 +17,7 @@ A RAG system indexes the world. PCIS indexes the agent's mind.
 
 ---
 
-Built by [@dwty_11](https://x.com/dwty_11)
+Built by **Jan Imamniyazov** ([@dwty_11](https://x.com/dwty_11))
 
 ---
 
@@ -32,7 +32,7 @@ PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-
 
 PCIS doesn't just store knowledge — it maintains it. Four components run continuously to keep the tree honest. The **Adversarial Gardener** makes a nightly pass where an external LLM challenges high-confidence beliefs, searching for contradictions and weak reasoning; when a challenge holds, a COUNTER leaf enters the tree and confidence updates propagate. The **Gap-scan** reads session logs, extracts significant facts and decisions, and cross-checks them against the existing tree — anything missing is staged for addition. **Belief Decay** degrades confidence on stale leaves over time, so the tree stays sharp, not just big. And the **External Validator** — a second LLM, running outside the system with no shared context — audits the tree independently, catching blind spots the gardener can't see from inside.
 
-Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed. You don't just get a self-improving agent. You get cryptographic proof of what changed, when, and why.
+Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed. You don't just get a self-improving agent. Every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed and logged. External anchoring (root signing + transparency log) is on the v2.0 roadmap.
 
 ---
 
@@ -134,7 +134,7 @@ Most AI assistants fail long-term for the same reason: they store memories but n
 
 The root cause isn't competence. It's the absence of epistemic maintenance.
 
-PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely owns, with cryptographic proof of what it believed and when. The agent doesn't just remember. It knows *why* it believes what it believes, can defend it under challenge, and flags when confidence should decay.
+PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely owns, with a verifiable record of what it believed and when, anchored by a Merkle root that detects any modification. The agent doesn't just remember. It knows *why* it believes what it believes, can defend it under challenge, and flags when confidence should decay.
 
 PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over years, not sessions.
 
@@ -155,14 +155,14 @@ PCIS takes a different path. Instead of retraining the model, it externalizes me
 - The **gap-scan** drives plasticity — it identifies what the agent should know but doesn't, targeting learning where it's needed
 - The **pruning protocol** manages forgetting deliberately — stale knowledge is flagged and removed by design, not by accident
 
-This architecture maps directly onto the stability-plasticity tradeoff that makes continual learning hard. The difference: PCIS does it at the knowledge layer, without touching model weights, and with cryptographic proof of every state.
+This architecture maps directly onto the stability-plasticity tradeoff that makes continual learning hard. The difference: PCIS does it at the knowledge layer, without touching model weights, and with a Merkle root that detects any modification to every state.
 
 ---
 
 ## Six Contributions
 
 1. **Persistent Knowledge Tree** — structured memory that survives session restarts
-2. **Merkle Integrity** — cryptographic proof of what the agent knew and when
+2. **Merkle Integrity** — tamper-detectable record of what the agent knew and when
 3. **Adversarial Pass** — external LLM challenges existing knowledge, generates counter-leaves
 4. **Gap-Scan** — finds what the agent *doesn't* know, not just what's wrong
 5. **Pruning Protocol** — stale knowledge is flagged and removed; the tree stays sharp
@@ -305,4 +305,4 @@ Converts to Apache 2.0 on 2030-03-20.
 Commercial inquiries: idwty@proton.me  
 See [LICENSE](LICENSE) for full terms.
 
-Registered as a Computer Program with Rospatent. Registration No. 2026617854, registered 2026-03-20.
+Registered as a Computer Program with Rospatent. Applied: No. 7009976726 (2026-03-11) · Registered: No. 2026617854 (2026-03-20).

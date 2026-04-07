@@ -60,25 +60,36 @@ def hash_leaf(content, branch, timestamp):
     return hashlib.sha256(data.encode()).hexdigest()
 
 
+MERKLE_PAD = hashlib.sha256(b"PCIS_MERKLE_PAD").hexdigest()
+
+
 def _merkle_tree_from_hashes(sorted_hashes):
     """Build a binary Merkle tree from sorted leaf hashes.
 
-    Returns (root_hash, levels) where levels[0] = leaf hashes,
-    levels[-1] = [root_hash].  Odd-length levels duplicate the last
-    element before pairing (standard Merkle convention).
+    Returns (root_hash, levels) where levels[0] = domain-separated leaf
+    hashes, levels[-1] = [root_hash].
+
+    Security properties:
+    - RFC 6962 domain separation: leaf hashes prefixed with 0x00, internal
+      nodes prefixed with 0x01 — prevents second-preimage attacks.
+    - Zero-hash pad for odd levels (MERKLE_PAD) instead of duplicating the
+      last node — prevents CVE-2012-2459 duplicate-leaf collisions.
     """
     if not sorted_hashes:
         root = hashlib.sha256(b"EMPTY_BRANCH").hexdigest()
         return root, [[root]]
-    level = list(sorted_hashes)
+    # Domain-separate leaves with 0x00 prefix
+    level = [hashlib.sha256(b'\x00' + h.encode()).hexdigest()
+             for h in sorted_hashes]
     levels = [level]
     while len(level) > 1:
         next_level = []
         for i in range(0, len(level), 2):
             left = level[i]
-            right = level[i + 1] if i + 1 < len(level) else level[i]
+            right = level[i + 1] if i + 1 < len(level) else MERKLE_PAD
+            # Domain-separate internal nodes with 0x01 prefix
             next_level.append(
-                hashlib.sha256((left + right).encode()).hexdigest()
+                hashlib.sha256(b'\x01' + (left + right).encode()).hexdigest()
             )
         level = next_level
         levels.append(level)
@@ -131,9 +142,12 @@ def generate_proof(tree, branch_name, leaf_id):
     for level in levels[:-1]:  # walk from leaves up to (but not including) root
         if idx % 2 == 0:
             # Target is left child — sibling is on the right
-            sibling_idx = idx + 1 if idx + 1 < len(level) else idx
+            if idx + 1 < len(level):
+                sibling_hash = level[idx + 1]
+            else:
+                sibling_hash = MERKLE_PAD
             proof_path.append({
-                "hash": level[sibling_idx],
+                "hash": sibling_hash,
                 "position": "right",
             })
         else:
@@ -158,14 +172,18 @@ def verify_proof(leaf_hash, proof, expected_root):
 
     Given a leaf hash and a proof path (from generate_proof), recompute the
     root and check it matches *expected_root*.  Returns True if valid.
+
+    Applies RFC 6962 domain separation: 0x00 prefix for the leaf hash,
+    0x01 prefix for each internal node computation.
     """
-    current = leaf_hash
+    # Domain-separate the leaf (0x00 prefix)
+    current = hashlib.sha256(b'\x00' + leaf_hash.encode()).hexdigest()
     for step in proof:
         sibling = step["hash"]
         if step["position"] == "left":
-            current = hashlib.sha256((sibling + current).encode()).hexdigest()
+            current = hashlib.sha256(b'\x01' + (sibling + current).encode()).hexdigest()
         else:
-            current = hashlib.sha256((current + sibling).encode()).hexdigest()
+            current = hashlib.sha256(b'\x01' + (current + sibling).encode()).hexdigest()
     return current == expected_root
 
 
