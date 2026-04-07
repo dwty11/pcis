@@ -104,7 +104,7 @@ class TestAdversarialCounters(unittest.TestCase):
         self.assertEqual(challenged_id, "cl-001")
 
     def test_normal_leaf_not_counter(self):
-        content = "Acme Corp renewal scheduled Q2 2026."
+        content = "The agent processed the request successfully."
         self.assertFalse(content.startswith("COUNTER:"))
 
 
