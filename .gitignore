@@ -12,3 +12,7 @@ pcis.egg-info/
 demo/demo_search_index.json
 memory/
 demo/hub.html
+demo/merkletree-vr.html
+demo/js/VRButton.js
+demo/js/three.min.js
+demo/js/
