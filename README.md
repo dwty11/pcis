@@ -1,13 +1,12 @@
 # PCIS — Persistent Cognitive Identity Systems
 ### The still point of the turning model.
 
-**PCIS maintains the assistant's beliefs about the world — not the world itself.**
+Most AI memory tools solve retrieval - find things faster, store more, compress better.  
+PCIS solves a different problem: **how do you know the memory wasn't changed?**
 
-Most AI memory projects solve retrieval. PCIS solves something harder: giving an AI a persistent self.
+The knowledge tree is not a database. It is a belief system - what the agent knows, how confident it is, and a Merkle-anchored record of what it believed and when. Every leaf is hashed. Every change is logged. The root hash detects any modification, including silent ones. An adversarial gardener challenges high-confidence beliefs nightly using an external LLM - when a challenge holds, it enters the tree as a COUNTER leaf and confidence updates. Nothing is overwritten. Everything is auditable.
 
-The knowledge tree is not a database. It is a belief system — what the agent knows, how confident it is, and a Merkle-anchored record of what it believed and when. The adversarial gardener actively challenges high-confidence beliefs using an external LLM, searching for contradictions and weaknesses. When a challenge holds, it enters the tree as a COUNTER leaf and the confidence updates. The Merkle root detects accidental corruption and unauthorized changes — anyone who can modify the data file cannot do so silently. Together they produce something that didn't exist before: an AI that carries its own epistemic identity across every session, every model swap, every restart — and that has been stress-tested, not just populated.
-
-This repository is the foundation. Build on it, and your AI won't just remember — it will know what it believes, why, and how those beliefs have held up under challenge.
+Build on PCIS and your agent won't just remember - it will know what it believes, why, and how those beliefs have held up under challenge. And you'll be able to prove it.
 
 A RAG system indexes the world. PCIS indexes the agent's mind.
 
@@ -42,7 +41,7 @@ Other systems claim learning loops. The difference here: every change — every 
 git clone https://github.com/dwty11/pcis.git
 cd pcis
 bash setup.sh
-python demo/server.py
+bash start_demo.sh
 ```
 
 Open `http://localhost:5555` — nine tabs showing the full architecture live.
@@ -51,7 +50,7 @@ Open `http://localhost:5555` — nine tabs showing the full architecture live.
 
 ## Quick Start (Docker)
 
-> **Docker support is planned for v2.0.** For now, use the Python setup above.
+> Docker support is coming in v2.0. For now, use the Python setup above.
 
 ---
 
@@ -265,11 +264,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
 Drop-in behavioral guides for AI agents using PCIS. Copy the relevant SKILL.md into your agent's context or skills directory.
 
-| Skill | When to use |
+| Skill / Adapter | When to use |
 |---|---|
 | [session-lifecycle](skills/session-lifecycle/SKILL.md) | Session start/end protocol — load context, commit knowledge, update Merkle root |
 | [memory-hygiene](skills/memory-hygiene/SKILL.md) | Periodic tree health — run gardener, review pruning candidates, fix echo chambers |
 | [knowledge-search](skills/knowledge-search/SKILL.md) | Search before you reason — keyword, semantic, and branch-scoped queries |
+| [LangChain adapter](adapters/langchain_memory.py) | Drop-in replacement for `ConversationBufferMemory` - persists facts as verified leaves |
 
 ---
 
