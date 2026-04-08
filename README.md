@@ -304,5 +304,3 @@ Business Source License 1.1 — free for non-commercial use. Commercial producti
 Converts to Apache 2.0 on 2030-03-20.  
 Commercial inquiries: idwty@proton.me  
 See [LICENSE](LICENSE) for full terms.
-
-Registered as a Computer Program with Rospatent. Applied: No. 7009976726 (2026-03-11) · Registered: No. 2026617854 (2026-03-20).
