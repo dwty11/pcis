@@ -57,7 +57,7 @@ else
   echo "     Start it before demo: External Validation tab will fail without it"
 fi
 
-# ── 5. Run 24 tests ───────────────────────────────────────────────────────
+# ── 5. Run test suite ───────────────────────────────────────────────────────
 echo "  [4/5] Running test suite..."
 TEST_OUTPUT=$($PYTHON -m pytest "$REPO/tests/" -q 2>&1)
 TEST_EXIT=$?
