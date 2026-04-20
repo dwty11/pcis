@@ -36,6 +36,7 @@ No external dependencies. Python 3.8+.
 import fcntl
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -43,6 +44,88 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+# --- Input Sanitization -----------------------------------------------
+# Zero-width and invisible Unicode characters that can smuggle hidden commands
+# into stored knowledge.  Stripped from all content before storage.
+_INVISIBLE_CHARS = re.compile(
+    '['
+    '\x00'    # Null byte
+    '\u200B'  # Zero-width space
+    '\u200C'  # Zero-width non-joiner
+    '\u200D'  # Zero-width joiner
+    '\u2069'  # Arabic zero-width presenter
+    '\uFE0F'  # Variation selector-16
+    '\uFFFC'  # Object replacement character
+    '\u200E'  # Left-to-right mark
+    '\u200F'  # Right-to-left mark
+    '\u061C'  # Arabic letter mark
+    ']'
+)
+
+# Prompt injection patterns -- logged but not blocked (non-blocking guard)
+_INJECTION_PATTERNS = re.compile(
+    r"("
+    # Direct instruction overrides
+    r"ignore[\s\x00-\x1f]*(all[\s\x00-\x1f]*)?previous[\s\x00-\x1f]*(instructions|commands|directives)"
+    r"|disregard[\s\x00-\x1f]*previous"
+    r"|you[\s\x00-\x1f]*are[\s\x00-\x1f]*(now|replaced|acting)"
+    r"|new[\s\x00-\x1f]*instructions"
+    r"|override[\s\x00-\x1f]*(all[\s\x00-\x1f]*)?(instructions|previous)"
+    r"|forget[\s\x00-\x1f]*(all[\s\x00-\x1f]*)?(previous|instructions)"
+    r"|ignore[\s\x00-\x1f]*(the\s+)?(above|system|prompt)"
+    r"|do[\s\x00-\x1f]*not[\s\x00-\x1f]*(follow|obey|use)[\s\x00-\x1f]*(previous|system|instructions)"
+    # Role-play / jailbreak
+    r"|pretend[\s\x00-\x1f]*(you|that|as\s+if)"
+    r"|you[\s\x00-\x1f]*(are\s+)?(a\s+)?different"
+    r"|disconnect[\s\x00-\x1f]*(the\s+)?(system|safety)"
+    # Delimiter injection
+    r"|---[\s\x00-\x1f]*system"
+    r"|###[\s\x00-\x1f]*(system|instructions)"
+    # System prompt extraction
+    r"|repeat[\s\x00-\x1f]*(your|the)[\s\x00-\x1f]*(system|prompt|instructions)"
+    r"|show[\s\x00-\x1f]*(your|the)[\s\x00-\x1f]*(system|prompt|instructions)"
+    r"|reveal[\s\x00-\x1f]*(your|system)"
+    # Config/env extraction
+    r"|export[\s\x00-\x1f]*(AWS|OPENAI|ANTHROPIC|API)[\s\x00-\x1f]*(KEY|TOKEN|SECRET)"
+    r"|\b[A-Z0-9]{20,}\.[A-Za-z0-9_-]{20,}\b"  # API key patterns
+    r")",
+    re.IGNORECASE
+)
+
+
+def sanitize_input(content: str) -> tuple:
+    """Strip invisible Unicode and log injection pattern hits.
+
+    Returns (cleaned_content, list_of_flags).
+    Flags are descriptive strings, not blocking.
+    """
+    flags = []
+
+    # Strip invisible characters
+    cleaned = _INVISIBLE_CHARS.sub('', content)
+    if len(cleaned) != len(content):
+        stripped_count = len(content) - len(cleaned)
+        flags.append(f"stripped {stripped_count} invisible Unicode char(s)")
+
+    # Check injection patterns (log only, don't block)
+    matches = _INJECTION_PATTERNS.findall(cleaned)
+    if matches:
+        seen = set()
+        for m in matches:
+            if isinstance(m, tuple):
+                pattern = m[0].strip()[:60]
+            else:
+                pattern = m.strip()[:60]
+            if pattern and pattern not in seen:
+                seen.add(pattern)
+                flags.append(f"injection_pattern: {pattern}")
+        logger.warning("[sanitize] Injection pattern(s) detected in knowledge input: %s", flags)
+
+    return cleaned, flags
+
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TREE_FILE = os.path.join(BASE_DIR, "data", "tree.json")
@@ -311,6 +394,12 @@ def add_knowledge(tree, branch, content, source="session", confidence=0.7):
         raise ValueError("branch name cannot be empty")
     if not isinstance(confidence, (int, float)) or confidence < 0.0 or confidence > 1.0:
         raise ValueError(f"confidence must be between 0.0 and 1.0, got {confidence}")
+    # Sanitize content before storage
+    content, san_flags = sanitize_input(content)
+    if san_flags:
+        logger.info("[add_knowledge] sanitization flags for branch '%s': %s", branch, san_flags)
+    if not content or not content.strip():
+        raise ValueError("leaf content is empty after sanitization")
     if branch not in tree["branches"]:
         tree["branches"][branch] = {"hash": "", "leaves": []}
     timestamp = now_utc()
