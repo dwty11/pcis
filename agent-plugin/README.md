@@ -1,6 +1,6 @@
-# PCIS OpenClaw Plugin
+# PCIS Agent Plugin
 
-Give any OpenClaw agent persistent, cryptographically verifiable long-term memory.
+Give any compatible agent persistent, cryptographically verifiable long-term memory.
 
 ## Installation
 
@@ -12,13 +12,13 @@ Give any OpenClaw agent persistent, cryptographically verifiable long-term memor
    pip install -e .
    ```
 
-2. Copy (or symlink) the `openclaw-plugin/` directory into your OpenClaw plugins path:
+2. Copy (or symlink) the `agent-plugin/` directory into your agent's plugins path:
 
    ```bash
-   cp -r openclaw-plugin/ ~/.openclaw/plugins/pcis/
+   cp -r agent-plugin/ ~/.agent/plugins/pcis/
    ```
 
-3. Configure the plugin in your OpenClaw agent config:
+3. Configure the plugin in your agent config:
 
    ```json
    {
@@ -39,7 +39,7 @@ Give any OpenClaw agent persistent, cryptographically verifiable long-term memor
 
 ## Available Tools
 
-Once installed, your OpenClaw agent gains three tools:
+Once installed, your agent gains three tools:
 
 | Tool | Description |
 |------|-------------|

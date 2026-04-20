@@ -260,14 +260,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
 ---
 
-## OpenClaw Plugin
+## Agent Plugin
 
-PCIS ships with an [OpenClaw plugin](openclaw-plugin/) that gives any OpenClaw agent persistent, verified memory out of the box.
+PCIS ships with an [agent plugin](agent-plugin/) that gives any compatible agent persistent, verified memory out of the box.
 
 **Quick setup:**
 
 ```bash
-cp -r openclaw-plugin/ ~/.openclaw/plugins/pcis/
+cp -r agent-plugin/ ~/.agent/plugins/pcis/
 pcis init --dir ~/.pcis
 ```
 
@@ -276,7 +276,7 @@ The plugin provides three tools to the agent:
 - `pcis_search(query, top_k)` — semantic search across the tree
 - `pcis_status()` — integrity check + branch/leaf summary
 
-On session start, the plugin automatically verifies Merkle tree integrity and loads current status. See [openclaw-plugin/README.md](openclaw-plugin/README.md) for full configuration options.
+On session start, the plugin automatically verifies Merkle tree integrity and loads current status. See [agent-plugin/README.md](agent-plugin/README.md) for full configuration options.
 
 ---
 
