@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pcis"
-version = "1.4.0"
+version = "1.4.1"
 description = "Persistent Cognitive Identity Systems — cryptographically verifiable long-term memory for AI agents"
 readme = "README.md"
 license = { file = "LICENSE" }

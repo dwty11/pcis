@@ -10,7 +10,10 @@ No external dependencies. Python 3.10+.
 
 from datetime import datetime, timezone
 
-from knowledge_tree import add_knowledge, now_utc
+try:
+    from core.knowledge_tree import add_knowledge, now_utc
+except ImportError:
+    from knowledge_tree import add_knowledge, now_utc
 
 
 def register_agent(tree, agent_id, metadata=None):

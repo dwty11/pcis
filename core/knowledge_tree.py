@@ -273,6 +273,13 @@ def verify_proof(leaf_hash, proof, expected_root):
 
 
 def compute_root_hash(tree):
+    """Compute the top-level root hash from branch hashes.
+
+    Uses the same RFC 6962 hardened Merkle construction as
+    _merkle_tree_from_hashes: 0x00 prefix for leaf-level domain separation,
+    0x01 prefix for internal nodes, and MERKLE_PAD for odd levels (instead
+    of duplicating the last hash, which is vulnerable to CVE-2012-2459).
+    """
     branches = tree.get("branches", {})
     branch_hashes = []
     for name in sorted(branches.keys()):
@@ -280,15 +287,18 @@ def compute_root_hash(tree):
         branch_hashes.append(f"{name}:{branch.get('hash', 'EMPTY')}")
     if not branch_hashes:
         return hashlib.sha256(b"EMPTY_TREE").hexdigest()
-    level = [hashlib.sha256(bh.encode()).hexdigest() for bh in branch_hashes]
+    # Domain-separate leaves with 0x00 prefix
+    level = [hashlib.sha256(b'\x00' + bh.encode()).hexdigest()
+             for bh in branch_hashes]
     while len(level) > 1:
         next_level = []
         for i in range(0, len(level), 2):
-            if i + 1 < len(level):
-                combined = level[i] + level[i + 1]
-            else:
-                combined = level[i] + level[i]
-            next_level.append(hashlib.sha256(combined.encode()).hexdigest())
+            left = level[i]
+            right = level[i + 1] if i + 1 < len(level) else MERKLE_PAD
+            # Domain-separate internal nodes with 0x01 prefix
+            next_level.append(
+                hashlib.sha256(b'\x01' + (left + right).encode()).hexdigest()
+            )
         level = next_level
     return level[0]
 

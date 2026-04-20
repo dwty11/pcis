@@ -109,7 +109,10 @@ def sign_root(tree=None, private_key_path=None):
     """
     _require_nacl()
 
-    from knowledge_tree import load_tree, compute_root_hash
+    try:
+        from core.knowledge_tree import load_tree, compute_root_hash
+    except ImportError:
+        from knowledge_tree import load_tree, compute_root_hash
 
     if tree is None:
         tree = load_tree(_tree_file())
@@ -156,7 +159,10 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
     """
     _require_nacl()
 
-    from knowledge_tree import load_tree, compute_root_hash
+    try:
+        from core.knowledge_tree import load_tree, compute_root_hash
+    except ImportError:
+        from knowledge_tree import load_tree, compute_root_hash
 
     if tree is None:
         tree = load_tree(_tree_file())

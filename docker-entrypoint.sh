@@ -23,4 +23,4 @@ if [ -n "$OLLAMA_HOST" ]; then
 fi
 
 # Start Flask
-exec python demo/server.py
+exec python demo/server.py --host 0.0.0.0
