@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenClaw PCIS Plugin — gives any OpenClaw agent persistent, verified memory.
+PCIS Agent Plugin — gives any compatible agent persistent, verified memory.
 
 On session start: runs ``pcis verify`` and loads tree status.
 Provides three tools for the agent:
@@ -40,7 +40,7 @@ def _ensure_env(config):
 # ---------------------------------------------------------------------------
 
 def on_session_start(config):
-    """Called by OpenClaw when a session begins.
+    """Called by the agent framework when a session begins.
 
     Verifies tree integrity and returns a status summary dict.
     """
@@ -73,7 +73,7 @@ def on_session_start(config):
 # Agent tools
 # ---------------------------------------------------------------------------
 
-def pcis_add(branch, content, source="openclaw-agent", confidence=0.8, config=None):
+def pcis_add(branch, content, source="agent-plugin", confidence=0.8, config=None):
     """Add a knowledge leaf to the tree.
 
     Args:
