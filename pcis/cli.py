@@ -407,6 +407,72 @@ def cmd_ingest(args):
         print(f"Markdown chunks processed: {result['chunks']}")
 
 
+def cmd_sign_init(args):
+    """Generate ed25519 signing keypair."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import generate_keypair
+
+    try:
+        priv_path, pub_path = generate_keypair()
+        print(f"Keypair generated:")
+        print(f"  Private key: {priv_path}")
+        print(f"  Public key:  {pub_path}")
+        print(f"\nKeep the private key safe. Share the public key freely.")
+    except FileExistsError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
+def cmd_sign_root(args):
+    """Sign the current Merkle root."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import sign_root
+
+    try:
+        result = sign_root()
+        print(f"Root signed:")
+        print(f"  Root hash:  {result['root_hash'][:24]}...")
+        print(f"  Signature:  {result['signature'][:24]}...")
+        print(f"  Signed at:  {result['signed_at']}")
+        print(f"  Public key: {result['public_key'][:24]}...")
+    except (FileNotFoundError, RuntimeError) as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
+def cmd_sign_verify(args):
+    """Verify signature against current tree."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import verify_root
+
+    result = verify_root()
+    if result["valid"]:
+        print(f"VALID — {result['detail']}")
+        print(f"  Root hash:  {result['root_hash'][:24]}...")
+        print(f"  Signed at:  {result['signed_at']}")
+    else:
+        print(f"INVALID — {result['detail']}")
+        print(f"  Root hash:  {result['root_hash'][:24]}...")
+        sys.exit(1)
+
+
+def cmd_sign_pubkey(args):
+    """Print public key hex for sharing."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import export_public_key
+
+    try:
+        pub_hex = export_public_key()
+        print(pub_hex)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
 def cmd_export(args):
     """Export the tree in a given format."""
     _set_base_dir(args)
@@ -520,6 +586,14 @@ def main():
     p = sub.add_parser("export", help="Export tree")
     p.add_argument("--format", default="json", help="Format: json, belief")
 
+    # sign (subcommand group)
+    sign_parser = sub.add_parser("sign", help="Ed25519 root signing")
+    sign_sub = sign_parser.add_subparsers(dest="sign_command")
+    sign_sub.add_parser("init", help="Generate ed25519 keypair")
+    sign_sub.add_parser("root", help="Sign current Merkle root")
+    sign_sub.add_parser("verify", help="Verify signature against current tree")
+    sign_sub.add_parser("pubkey", help="Print public key hex")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -547,6 +621,20 @@ def main():
         "export": cmd_export,
         "ingest": cmd_ingest,
     }
+
+    # Handle 'sign' subcommand group
+    if args.command == "sign":
+        sign_commands = {
+            "init": cmd_sign_init,
+            "root": cmd_sign_root,
+            "verify": cmd_sign_verify,
+            "pubkey": cmd_sign_pubkey,
+        }
+        if not args.sign_command:
+            sign_parser.print_help()
+            sys.exit(0)
+        sign_commands[args.sign_command](args)
+        return
 
     commands[args.command](args)
 
