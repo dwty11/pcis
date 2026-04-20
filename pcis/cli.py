@@ -220,6 +220,33 @@ def cmd_prune(args):
 def cmd_decay(args):
     """Apply belief decay to the tree."""
     _set_base_dir(args)
+
+    if args.status:
+        from belief_decay import decay_status
+        status = decay_status(half_life_days=args.half_life)
+        print(f"Decay Status (half-life={args.half_life} days)")
+        print(f"  Total leaves: {status['total']}")
+        print(f"  Exempt leaves: {status['exempt']}")
+        print(f"  Below 0.5 confidence: {status['thresholds'][0.5]}")
+        print(f"  Below 0.3 confidence: {status['thresholds'][0.3]}")
+        print(f"  Below 0.1 confidence: {status['thresholds'][0.1]}")
+        return
+
+    if args.report:
+        from belief_decay import decay_report
+        report = decay_report(half_life_days=args.half_life)
+        if not report:
+            print("No non-exempt leaves found.")
+            return
+        print(f"Decay Report (half-life={args.half_life} days)")
+        print(f"{'Leaf ID':>14}  {'Branch':>14}  {'Old':>6}  {'New':>6}  {'Age':>8}")
+        print("-" * 60)
+        for entry in report:
+            print(f"  {entry['leaf_id'][:12]:>12}  {entry['branch']:>14}  "
+                  f"{entry['old_conf']:.3f}  {entry['new_conf']:.3f}  "
+                  f"{entry['age_days']:7.1f}d")
+        return
+
     from belief_decay import apply_decay_to_tree
 
     stats = apply_decay_to_tree(half_life_days=args.half_life, dry_run=args.dry_run)
@@ -448,6 +475,8 @@ def main():
     p = sub.add_parser("decay", help="Apply belief decay")
     p.add_argument("--half-life", type=int, default=180, help="Half-life in days")
     p.add_argument("--dry-run", action="store_true", help="Report only")
+    p.add_argument("--report", action="store_true", help="Show per-leaf decay details")
+    p.add_argument("--status", action="store_true", help="Show confidence threshold summary")
 
     # link
     p = sub.add_parser("link", help="Create synapse between leaves")

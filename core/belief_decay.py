@@ -111,3 +111,70 @@ def apply_decay_to_tree(tree_path=None, half_life_days=180, dry_run=False, now=N
             pass  # history is advisory
 
     return summary
+
+
+def decay_report(tree_path=None, half_life_days=180, now=None):
+    """Generate a per-leaf decay report without modifying the tree.
+
+    Returns a list of dicts with keys:
+        leaf_id, branch, content_preview, old_conf, new_conf, age_days
+    """
+    tree_path = tree_path or TREE_FILE
+    tree = load_tree(tree_path)
+    report = []
+
+    for branch_name, branch in tree.get("branches", {}).items():
+        for leaf in branch.get("leaves", []):
+            if branch_name in EXEMPT_BRANCHES:
+                continue
+            old_conf = leaf["confidence"]
+            new_conf, age_days = decay_confidence(
+                leaf, half_life_days=half_life_days, now=now
+            )
+            report.append({
+                "leaf_id": leaf["id"],
+                "branch": branch_name,
+                "content_preview": leaf["content"][:60],
+                "old_conf": round(old_conf, 6),
+                "new_conf": round(new_conf, 6),
+                "age_days": age_days,
+            })
+
+    return report
+
+
+def decay_status(tree_path=None, half_life_days=180, now=None):
+    """Check how many leaves fall below confidence thresholds.
+
+    Does NOT modify the tree — read-only analysis.
+
+    Returns a dict:
+        total: int
+        exempt: int
+        thresholds: {0.5: int, 0.3: int, 0.1: int}  — counts below each
+    """
+    tree_path = tree_path or TREE_FILE
+    tree = load_tree(tree_path)
+
+    total = 0
+    exempt = 0
+    below = {0.5: 0, 0.3: 0, 0.1: 0}
+
+    for branch_name, branch in tree.get("branches", {}).items():
+        for leaf in branch.get("leaves", []):
+            total += 1
+            if branch_name in EXEMPT_BRANCHES:
+                exempt += 1
+                continue
+            new_conf, _ = decay_confidence(
+                leaf, half_life_days=half_life_days, now=now
+            )
+            for threshold in below:
+                if new_conf < threshold:
+                    below[threshold] += 1
+
+    return {
+        "total": total,
+        "exempt": exempt,
+        "thresholds": below,
+    }
