@@ -27,6 +27,9 @@ from core.doc_ingest import (
     extract_claims_from_text,
     ingest_document,
     read_document,
+    read_markdown,
+    split_markdown_by_headers,
+    _extract_text_from_pdf_binary,
     INGEST_BRANCH,
     DEFAULT_CONFIDENCE,
 )
@@ -188,6 +191,119 @@ class TestReadDocument(unittest.TestCase):
     def test_missing_file_raises(self):
         with self.assertRaises(FileNotFoundError):
             read_document("/nonexistent/file.txt")
+
+
+class TestMarkdownIngestion(unittest.TestCase):
+    """Test markdown splitting and ingestion."""
+
+    def test_split_by_headers(self):
+        """Markdown is split into chunks at each header."""
+        md = (
+            "Some intro text.\n"
+            "\n"
+            "# First Section\n"
+            "Content of first section.\n"
+            "\n"
+            "## Subsection\n"
+            "Subsection content.\n"
+            "\n"
+            "# Second Section\n"
+            "Content of second section.\n"
+        )
+        chunks = split_markdown_by_headers(md)
+        self.assertEqual(len(chunks), 4)
+        self.assertEqual(chunks[0]["heading"], "Introduction")
+        self.assertIn("intro text", chunks[0]["content"])
+        self.assertEqual(chunks[1]["heading"], "First Section")
+        self.assertEqual(chunks[1]["level"], 1)
+        self.assertEqual(chunks[2]["heading"], "Subsection")
+        self.assertEqual(chunks[2]["level"], 2)
+        self.assertEqual(chunks[3]["heading"], "Second Section")
+
+    def test_no_headers_single_chunk(self):
+        """Markdown with no headers becomes one 'Introduction' chunk."""
+        md = "Just a paragraph.\n\nAnother paragraph."
+        chunks = split_markdown_by_headers(md)
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0]["heading"], "Introduction")
+
+    def test_empty_sections_skipped(self):
+        """Empty sections (header with no content) are not included."""
+        md = "# A\n# B\nContent for B."
+        chunks = split_markdown_by_headers(md)
+        # "A" has no content between it and "B", so only "B" has content
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0]["heading"], "B")
+
+    def test_read_markdown_file(self):
+        """read_markdown reads a .md file and returns chunks."""
+        md_content = "# Title\nHello world.\n\n## Sub\nDetails here."
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(md_content)
+            f.flush()
+            path = f.name
+        try:
+            chunks = read_markdown(path)
+            self.assertEqual(len(chunks), 2)
+            self.assertEqual(chunks[0]["heading"], "Title")
+            self.assertEqual(chunks[1]["heading"], "Sub")
+        finally:
+            os.unlink(path)
+
+    def test_read_markdown_missing_file(self):
+        """read_markdown raises FileNotFoundError for missing file."""
+        with self.assertRaises(FileNotFoundError):
+            read_markdown("/nonexistent/file.md")
+
+
+class TestPDFIngestion(unittest.TestCase):
+    """Test PDF text extraction fallback."""
+
+    def test_binary_extraction_finds_text(self):
+        """The binary fallback extracts readable strings from a fake PDF."""
+        # Create a minimal file with some embedded text
+        content = b"%PDF-1.4\nsome binary junk\x00\x01\x02"
+        content += b"This is the real content of the document"
+        content += b"\x00more junk\x01\x02"
+        content += b"Another meaningful sentence here for testing"
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(content)
+            f.flush()
+            path = f.name
+        try:
+            text = _extract_text_from_pdf_binary(path)
+            self.assertIn("real content", text)
+            self.assertIn("meaningful sentence", text)
+        finally:
+            os.unlink(path)
+
+    def test_binary_extraction_raises_on_empty(self):
+        """Binary extraction raises RuntimeError when no text found."""
+        # A file with only non-printable bytes
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(b"\x00\x01\x02\x03" * 100)
+            f.flush()
+            path = f.name
+        try:
+            with self.assertRaises(RuntimeError):
+                _extract_text_from_pdf_binary(path)
+        finally:
+            os.unlink(path)
+
+    def test_read_document_pdf_with_pdftotext_fallback(self):
+        """read_document for PDF falls through to binary extraction."""
+        content = b"%PDF-1.4\n"
+        content += b"Extractable text from a PDF file for testing"
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(content)
+            f.flush()
+            path = f.name
+        try:
+            # This will try pdftotext (may not be installed), then binary fallback
+            text = read_document(path)
+            self.assertTrue(len(text) > 0)
+        finally:
+            os.unlink(path)
 
 
 class TestIngestAPI(unittest.TestCase):
