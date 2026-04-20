@@ -1,12 +1,12 @@
-# PCIS — Persistent Cognitive Identity Systems
-### The still point of the turning model.
+# PCIS — Agent Accountability Layer
+### Your agent made a decision. Six months from now, someone will ask what it knew at the time — and whether anyone ever challenged it. PCIS is how you answer that, with cryptographic proof.
 
-Most AI memory tools solve retrieval - find things faster, store more, compress better.  
-PCIS solves a different problem: **how do you know the memory wasn't changed?**
+Most AI memory tools solve retrieval — find things faster, store more, compress better.  
+PCIS solves a different problem: **what did the agent believe, when, and did it hold up under adversarial review?**
 
-The knowledge tree is not a database. It is a belief system - what the agent knows, how confident it is, and a Merkle-anchored record of what it believed and when. Every leaf is hashed. Every change is logged. The root hash detects any modification, including silent ones. An adversarial gardener challenges high-confidence beliefs nightly using an external LLM - when a challenge holds, it enters the tree as a COUNTER leaf and confidence updates. Nothing is overwritten. Everything is auditable.
+The knowledge tree is not a database. It is a verified belief record — every leaf hashed, every change logged, a Merkle root that detects any modification including silent ones. An adversarial gardener challenges high-confidence beliefs nightly using an external LLM. When a challenge holds, it enters the tree as a COUNTER leaf and confidence updates propagate. Nothing is overwritten. Everything is auditable.
 
-Build on PCIS and your agent won't just remember - it will know what it believes, why, and how those beliefs have held up under challenge. And you'll be able to prove it.
+Build on PCIS and your agent doesn't just remember — it produces a tamper-evident record of what it believed and when, with a full challenge history. That record is the answer when your compliance team, your auditor, or your regulator asks: *what did the agent know when it made that call?*
 
 A RAG system indexes the world. PCIS indexes the agent's mind.
 
