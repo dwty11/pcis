@@ -355,6 +355,31 @@ def cmd_status(args):
     print(f"  Gardener:    {health_status}")
 
 
+def cmd_ingest(args):
+    """Ingest a document (text, PDF, or markdown) into the knowledge tree."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from doc_ingest import ingest_file
+
+    path = os.path.abspath(args.file)
+    if not os.path.exists(path):
+        print(f"File not found: {path}")
+        sys.exit(1)
+
+    print(f"Ingesting: {path}")
+    result = ingest_file(
+        path,
+        branch=args.branch,
+    )
+
+    print(f"\nExtracted {result['count']} claims from {result['source']}:")
+    for i, leaf in enumerate(result["leaves"], 1):
+        print(f"  {i}. [{leaf['id'][:8]}] {leaf['content'][:80]}")
+    print(f"\nTree root hash: {result['root_hash'][:24]}...")
+    if "chunks" in result:
+        print(f"Markdown chunks processed: {result['chunks']}")
+
+
 def cmd_export(args):
     """Export the tree in a given format."""
     _set_base_dir(args)
@@ -457,6 +482,11 @@ def main():
     # status
     sub.add_parser("status", help="Show PCIS status overview")
 
+    # ingest
+    p = sub.add_parser("ingest", help="Ingest a document (text, PDF, or markdown)")
+    p.add_argument("file", help="Path to the file to ingest")
+    p.add_argument("--branch", default=None, help="Target branch (default: ingested)")
+
     # export
     p = sub.add_parser("export", help="Export tree")
     p.add_argument("--format", default="json", help="Format: json, belief")
@@ -486,6 +516,7 @@ def main():
         "drift": cmd_drift,
         "status": cmd_status,
         "export": cmd_export,
+        "ingest": cmd_ingest,
     }
 
     commands[args.command](args)

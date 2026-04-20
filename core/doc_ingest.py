@@ -85,19 +85,35 @@ def extract_claims_from_text(content, llm_base_url=None, llm_model=None):
 
 
 def read_document(path):
-    """Read a text file or PDF and return its text content."""
+    """Read a text file, PDF, or markdown file and return its text content.
+
+    For markdown files (.md), returns the full text (use read_markdown()
+    for chunked output split by headers).
+    """
     if not os.path.exists(path):
         raise FileNotFoundError(f"Document not found: {path}")
 
     if path.lower().endswith(".pdf"):
         return _read_pdf(path)
 
+    if path.lower().endswith(".md"):
+        # Return full text for the standard pipeline; use read_markdown()
+        # for chunked ingestion
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
 
 def _read_pdf(path):
-    """Extract text from a PDF file. Tries pdftotext (poppler), then PyPDF2."""
+    """Extract text from a PDF file.
+
+    Strategy:
+    1. Try pdftotext (poppler-utils) via subprocess — best quality.
+    2. Fall back to raw binary extraction — pulls ASCII/UTF-8 strings from
+       the PDF binary.  Not perfect, but works with stdlib only.
+    """
     import subprocess
     try:
         result = subprocess.run(
@@ -109,18 +125,104 @@ def _read_pdf(path):
     except FileNotFoundError:
         pass
 
-    try:
-        import PyPDF2
-        with open(path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
-            pages = [page.extract_text() or "" for page in reader.pages]
-            return "\n".join(pages)
-    except ImportError:
-        pass
+    # Fallback: extract printable text runs from the raw PDF binary
+    return _extract_text_from_pdf_binary(path)
 
-    raise RuntimeError(
-        f"Cannot read PDF: install pdftotext (poppler-utils) or PyPDF2"
-    )
+
+def _extract_text_from_pdf_binary(path):
+    """Best-effort text extraction from a PDF binary using stdlib only.
+
+    Reads the file as bytes, finds runs of printable ASCII characters
+    (length >= 4), and joins them.  Skips PDF structural tokens.
+    """
+    import re as _re
+
+    with open(path, "rb") as f:
+        raw = f.read()
+
+    # Find runs of printable ASCII (space through tilde) of length >= 4
+    text_runs = _re.findall(rb'[\x20-\x7e]{4,}', raw)
+
+    # Decode and filter out PDF structural noise
+    _pdf_noise = {"stream", "endstream", "endobj", "obj", "xref",
+                  "trailer", "startxref"}
+    lines = []
+    for run in text_runs:
+        decoded = run.decode("ascii", errors="ignore").strip()
+        # Skip PDF operators and structural tokens
+        if decoded.lower() in _pdf_noise:
+            continue
+        if decoded.startswith("/") or decoded.startswith("<<"):
+            continue
+        if all(c in "0123456789. " for c in decoded):
+            continue
+        lines.append(decoded)
+
+    text = "\n".join(lines)
+    if not text.strip():
+        raise RuntimeError(
+            f"Cannot extract text from PDF: install pdftotext (poppler-utils) "
+            f"for better results"
+        )
+    return text
+
+
+def read_markdown(path):
+    """Read a markdown file and split it into logical chunks by headers.
+
+    Returns a list of dicts: [{"heading": str, "content": str}, ...]
+    Each chunk contains the heading (or "Introduction" for content before
+    the first heading) and the body text under that heading.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Document not found: {path}")
+
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read()
+
+    return split_markdown_by_headers(text)
+
+
+def split_markdown_by_headers(text):
+    """Split markdown text into chunks by headers.
+
+    Returns a list of dicts: [{"heading": str, "content": str, "level": int}, ...]
+    """
+    import re as _re
+
+    lines = text.split("\n")
+    chunks = []
+    current_heading = "Introduction"
+    current_level = 0
+    current_lines = []
+
+    for line in lines:
+        header_match = _re.match(r'^(#{1,6})\s+(.+)', line)
+        if header_match:
+            # Save previous chunk if it has content
+            body = "\n".join(current_lines).strip()
+            if body:
+                chunks.append({
+                    "heading": current_heading,
+                    "content": body,
+                    "level": current_level,
+                })
+            current_heading = header_match.group(2).strip()
+            current_level = len(header_match.group(1))
+            current_lines = []
+        else:
+            current_lines.append(line)
+
+    # Save final chunk
+    body = "\n".join(current_lines).strip()
+    if body:
+        chunks.append({
+            "heading": current_heading,
+            "content": body,
+            "level": current_level,
+        })
+
+    return chunks
 
 
 def ingest_document(content, source="manual", tree=None, save=True,
@@ -176,10 +278,52 @@ def ingest_document(content, source="manual", tree=None, save=True,
     }
 
 
-def ingest_file(path, tree_path=None, llm_base_url=None, llm_model=None):
-    """Convenience: read file + ingest. Returns summary dict."""
-    content = read_document(path)
+def ingest_file(path, tree_path=None, llm_base_url=None, llm_model=None,
+                branch=None):
+    """Convenience: read file + ingest. Returns summary dict.
+
+    For markdown files, ingests each header-delimited chunk separately,
+    using the heading as the source label.
+    """
     source = os.path.basename(path)
+
+    if path.lower().endswith(".md"):
+        # Chunked markdown ingestion
+        chunks = read_markdown(path)
+        if not chunks:
+            content = read_document(path)
+            return ingest_document(
+                content, source=source, tree_path=tree_path,
+                llm_base_url=llm_base_url, llm_model=llm_model,
+            )
+
+        # Load tree once, ingest all chunks, save once
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+        from core.knowledge_tree import load_tree, save_tree
+
+        tree = load_tree(tree_path)
+        all_leaves = []
+        last_root_hash = ""
+        for chunk in chunks:
+            chunk_source = f"{source}#{chunk['heading']}"
+            result = ingest_document(
+                chunk["content"], source=chunk_source, tree=tree,
+                save=False, tree_path=tree_path,
+                llm_base_url=llm_base_url, llm_model=llm_model,
+            )
+            all_leaves.extend(result["leaves"])
+            last_root_hash = result["root_hash"]
+
+        save_tree(tree, tree_path)
+        return {
+            "leaves": all_leaves,
+            "count": len(all_leaves),
+            "root_hash": last_root_hash,
+            "source": source,
+            "chunks": len(chunks),
+        }
+
+    content = read_document(path)
     return ingest_document(
         content, source=source, tree_path=tree_path,
         llm_base_url=llm_base_url, llm_model=llm_model,
