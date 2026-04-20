@@ -929,7 +929,33 @@ def main():
     write_notify_flag(committed_counters, staged_synapses, flags, dry_run=args.dry_run,
                       staged_counters=staged_counters)
 
+    # Telegram notification
+    notify_telegram(
+        n_counters=len(committed_counters) + len(staged_counters),
+        n_synapses=len(staged_synapses),
+        n_flags=len(flags),
+    )
+
     log.info("✅ Gardening complete — %s", now_local())
+
+
+def notify_telegram(n_counters=0, n_synapses=0, n_flags=0):
+    """Send a brief summary to Telegram.  Silently skips if env vars are missing."""
+    bot_token = os.environ.get("PCIS_TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("PCIS_TELEGRAM_CHAT_ID")
+    if not bot_token or not chat_id:
+        return
+    text = f"\U0001f33f Gardener: {n_counters} counters, {n_synapses} synapses, {n_flags} flags"
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = json.dumps({"chat_id": chat_id, "text": text}).encode()
+    req = urllib.request.Request(url, data=payload, method="POST")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            resp.read()
+        log.info("Telegram notification sent.")
+    except Exception as e:
+        log.warning("Telegram notification failed (non-fatal): %s", e)
 
 
 if __name__ == "__main__":
