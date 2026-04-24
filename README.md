@@ -1,11 +1,11 @@
-# PCIS — Agent Accountability Layer
-### Memory is only as useful as it is trustworthy.
+# PCIS — Reasoning Ledger for AI Agents
+### Every belief. Every challenge. Every update. Verifiable.
 
-An agent that remembers the wrong thing, or remembers a thing that was altered, or can't prove what it knew when — is worse than an agent with no memory at all, because its confidence is unearned. PCIS addresses memory as a trust problem, not a retrieval problem.
+Most AI systems produce outputs you can't audit. You see the answer — not the reasoning behind it, not when it formed, not whether it was ever challenged. PCIS is a reasoning ledger: a tamper-evident record of what the agent believed, why it believed it, and every time that belief was updated or challenged. When your compliance team asks *what did the agent know when it made that call* — PCIS is the answer.
 
 The knowledge tree is not a database. It is a verified belief record — every leaf hashed, every change logged, a Merkle root that detects any modification including silent ones. An adversarial gardener challenges high-confidence beliefs nightly using an external LLM. When a challenge holds, it enters the tree as a COUNTER leaf and confidence updates propagate. Nothing is overwritten. Everything is auditable.
 
-Build on PCIS and your agent doesn't just remember — it produces a tamper-evident record of what it believed and when, with a full challenge history. That record is the answer when your compliance team, your auditor, or your regulator asks: *what did the agent know when it made that call?*
+Build on PCIS and your agent doesn't just remember — it produces a tamper-evident record of what it believed and when, with a full challenge history.
 
 > **RAG retrieves. PCIS proves.**
 
