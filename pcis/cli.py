@@ -473,6 +473,90 @@ def cmd_sign_pubkey(args):
         sys.exit(1)
 
 
+def cmd_events_emit(args):
+    """Emit an ESCALATION_SENT event."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from events import emit_escalation
+
+    ev = emit_escalation(
+        agent_id=args.agent,
+        reason=args.reason,
+        leaf_id=args.leaf,
+        branch=args.branch,
+    )
+    prev = ev["prev_event_hash"]
+    prev_disp = f"{prev[:16]}…" if prev else "null"
+    print(f"ESCALATION_SENT  [{ev['event_id']}]")
+    print(f"  agent     : {ev['agent_id']}")
+    print(f"  reason    : {ev['reason']}")
+    print(f"  leaf      : {ev['leaf_id'] or '-'}")
+    print(f"  branch    : {ev['branch'] or '-'}")
+    print(f"  hash      : {ev['event_hash'][:16]}…")
+    print(f"  prev_hash : {prev_disp}")
+
+
+def cmd_events_resolve(args):
+    """Emit an ESCALATION_RESOLVED event referencing a prior SENT."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from events import resolve_escalation
+
+    try:
+        ev = resolve_escalation(
+            event_id=args.event_id,
+            resolution=args.resolution,
+            agent_id=args.agent,
+        )
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"ESCALATION_RESOLVED  [{ev['event_id']}]")
+    print(f"  resolves    : {args.event_id}")
+    print(f"  agent       : {ev['agent_id']}")
+    print(f"  resolution  : {ev['resolution']}")
+    print(f"  leaf        : {ev['leaf_id'] or '-'}")
+    print(f"  branch      : {ev['branch'] or '-'}")
+    print(f"  hash        : {ev['event_hash'][:16]}…")
+    print(f"  prev_hash   : {ev['prev_event_hash'][:16]}…")
+
+
+def cmd_events_list(args):
+    """Print every event in the journal, one per line."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from events import load_journal
+
+    events = load_journal()
+    if not events:
+        print("Journal is empty.")
+        return
+    for ev in events:
+        kind = ev["event_type"].replace("ESCALATION_", "").lower()
+        leaf = (ev.get("leaf_id") or "-")[:12]
+        branch = ev.get("branch") or "-"
+        agent = ev.get("agent_id") or "-"
+        print(
+            f"{ev['timestamp']}  {kind:9}  "
+            f"agent={agent:10}  branch={branch:14}  "
+            f"leaf={leaf:12}  [{ev['event_hash'][:8]}]"
+        )
+
+
+def cmd_events_verify_chain(args):
+    """Verify the events journal hash chain."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from events import verify_chain
+
+    result = verify_chain()
+    icon = "✅" if result["valid"] else "🔴"
+    print(f"{icon} {result['detail']} (events={result['events']})")
+    if not result["valid"]:
+        sys.exit(1)
+
+
 def cmd_export(args):
     """Export the tree in a given format."""
     _set_base_dir(args)
@@ -594,6 +678,24 @@ def main():
     sign_sub.add_parser("verify", help="Verify signature against current tree")
     sign_sub.add_parser("pubkey", help="Print public key hex")
 
+    # events (subcommand group) — ESCALATION event journal
+    events_parser = sub.add_parser("events", help="ESCALATION event journal")
+    events_sub = events_parser.add_subparsers(dest="events_command")
+
+    p = events_sub.add_parser("emit", help="Emit ESCALATION_SENT")
+    p.add_argument("--agent", required=True, help="Agent ID emitting the escalation")
+    p.add_argument("--reason", required=True, help="Why escalation was triggered")
+    p.add_argument("--leaf", help="Leaf ID being escalated, if known")
+    p.add_argument("--branch", help="Branch name")
+
+    p = events_sub.add_parser("resolve", help="Emit ESCALATION_RESOLVED for a prior SENT")
+    p.add_argument("--event-id", required=True, help="event_id of the SENT to resolve")
+    p.add_argument("--agent", required=True, help="Agent ID resolving the escalation")
+    p.add_argument("--resolution", required=True, help="Resolution text")
+
+    events_sub.add_parser("list", help="List events in the journal")
+    events_sub.add_parser("verify-chain", help="Verify the hash chain end-to-end")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -634,6 +736,20 @@ def main():
             sign_parser.print_help()
             sys.exit(0)
         sign_commands[args.sign_command](args)
+        return
+
+    # Handle 'events' subcommand group
+    if args.command == "events":
+        events_commands = {
+            "emit": cmd_events_emit,
+            "resolve": cmd_events_resolve,
+            "list": cmd_events_list,
+            "verify-chain": cmd_events_verify_chain,
+        }
+        if not args.events_command:
+            events_parser.print_help()
+            sys.exit(0)
+        events_commands[args.events_command](args)
         return
 
     commands[args.command](args)
