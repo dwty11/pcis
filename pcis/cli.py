@@ -557,6 +557,51 @@ def cmd_events_verify_chain(args):
         sys.exit(1)
 
 
+def cmd_actions_list(args):
+    """List actions in the action log (most recent first)."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from action_log import load_action_log
+
+    events = load_action_log(args.journal)
+    if not events:
+        print("Journal is empty.")
+        return
+
+    limit = args.limit
+    events = list(reversed(events))[:limit]
+
+    for ev in events:
+        ts = ev.get("timestamp", "")
+        agent = ev.get("agent_id", "-")
+        if ev["event_type"] == "ACTION_STARTED":
+            tool = ev.get("tool_name", "-")
+            evid = (ev.get("event_id") or "")[:6]
+            print(f"{ts}  STARTED    {agent}  {tool}  (id: {evid})")
+        elif ev["event_type"] == "ACTION_COMPLETED":
+            severity = ev.get("outcome_severity", 0.0)
+            delta = ev.get("confidence_delta")
+            delta_str = f"delta={delta:+.3f}" if delta is not None else "delta=—"
+            aid = (ev.get("action_id") or "")[:6]
+            print(f"{ts}  COMPLETED  {agent}  {aid}  severity={severity:.2f}  {delta_str}")
+
+
+def cmd_actions_verify_chain(args):
+    """Verify the action log hash chain."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from action_log import verify_chain
+
+    result = verify_chain(args.journal)
+    print(f"Chain length : {result['length']}")
+    print(f"Chain valid  : {result['valid']}")
+    if not result["valid"]:
+        broken = result.get("broken_at")
+        if broken is not None:
+            print(f"Broken at    : {broken}")
+        sys.exit(1)
+
+
 def cmd_audit_export(args):
     """Export an audit bundle (Phase 3)."""
     _set_base_dir(args)
@@ -773,6 +818,19 @@ def main():
     p = audit_sub.add_parser("verify", help="Verify a .belief.bundle")
     p.add_argument("bundle_path", help="Path to the .belief.bundle file")
 
+    # actions (subcommand group) — PCIS-internal action log
+    actions_parser = sub.add_parser(
+        "actions", help="Action log (PCIS-internal action audit)"
+    )
+    actions_sub = actions_parser.add_subparsers(dest="actions_command")
+
+    p = actions_sub.add_parser("list", help="List actions (most recent first)")
+    p.add_argument("--journal", help="Path to action_log.jsonl (default: <BASE_DIR>/data/action_log.jsonl)")
+    p.add_argument("--limit", type=int, default=20, help="Max events to show (default: 20)")
+
+    p = actions_sub.add_parser("verify-chain", help="Verify the action log hash chain")
+    p.add_argument("--journal", help="Path to action_log.jsonl (default: <BASE_DIR>/data/action_log.jsonl)")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -839,6 +897,18 @@ def main():
             audit_parser.print_help()
             sys.exit(0)
         audit_commands[args.audit_command](args)
+        return
+
+    # Handle 'actions' subcommand group
+    if args.command == "actions":
+        actions_commands = {
+            "list": cmd_actions_list,
+            "verify-chain": cmd_actions_verify_chain,
+        }
+        if not args.actions_command:
+            actions_parser.print_help()
+            sys.exit(0)
+        actions_commands[args.actions_command](args)
         return
 
     commands[args.command](args)

@@ -780,6 +780,27 @@ def main():
     if args.branch:
         log.info("Focus: %s", args.branch)
 
+    # Action layer: emit ACTION_STARTED at the beginning of the main pass.
+    # Non-fatal — the gardener must continue even if the action log is broken.
+    # Declared before the try block so it stays in scope at the outcome touch
+    # point even if emission fails.
+    _gardener_action_id = None
+    if not args.dry_run:
+        try:
+            import sys as _sys
+            _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from action_log import emit_action
+            evt = emit_action(
+                agent_id="gardener",
+                tool_name="adversarial_pass",
+                parameters_summary=f"gap_scan={args.gap_scan}",
+                journal_path=os.path.join(BASE_DIR, "data", "action_log.jsonl"),
+            )
+            _gardener_action_id = evt["event_id"]
+            log.info("📋 Action logged: %s", _gardener_action_id)
+        except Exception as e:
+            log.warning("⚠️  action_log.emit_action skipped (non-fatal): %s", e)
+
     ensure_ollama_warm()
 
     tree = load_tree()
@@ -975,6 +996,27 @@ def main():
         n_synapses=len(staged_synapses),
         n_flags=len(flags),
     )
+
+    # Action layer: record outcome at the end of the main pass.
+    # Severity is 0.0 if no operational counters committed (clean run);
+    # 0.2 if any were committed (challenges found, not catastrophic).
+    if _gardener_action_id and not args.dry_run:
+        try:
+            import sys as _sys
+            _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from action_log import record_outcome
+            _severity = 0.0 if not committed_counters else 0.2
+            record_outcome(
+                action_id=_gardener_action_id,
+                outcome_severity=_severity,
+                agent_id="gardener",
+                description=f"{len(committed_counters)} counter(s) committed, "
+                            f"{len(staged_counters)} staged",
+                journal_path=os.path.join(BASE_DIR, "data", "action_log.jsonl"),
+            )
+            log.info("✅ Action outcome recorded (severity=%.1f)", _severity)
+        except Exception as e:
+            log.warning("⚠️  action_log.record_outcome skipped (non-fatal): %s", e)
 
     log.info("✅ Gardening complete — %s", now_local())
 
