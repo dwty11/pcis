@@ -557,6 +557,69 @@ def cmd_events_verify_chain(args):
         sys.exit(1)
 
 
+def cmd_audit_export(args):
+    """Export an audit bundle (Phase 3)."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from audit import create_bundle
+
+    base = os.environ["PCIS_BASE_DIR"]
+
+    tree = args.tree or os.path.join(base, "data", "tree.json")
+    sig = args.sig or os.path.join(base, "data", "root_signature.json")
+    journal = args.journal or os.path.join(base, "data", "events.action.jsonl")
+    key = args.key or os.path.expanduser("~/.pcis-keys/pcis_signing.pub")
+
+    if args.output:
+        output = args.output
+    else:
+        from datetime import datetime, timezone
+        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+        output = os.path.join(base, "data", "audit", f"{date_str}.belief.bundle")
+
+    result = create_bundle(tree, sig, journal, key, output)
+
+    if not result["ok"]:
+        print(f"Error: {result['error']}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Bundle written: {result['bundle_path']}")
+    print(f"  root_hash : {result['root_hash'][:16]}…")
+    print(f"  leaves    : {result['leaf_count']}")
+    print(f"  events    : {result['event_count']}")
+
+
+def cmd_audit_verify(args):
+    """Verify an audit bundle (Phase 3)."""
+    _set_base_dir(args)
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from audit import verify_bundle
+
+    result = verify_bundle(args.bundle_path)
+    layers = result["layers"]
+
+    def line(name, key):
+        layer = layers[key]
+        status = layer["status"]
+        detail = layer.get("detail", "")
+        if detail:
+            print(f"{name:13}: {status}  ({detail})")
+        else:
+            print(f"{name:13}: {status}")
+
+    line("snapshot", "snapshot")
+    line("signature", "signature")
+    line("events_chain", "events_chain")
+    line("cross_check", "cross_check")
+    print("------------------------------------")
+
+    if result["overall"] == "ok":
+        print("overall      : VERIFIED")
+    else:
+        print("overall      : FAIL")
+        sys.exit(1)
+
+
 def cmd_export(args):
     """Export the tree in a given format."""
     _set_base_dir(args)
@@ -696,6 +759,20 @@ def main():
     events_sub.add_parser("list", help="List events in the journal")
     events_sub.add_parser("verify-chain", help="Verify the hash chain end-to-end")
 
+    # audit (subcommand group) — Phase 3 audit bundle
+    audit_parser = sub.add_parser("audit", help="Audit bundle export + cross-verify")
+    audit_sub = audit_parser.add_subparsers(dest="audit_command")
+
+    p = audit_sub.add_parser("export", help="Build a .belief.bundle from current state")
+    p.add_argument("--tree", help="Path to tree.json (default: <BASE_DIR>/data/tree.json)")
+    p.add_argument("--sig", help="Path to root_signature.json (default: <BASE_DIR>/data/root_signature.json)")
+    p.add_argument("--journal", help="Path to events.action.jsonl (default: <BASE_DIR>/data/events.action.jsonl)")
+    p.add_argument("--key", help="Path to pcis_signing.pub (default: ~/.pcis-keys/pcis_signing.pub)")
+    p.add_argument("--output", help="Output bundle path (default: <BASE_DIR>/data/audit/<YYYYMMDD>.belief.bundle)")
+
+    p = audit_sub.add_parser("verify", help="Verify a .belief.bundle")
+    p.add_argument("bundle_path", help="Path to the .belief.bundle file")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -750,6 +827,18 @@ def main():
             events_parser.print_help()
             sys.exit(0)
         events_commands[args.events_command](args)
+        return
+
+    # Handle 'audit' subcommand group
+    if args.command == "audit":
+        audit_commands = {
+            "export": cmd_audit_export,
+            "verify": cmd_audit_verify,
+        }
+        if not args.audit_command:
+            audit_parser.print_help()
+            sys.exit(0)
+        audit_commands[args.audit_command](args)
         return
 
     commands[args.command](args)
