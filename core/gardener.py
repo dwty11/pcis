@@ -58,6 +58,7 @@ TREE_FILE = os.environ.get("PCIS_TREE_FILE", os.path.join(BASE_DIR, "data", "tre
 GARDEN_LOG = os.path.join(BASE_DIR, "memory", "gardener-log.md")
 GARDEN_STAGING = os.path.join(BASE_DIR, "memory", "gardener-staging.md")
 GARDEN_NOTIFY_FLAG = os.path.join(BASE_DIR, "memory", "gardener-pending-notify.flag")
+EVENTS_JOURNAL = os.path.join(BASE_DIR, "events.action.jsonl")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_URL = f"{OLLAMA_HOST}/api/generate"
 MLX_HOST = os.environ.get("PCIS_MLX_HOST", "http://localhost:8080")
@@ -507,6 +508,27 @@ def apply_staging():
         if os.path.exists(GARDEN_NOTIFY_FLAG):
             os.remove(GARDEN_NOTIFY_FLAG)
         log.info("✅ Tree saved. Staging cleared. (%d item(s) applied)", count)
+
+    # Resolve any open ESCALATION_SENT events now that staging has been applied.
+    # Non-fatal: never let an events failure block the gardener completing.
+    try:
+        import sys as _sys
+        _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from events import load_journal, resolve_escalation
+        journal = load_journal(EVENTS_JOURNAL)
+        resolved_ids = {e["event_id"] for e in journal if e["event_type"] == "ESCALATION_RESOLVED"}
+        unresolved = [e for e in journal if e["event_type"] == "ESCALATION_SENT" and e["event_id"] not in resolved_ids]
+        for evt in unresolved:
+            resolve_escalation(
+                event_id=evt["event_id"],
+                resolution=f"J applied staging: {count} item(s) committed via --apply-staging",
+                agent_id="gardener",
+                journal_path=EVENTS_JOURNAL,
+            )
+            log.info("✅ Escalation resolved: %s", evt["event_id"])
+    except Exception as e:
+        log.warning("⚠️  events.resolve_escalation skipped (non-fatal): %s", e)
+
     return count
 
 
@@ -924,6 +946,24 @@ def main():
     # Write staging file for synapses + constitutional counter-leaves
     if not args.dry_run and (staged_synapses or staged_counters):
         write_staging_file(staged_synapses, flags, staged_counters=staged_counters)
+
+    # Emit ESCALATION_SENT into the events journal when constitutional
+    # counter-leaves are staged (action-layer audit trail). Non-fatal:
+    # gardener must continue even if the events module is unavailable.
+    if staged_counters and not args.dry_run:
+        try:
+            import sys as _sys
+            _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from events import emit_escalation
+            evt = emit_escalation(
+                agent_id="gardener",
+                reason=f"{len(staged_counters)} constitutional counter-leaf(ves) staged for J review — branches: {sorted({c['branch'] for c in staged_counters})}",
+                branch="constitutional",
+                journal_path=EVENTS_JOURNAL,
+            )
+            log.info("📋 Escalation emitted: %s", evt["event_id"])
+        except Exception as e:
+            log.warning("⚠️  events.emit_escalation skipped (non-fatal): %s", e)
 
     # Write notify flag for session startup
     write_notify_flag(committed_counters, staged_synapses, flags, dry_run=args.dry_run,
