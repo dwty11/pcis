@@ -431,19 +431,40 @@ def add_knowledge(tree, branch, content, source="session", confidence=0.7):
     return leaf_id
 
 
-def prune_leaf(tree, branch, leaf_id):
+def prune_leaf(tree, branch, leaf_id, hard=False, reason="manual"):
+    """Mark a leaf as pruned (soft) or remove it (hard).
+
+    Soft prune (default): the leaf stays in the tree with `pruned=True`,
+    `pruned_at`, and `pruned_reason` fields added. The leaf's stored hash
+    is unchanged, so the branch and root hashes are unchanged — past
+    Merkle proofs still verify, and an adversary cannot silently remove
+    an inconvenient leaf. Search, confidence walks, and other active
+    operations should skip leaves where `leaf.get("pruned")` is true.
+
+    Hard prune: removes the leaf from the list entirely and recomputes
+    the branch hash. Reserved for legitimate operator-driven content
+    removal (e.g. takedown). Leaves a verifiable gap — Merkle proofs
+    issued before the prune will fail against the new root, which is
+    the explicit signal that something was removed.
+    """
     if branch not in tree["branches"]:
         return False
     leaves = tree["branches"][branch]["leaves"]
-    original_len = len(leaves)
-    tree["branches"][branch]["leaves"] = [
-        l for l in leaves if l["id"] != leaf_id
-    ]
-    if len(tree["branches"][branch]["leaves"]) < original_len:
-        tree["branches"][branch]["hash"] = compute_branch_hash(
-            tree["branches"][branch]["leaves"]
-        )
-        return True
+    for leaf in leaves:
+        if leaf["id"] == leaf_id:
+            if hard:
+                tree["branches"][branch]["leaves"] = [
+                    l for l in leaves if l["id"] != leaf_id
+                ]
+                tree["branches"][branch]["hash"] = compute_branch_hash(
+                    tree["branches"][branch]["leaves"]
+                )
+            else:
+                leaf["pruned"] = True
+                leaf["pruned_at"] = now_utc()
+                leaf["pruned_reason"] = reason
+                # Branch hash unchanged — leaf hash preserved in chain.
+            return True
     return False
 
 

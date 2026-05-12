@@ -2,20 +2,31 @@
 """
 knowledge_prune.py — Knowledge Tree Pruning Protocol
 
-Active forgetting for a knowledge tree. Biological memory prunes.
-Digital memory should too. Without pruning, low-value noise accumulates
-and degrades semantic search quality over time.
+Active forgetting for a knowledge tree. Pruning is SOFT by default: a
+pruned leaf gets `pruned=True`, `pruned_at`, and `pruned_reason` fields,
+but its content and hash remain in the tree. The branch and root hashes
+are unchanged. This preserves the audit story — an outside party can
+still ask "what did the agent know on date X" and get a complete answer,
+including what was later marked pruned.
+
+Active operations (semantic search, confidence walks, belief queries)
+should filter out leaves where `leaf.get("pruned")` is true. Audit and
+integrity operations include them.
+
+Hard prune (destructive removal) is reserved for legitimate operator-
+driven content removal and is exposed only through `knowledge_tree.py
+prune_leaf(..., hard=True)` — never via this CLI.
 
 Usage:
     python3 knowledge_prune.py --review              # Interactive review of prune candidates
     python3 knowledge_prune.py --stale                # Show leaves older than 90 days, never refreshed
     python3 knowledge_prune.py --low-confidence 0.6   # Show leaves below confidence threshold
     python3 knowledge_prune.py --branch-health        # Check health metrics per branch
-    python3 knowledge_prune.py --auto-flag             # Flag candidates, don't delete (safe)
-    python3 knowledge_prune.py --execute               # Actually prune flagged leaves (requires --confirm)
+    python3 knowledge_prune.py --auto-flag             # Show candidates, change nothing (safe)
+    python3 knowledge_prune.py --execute               # Soft-prune all flagged candidates
 
 Schedule: Quarterly review, or whenever tree exceeds 200 leaves.
-Principle: A gardener, not a hoarder. Prune what no longer serves.
+Principle: A gardener, not a hoarder. Mark what no longer serves; never erase the record.
 
 No external dependencies. Python 3.8+.
 """
@@ -280,12 +291,19 @@ def cmd_execute(yes=False, dry_run=False):
     with tree_lock() as tree:
         for c in candidates:
             branch = tree["branches"].get(c["branch"])
-            if branch:
-                before = len(branch["leaves"])
-                branch["leaves"] = [l for l in branch["leaves"] if l["id"] != c["id"]]
-                if len(branch["leaves"]) < before:
-                    branch["hash"] = compute_branch_hash(branch["leaves"])
+            if not branch:
+                continue
+            for leaf in branch["leaves"]:
+                if leaf["id"] == c["id"] and not leaf.get("pruned"):
+                    leaf["pruned"] = True
+                    leaf["pruned_at"] = now_utc()
+                    leaf["pruned_reason"] = "auto_flag: " + ", ".join(c["reasons"])
                     pruned += 1
+                    break
+            # Branch and root hashes are intentionally unchanged — soft
+            # prune preserves Merkle inclusion so adversaries cannot
+            # silently remove inconvenient leaves. Audit queries can
+            # filter on `pruned=True` to inspect what was pruned and when.
 
     prune_log = load_prune_log()
     prune_log["sessions"].append({
@@ -299,7 +317,7 @@ def cmd_execute(yes=False, dry_run=False):
     prune_log["total_pruned"] += pruned
     save_prune_log(prune_log)
 
-    print(f"Pruned {pruned} leaf(s). New root: {tree['root_hash'][:24]}...")
+    print(f"Soft-pruned {pruned} leaf(s) (marked pruned=True; tree hash unchanged).")
 
 
 def cmd_review(yes=False, dry_run=False):
@@ -322,9 +340,10 @@ def cmd_review(yes=False, dry_run=False):
 
     for branch_name in sorted(tree.get("branches", {}).keys()):
         branch = tree["branches"][branch_name]
-        leaves_to_remove = []
 
         for leaf in branch.get("leaves", []):
+            if leaf.get("pruned"):
+                continue
             conf = leaf.get("confidence", 0.7)
             age = days_since(leaf.get("created", ""))
 
@@ -346,10 +365,12 @@ def cmd_review(yes=False, dry_run=False):
                 action = input("  Action -- [k]eep / [p]rune / [r]efresh confidence / [s]kip: ").strip().lower()
 
             if action == 'p':
-                leaves_to_remove.append(leaf['id'])
+                leaf["pruned"] = True
+                leaf["pruned_at"] = now_utc()
+                leaf["pruned_reason"] = "interactive_review"
                 actions["pruned"] += 1
                 if not yes:
-                    print("  -> PRUNED\n")
+                    print("  -> SOFT-PRUNED (hash preserved)\n")
             elif action == 'r' and not yes:
                 new_conf = input("  New confidence (0.0-1.0): ").strip()
                 try:
@@ -366,9 +387,6 @@ def cmd_review(yes=False, dry_run=False):
             else:
                 if not yes:
                     print("  -> SKIPPED\n")
-
-        if leaves_to_remove:
-            branch["leaves"] = [l for l in branch["leaves"] if l["id"] not in leaves_to_remove]
 
     if dry_run:
         print(f"\nDry run complete. No changes made.")

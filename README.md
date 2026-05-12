@@ -9,7 +9,7 @@ Build on PCIS and your agent doesn't just remember — it produces a tamper-evid
 
 > **RAG retrieves. PCIS proves.**
 
-> **License:** Business Source License 1.1 — non-commercial use is free. Commercial deployments require a license (email idwty@proton.me). Converts to Apache 2.0 on 2030-03-20. [See LICENSE](LICENSE)
+PCIS is a **notarized agent journal** — what the agent claimed to know, signed and tamper-evident. It is complementary to identity and attestation layers (PKI, DIDs, runtime attestation), not a replacement for them. PCIS proves what *this keypair* asserted at *this moment in time*; binding the keypair to a real-world organization or person is a separate concern and sits on top.
 
 [![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/dwty11/pcis/releases) [![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)](https://github.com/dwty11/pcis/commits/main)
 
@@ -134,11 +134,25 @@ The root cause isn't competence. It's the absence of epistemic maintenance.
 
 PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely owns, with a verifiable record of what it believed and when, anchored by a Merkle root that detects any modification. The agent doesn't just remember. It knows *why* it believes what it believes, can defend it under challenge, and flags when confidence should decay.
 
-PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory and identity continuity that makes agents trustworthy over years, not sessions.
+PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory continuity that makes agents trustworthy over years, not sessions.
 
 PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model — including GigaChat for on-prem deployments. Switching the underlying model requires no changes to the memory layer.
 
 For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+
+---
+
+## What PCIS Does NOT Do
+
+PCIS is one slice of the agent-audit problem — the provenance-of-memory slice. Other slices live elsewhere, and PCIS does not claim to solve them.
+
+- **Not a replacement for identity binding.** PCIS proves that a given keypair claimed a given belief at a given time. Binding that keypair to a real-world organization, person, or accredited operator is the job of PKI, DIDs, or runtime attestation. Out-of-band trust establishment sits on top.
+- **Not a guarantee that the agent's output reflects the tree.** The signature proves the agent committed to assertion A at logical time T. Whether the message that followed was actually derived from A is testimony, not proof of internal causation. A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
+- **Not equivocation-proof on its own.** A dishonest operator can in principle maintain two trees and show different versions to different parties — both verify against signed roots from the same key. Closing this gap requires an independent witness layer (third-party co-signer of every committed root). The witness service is a separate component, not part of PCIS proper.
+- **Not a state commitment.** The tree is an *attestation log* — history-shaped. To find an agent's current view of a topic, walk the leaves applying supersedes-resolution and confidence rules. A true sparse-Merkle state commitment is a larger, separate project. PCIS is the honest version of what the underlying tree actually proves.
+- **No forward secrecy.** A compromised private key allows backdating signed messages. Key rotation must be operator-driven; old observations remain verifiable under old keys (CT-log model).
+
+These limits are deliberate. Identity-binding, witnessing/equivocation-detection, output-grounding, and state (vs history) commitments each belong in separate layers.
 
 ---
 
@@ -151,19 +165,19 @@ PCIS takes a different path. Instead of retraining the model, it externalizes me
 - The **knowledge tree** functions as a replay buffer — prior knowledge is never overwritten, only extended or challenged
 - The **adversarial gardener** applies stability pressure — high-confidence beliefs are challenged nightly, preventing overfit to recent context
 - The **gap-scan** drives plasticity — it identifies what the agent should know but doesn't, targeting learning where it's needed
-- The **pruning protocol** manages forgetting deliberately — stale knowledge is flagged and removed by design, not by accident
+- The **soft-prune protocol** manages forgetting deliberately — stale knowledge is marked pruned without erasing the Merkle record of its existence; the tree stays sharp for active operations while audit queries remain complete
 
 This architecture maps directly onto the stability-plasticity tradeoff that makes continual learning hard. The difference: PCIS does it at the knowledge layer, without touching model weights, and with a Merkle root that detects any modification to every state.
 
 ---
 
-## Six Contributions
+## What's in the box
 
 1. **Persistent Knowledge Tree** — structured memory that survives session restarts
 2. **Merkle Integrity** — tamper-detectable record of what the agent knew and when
-3. **Adversarial Pass** — external LLM challenges existing knowledge, generates counter-leaves
+3. **Adversarial Gardener** — external LLM challenges existing knowledge, generates counter-leaves
 4. **Gap-Scan** — finds what the agent *doesn't* know, not just what's wrong
-5. **Pruning Protocol** — stale knowledge is flagged and removed; the tree stays sharp
+5. **Soft-Prune Protocol** — stale leaves are marked pruned without erasing the Merkle record; active operations stay sharp, audit queries stay complete
 6. **Model-Agnostic** — swap the LLM without touching the memory layer
 
 ---

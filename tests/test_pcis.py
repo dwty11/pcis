@@ -566,20 +566,45 @@ class TestMerkleProofs(unittest.TestCase):
             kt.verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
         )
 
-    def test_proof_invalidated_by_leaf_removal(self):
-        """Removing a leaf from the branch changes the root, invalidating old proofs."""
+    def test_soft_prune_preserves_branch_hash_and_proofs(self):
+        """Default soft prune keeps branch hash and proofs intact — audit story."""
         tree = self._tree_with_leaves(4)
         leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
         proof = kt.generate_proof(tree, "technical", leaf_id)
         old_root = proof["branch_root"]
 
-        # Remove a different leaf — the branch root must change
         other_id = tree["branches"]["technical"]["leaves"][1]["id"]
-        kt.prune_leaf(tree, "technical", other_id)
+        result = kt.prune_leaf(tree, "technical", other_id)
+        self.assertTrue(result)
 
+        # Soft prune: leaf marked but still present, hash unchanged.
+        pruned_leaf = next(
+            l for l in tree["branches"]["technical"]["leaves"] if l["id"] == other_id
+        )
+        self.assertTrue(pruned_leaf.get("pruned"))
+        self.assertIn("pruned_at", pruned_leaf)
+        new_root = tree["branches"]["technical"]["hash"]
+        self.assertEqual(old_root, new_root)
+        self.assertTrue(
+            kt.verify_proof(proof["leaf_hash"], proof["proof"], new_root)
+        )
+
+    def test_hard_prune_invalidates_proofs(self):
+        """Opt-in hard prune removes the leaf and recomputes the branch hash."""
+        tree = self._tree_with_leaves(4)
+        leaf_id = tree["branches"]["technical"]["leaves"][0]["id"]
+        proof = kt.generate_proof(tree, "technical", leaf_id)
+        old_root = proof["branch_root"]
+
+        other_id = tree["branches"]["technical"]["leaves"][1]["id"]
+        kt.prune_leaf(tree, "technical", other_id, hard=True)
+
+        # Hard prune: leaf gone, branch hash changed, old proofs invalid.
+        self.assertFalse(
+            any(l["id"] == other_id for l in tree["branches"]["technical"]["leaves"])
+        )
         new_root = tree["branches"]["technical"]["hash"]
         self.assertNotEqual(old_root, new_root)
-        # Old proof no longer matches new root
         self.assertFalse(
             kt.verify_proof(proof["leaf_hash"], proof["proof"], new_root)
         )
