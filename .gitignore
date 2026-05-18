@@ -10,6 +10,7 @@ __pycache__/
 build/
 pcis.egg-info/
 demo/demo_search_index.json
+demo/adversarial_validation_run.json
 memory/
 demo/hub.html
 demo/merkletree-vr.html
