@@ -1,0 +1,31 @@
+{
+  "run_date": "2026-04-06T06:33:12.778611+00:00",
+  "model": "qwen3:14b",
+  "provider": "local-qwen",
+  "entries_challenged": 3,
+  "counters": [
+    {
+      "challenged_id": "1b0cd6b0baf4",
+      "challenge": "The belief underestimates the risk of inconsistent review quality by ignoring that Kotlin's unique features (e.g., coroutines, DSLs) may introduce subtle, hard-to-detect bugs that could escalate into critical issues, and the 4-week estimate assumes no unforeseen technical debt or compatibility challenges with existing tooling.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "risks"
+    },
+    {
+      "challenged_id": "e927fef96ff5",
+      "challenge": "This policy may overlook critical gaps, such as unaddressed risks from internal AI tool usage (not just external), lack of enforcement mechanisms for training compliance, and no provisions for auditing AI outputs or mitigating algorithmic bias in deliverables. Additionally, it assumes all AI-generated content is identifiable, ignoring scenarios where AI contributions are indistinguishable from human work, potentially leading to unreported ethical or legal risks.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "compliance"
+    },
+    {
+      "challenged_id": "56c8472e7bda",
+      "challenge": "The belief assumes a universal drop in trust without considering contextual factors like the severity of the hallucination, customer demographics, or the nature of the AI's role (e.g., critical vs. non-critical tasks). Additionally, the 34% figure may reflect short-term behavior rather than long-term trust erosion, and recovery efforts might have been influenced by external factors (e.g., media coverage) rather than the interventions themselves.",
+      "confidence": 0.6,
+      "model": "qwen3:14b",
+      "branch": "lessons"
+    }
+  ],
+  "merkle_root_before": "c334bf6e49951a1c1ae58caff4ac03149e8eec19e115e37633affa99677dd216",
+  "merkle_root_after": "c334bf6e49951a1c1ae58caff4ac03149e8eec19e115e37633affa99677dd216"
+}

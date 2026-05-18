@@ -1,0 +1,65 @@
+{
+  "synapses": [
+    {
+      "from_leaf": "8380c938d48f",
+      "to_leaf": "81f2c11c9da9",
+      "relation": "REINFORCES",
+      "note": "Co-branch: projects"
+    },
+    {
+      "from_leaf": "81f2c11c9da9",
+      "to_leaf": "cf535cc5ce7e",
+      "relation": "REINFORCES",
+      "note": "Co-branch: projects"
+    },
+    {
+      "from_leaf": "a2b92e85661a",
+      "to_leaf": "01f3a4ac52bf",
+      "relation": "REINFORCES",
+      "note": "Co-branch: risks"
+    },
+    {
+      "from_leaf": "01f3a4ac52bf",
+      "to_leaf": "03788b79f9c3",
+      "relation": "REINFORCES",
+      "note": "Co-branch: risks"
+    },
+    {
+      "from_leaf": "809bcf98d393",
+      "to_leaf": "5b60b28a9005",
+      "relation": "REINFORCES",
+      "note": "Co-branch: decisions"
+    },
+    {
+      "from_leaf": "5b60b28a9005",
+      "to_leaf": "30fffc0d8439",
+      "relation": "REINFORCES",
+      "note": "Co-branch: decisions"
+    },
+    {
+      "from_leaf": "48e0c3176ec6",
+      "to_leaf": "55230ef8ca71",
+      "relation": "REINFORCES",
+      "note": "Co-branch: compliance"
+    },
+    {
+      "from_leaf": "55230ef8ca71",
+      "to_leaf": "687b6eee7eb6",
+      "relation": "REINFORCES",
+      "note": "Co-branch: compliance"
+    },
+    {
+      "from_leaf": "0611623f7016",
+      "to_leaf": "fb0d87573d22",
+      "relation": "REINFORCES",
+      "note": "Co-branch: lessons"
+    },
+    {
+      "from_leaf": "fb0d87573d22",
+      "to_leaf": "d8cd49b998b1",
+      "relation": "REINFORCES",
+      "note": "Co-branch: lessons"
+    }
+  ],
+  "combined_root_hash": "3507a6ec71109d80280212450518b38049ac28e2bcba5add592e8161d169905f"
+}

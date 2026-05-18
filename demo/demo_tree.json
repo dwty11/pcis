@@ -1,0 +1,1034 @@
+{
+  "version": 1,
+  "instance": "pcis-demo",
+  "root_hash": "7139729a528d560937bef1dbcb67552b3fff293ccf4b9c831324baad0f11816f",
+  "last_updated": "2026-04-07 11:43:38 UTC",
+  "branches": {
+    "projects": {
+      "hash": "67f033502555a159b65c4ff78505743cc36cf9938c0bee0f36b7f3d13364b41c",
+      "leaves": [
+        {
+          "id": "8380c938d48f",
+          "hash": "8380c938d48f22cabd0a73e92cd5a94e8d8d8451c2ff5306c0a0b1f079ed1094",
+          "content": "ATLAS — customer service AI agent for Meridian Corp retail banking division. Handles account inquiries, transaction disputes, and product recommendations via natural language. Team: 12 engineers + 3 ML specialists. Status: production since Q4 2025, serving 2.3M customers. Stack: Python, LangGraph, Claude API. Impact: 40% reduction in call center volume, $8.2M annual savings.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.95,
+          "created": "2026-01-10 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e3e3e0585ceb",
+          "hash": "e3e3e0585ceb3cb9d4978716d47cd7dd21b97d63084e458b8221ed0f43c2f5c9",
+          "content": "ATLAS: Q1 2026 performance review — average resolution time dropped to 2.1 minutes (from 4.8 min in Q4 2025). Customer satisfaction score: 4.6/5.0. Escalation rate to human agents: 12.3%. Identified gap in handling complex multi-product bundling scenarios.",
+          "source": "q1-review-2026",
+          "confidence": 0.91,
+          "created": "2026-03-15 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "41495bafa233",
+          "hash": "41495bafa233b3daa9b267eac6afce8992d10c7157dd68f341ac4306ef33007b",
+          "content": "ATLAS: planned expansion to mortgage pre-qualification workflow in Q2 2026. Requires integration with credit bureau APIs and underwriting rules engine. Estimated 6-week development cycle. Compliance pre-approval obtained.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.82,
+          "created": "2026-02-18 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "62099a175202",
+          "hash": "62099a1752022986ccbad1351f074a38f020995e64723aa45d5d9c6b2ac46b34",
+          "content": "SENTINEL — fraud detection agent for real-time transaction monitoring. Analyzes payment patterns, device fingerprints, and behavioral signals. Status: MVP completed, entering UAT phase. Team: 8 engineers + 2 data scientists. Target: reduce false positive rate from 18% to under 5%.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.88,
+          "created": "2026-01-10 09:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "438582834919",
+          "hash": "438582834919892d7191e097242f4ddcbf96b29fa5b644ff6eaf2278c23fcff0",
+          "content": "SENTINEL: UAT results (Feb 2026) — false positive rate reduced to 7.2% on test dataset. True positive rate: 96.1%. Processing latency: 45ms p99. Flagged issue: model drift on weekend transaction patterns requires retraining pipeline.",
+          "source": "uat-report-2026-02",
+          "confidence": 0.85,
+          "created": "2026-02-28 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bd677456cc75",
+          "hash": "bd677456cc75b1643c4867bd0e1c8a5e0d6a8882d9155b23914a84a7c9a79f64",
+          "content": "COMPASS — internal knowledge management agent for Meridian Corp. Indexes policy documents, regulatory filings, and internal memos. Provides semantic search and summarization for compliance and legal teams. Status: beta, 340 active users.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.87,
+          "created": "2026-01-10 09:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d83eee31db34",
+          "hash": "d83eee31db349c24f0e10bd0e9ed9855aa8600478eba560c508da846f13ce32b",
+          "content": "COMPASS: user feedback analysis (March 2026) — most requested feature is cross-reference linking between regulatory updates and internal policy documents. Current retrieval accuracy: 89.3% on benchmark queries. Indexing pipeline processes 2,400 documents/day.",
+          "source": "user-feedback-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-10 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ed98412a56b6",
+          "hash": "ed98412a56b637594b9f1de8ee1643dded1000658067a59f17231679d3ca9fc4",
+          "content": "FORGE — automated code review agent for engineering teams. Reviews pull requests for security vulnerabilities, style compliance, and architectural patterns. Integrated with GitHub Enterprise. Status: pilot with 3 teams, expanding to all 14 engineering teams by Q3 2026.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.8,
+          "created": "2026-01-10 09:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c546fd6c3832",
+          "hash": "c546fd6c3832ab94da4a79f7f5b356e979644f8c1d6a70ad224d2b5becca2d11",
+          "content": "FORGE: pilot metrics — reviewed 1,847 PRs in Q1 2026. Caught 23 security issues (4 critical), 156 style violations, and 12 architectural anti-patterns. Developer approval rating: 78%. Main complaint: too many false positives on legacy code patterns.",
+          "source": "q1-review-2026",
+          "confidence": 0.86,
+          "created": "2026-03-15 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "27a320929790",
+          "hash": "27a3209297903a5bee2324074b9bae16e7f07fee7504a55a5116eb3b784689e8",
+          "content": "BRIDGE — document processing pipeline for accounts payable automation. Extracts data from invoices, purchase orders, and receipts using multimodal AI. Status: in development, targeting Q2 2026 release. Expected to process 50,000 documents/month.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.79,
+          "created": "2026-01-10 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "668e8b19cb65",
+          "hash": "668e8b19cb65baae9e75e5abc33cf5f7990da395dc399e8a7b87c2197b01bf2c",
+          "content": "BRIDGE: sprint review March 14 — OCR accuracy on structured invoices: 97.8%. Handwritten notes accuracy: 72.4% (below target). Integration with SAP S/4HANA completed. Remaining: approval workflow UI and exception handling module.",
+          "source": "sprint-review-2026-03-14",
+          "confidence": 0.81,
+          "created": "2026-03-14 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "cf535cc5ce7e",
+          "hash": "cf535cc5ce7e6a513c9c05302e99077fa91db6e683574cf4692aafb3e995aa14",
+          "content": "MERIDIAN AI PLATFORM — shared infrastructure layer providing model serving, prompt management, evaluation framework, and observability for all AI agents. Runs on Kubernetes with GPU node pools. Current capacity: 12 A100 GPUs. Team: 6 platform engineers.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-18 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "4406b591d95e",
+          "hash": "4406b591d95edd7c93a21aaec5d68bf76fac22143422b684166f00987c59efe6",
+          "content": "Platform capacity planning: current GPU utilization at 73% during peak hours. Projected to exceed 90% by Q3 2026 with SENTINEL and BRIDGE going to production. Procurement request submitted for 8 additional H100 GPUs. Lead time: 10-12 weeks.",
+          "source": "capacity-review-2026-03",
+          "confidence": 0.78,
+          "created": "2026-03-20 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "83e69c8d4ea3",
+          "hash": "83e69c8d4ea3f29f113189c8e592c300c135296c590aa99c6551130423dff466",
+          "content": "ECHO — voice analytics agent for call center quality assurance. Transcribes and analyzes customer calls for sentiment, compliance adherence, and agent performance. Status: proof of concept, evaluating ASR providers. Budget approved: $1.2M.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.72,
+          "created": "2026-01-10 10:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a571d9ab6c90",
+          "hash": "a571d9ab6c90abc6eb3649f132cc86b24707adb369f45686d9ad7479e843ea39",
+          "content": "NEXUS — supply chain optimization agent for Meridian Corp logistics arm. Forecasts demand, optimizes routing, and manages vendor relationships. Status: requirements gathering phase, collaboration with operations team. Target launch: Q4 2026.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.68,
+          "created": "2026-01-10 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c324c79e2d2c",
+          "hash": "c324c79e2d2c6b579d1e54c8b80b365a28a17d6e713cf389cb8694cf7a1bb7aa",
+          "content": "Cross-project dependency map: ATLAS depends on COMPASS for knowledge retrieval. SENTINEL feeds risk scores to ATLAS for transaction-related queries. BRIDGE output feeds into ATLAS for payment dispute resolution. All agents consume MERIDIAN AI PLATFORM services.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-18 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "8c6f10c263d3",
+          "hash": "8c6f10c263d37e84ab3f7836593c6c32e81b10573ac16d15728194a4494abb9d",
+          "content": "Headcount allocation for AI program: 47 FTEs across 6 active projects. 12 open positions (4 ML engineers, 3 platform engineers, 2 security specialists, 3 data engineers). Hiring pipeline: 34 candidates in various stages.",
+          "source": "q1-review-2026",
+          "confidence": 0.84,
+          "created": "2026-03-15 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "81f2c11c9da9",
+          "hash": "81f2c11c9da9db5c8cc3e0e6ef8a65c4865681c86eb1ed2c38ba9b4591ab2faf",
+          "content": "ATLAS chatbot migration from rule-based to agentic architecture reduced maintenance burden by 60%. Previous system required 200+ manually curated decision trees. New system uses dynamic tool selection with 14 integrated APIs.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.93,
+          "created": "2026-03-22 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "fee5c0021824",
+          "hash": "fee5c00218245db2391ae12528dec89088abadd3afd0883654b04f0248b9d044",
+          "content": "Total AI program budget for FY2026: $18.4M (up from $11.2M in FY2025). Breakdown: infrastructure 32%, personnel 48%, vendor/licensing 15%, contingency 5%. ROI target: 2.8x by end of FY2027.",
+          "source": "q1-review-2026",
+          "confidence": 0.89,
+          "created": "2026-03-15 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "31595af6f348",
+          "hash": "31595af6f3485b7f35489346661f85fe1bec1a91d9ff8681cebd3849cd65044a",
+          "content": "GUARDIAN — model monitoring and governance dashboard. Tracks drift metrics, fairness indicators, and usage patterns across all deployed models. Status: v1.0 released Feb 2026, adopted by all production agents. Alerts configured for 23 drift scenarios.",
+          "source": "program-tracker-2026-01",
+          "confidence": 0.91,
+          "created": "2026-02-05 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "risks": {
+      "hash": "619fa1fcab08df96b515901d4d3c7851d6dd1badcb7008e715cf420f6729f9e3",
+      "leaves": [
+        {
+          "id": "0ad6aa95e44d",
+          "hash": "0ad6aa95e44dcbaa3b9e4104a92e56e4a1da780f0eae81fc8bd7aca2266a9ecc",
+          "content": "HIGH RISK: Model hallucination in ATLAS agent when handling edge-case product combinations. Observed confabulation rate of 3.2% on synthetic stress test. Mitigation: added retrieval-augmented generation with mandatory source citation.",
+          "source": "risk-register-2026-01",
+          "confidence": 0.88,
+          "created": "2026-01-22 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "03788b79f9c3",
+          "hash": "03788b79f9c35b3052d074077ae85a4cc8a3c0b9415713c2e643cd5fc1bd953a",
+          "content": "MEDIUM RISK: Single point of failure in MERIDIAN AI PLATFORM GPU cluster. No failover region configured. Impact: all AI agents go offline simultaneously. Mitigation plan: multi-region deployment by Q3 2026, estimated cost: $2.1M.",
+          "source": "risk-register-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-22 10:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "8d8aa95a3473",
+          "hash": "8d8aa95a34738219bee6e5c3dbb1dcdf33d3501338fac093d86b018a595de2f9",
+          "content": "HIGH RISK: SENTINEL fraud model trained on historical data may encode demographic biases in transaction flagging. Fairness audit in progress. Preliminary results show 1.4x higher false positive rate for cross-border transactions from specific regions.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.85,
+          "created": "2026-01-30 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "9b34e1de1427",
+          "hash": "9b34e1de14277f451132717b0690b46d34047efb10df18e988aba5a4d9824af3",
+          "content": "MEDIUM RISK: Vendor lock-in with primary LLM provider. Current architecture tightly coupled to single model API. Mitigation: abstraction layer in MERIDIAN AI PLATFORM supports model swapping, but only 2 of 6 agents have been tested with alternative models.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.83,
+          "created": "2026-02-18 15:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "8b241f56b48f",
+          "hash": "8b241f56b48f72603fad59117840fc8ff6f7ce01152d7972708e75190b269175",
+          "content": "LOW RISK: COMPASS knowledge base contains stale regulatory documents. 14% of indexed documents are older than 2 years with no review date. Mitigation: automated freshness scoring and review workflow implemented in March 2026.",
+          "source": "risk-register-2026-03",
+          "confidence": 0.79,
+          "created": "2026-03-05 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "01f3a4ac52bf",
+          "hash": "01f3a4ac52bf98591bf3450be83021884b6dc52563534e593b7771e3850d5992",
+          "content": "HIGH RISK: Prompt injection vulnerability discovered in ATLAS agent during red team exercise. Attacker could extract system prompts and bypass content filters using multi-turn conversation manipulation. Patched within 48 hours, but systematic testing needed.",
+          "source": "security-assessment-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-12 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bb3b498264e2",
+          "hash": "bb3b498264e2aa766d0b7de348f53b2aec720339c010d355b15a9ec52e55ae9f",
+          "content": "MEDIUM RISK: Data residency concerns for ECHO voice analytics. Call recordings may contain PII that cannot leave domestic jurisdiction. Cloud ASR providers process data in multiple regions. Requires on-premise or sovereign cloud deployment.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.86,
+          "created": "2026-01-30 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5f5357551cf0",
+          "hash": "5f5357551cf0ab491faf3af1eb5949744cbafff0918c13a8d503ed728cdc4aa5",
+          "content": "MEDIUM RISK: Key person dependency on lead ML architect (sole maintainer of SENTINEL model training pipeline and MERIDIAN AI PLATFORM inference engine). Bus factor of 1. Knowledge transfer sessions scheduled for Q2 2026.",
+          "source": "risk-register-2026-01",
+          "confidence": 0.87,
+          "created": "2026-01-22 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "1b0cd6b0baf4",
+          "hash": "1b0cd6b0baf4a9ef0d1b38d754b348d14c16d243b2b7381dce692bee8fd7e3a3",
+          "content": "LOW RISK: FORGE code review agent lacks support for internal Kotlin microservices (3 of 14 teams). Coverage gap creates inconsistent review quality. Kotlin support estimated at 4 weeks of development effort.",
+          "source": "risk-register-2026-03",
+          "confidence": 0.76,
+          "created": "2026-03-05 09:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "831360f2850e",
+          "hash": "831360f2850edb77524fc4b96d08a2411fb7575229e4ea820dd6532666acabeb",
+          "content": "HIGH RISK: Regulatory uncertainty around EU AI Act classification. SENTINEL fraud detection likely qualifies as high-risk AI system under Article 6. Compliance requirements include conformity assessment, registration in EU database, and ongoing monitoring.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.89,
+          "created": "2026-01-30 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a8b633dcd090",
+          "hash": "a8b633dcd09056db7a3e13e03d336dcb3a8b0c306a1858bad207e86800ccac95",
+          "content": "MEDIUM RISK: Training data provenance unclear for 23% of COMPASS indexed documents. Some vendor-supplied datasets lack clear licensing terms. Legal review initiated to assess IP exposure.",
+          "source": "risk-register-2026-03",
+          "confidence": 0.81,
+          "created": "2026-03-05 09:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a19ebe683e3c",
+          "hash": "a19ebe683e3c231cdad74071e377a7b256a8ecd7e6c9b96d0b3640a891ba67ba",
+          "content": "HIGH RISK: Cost overrun trajectory — GPU compute costs trending 22% above Q1 forecast due to higher-than-expected inference volume from ATLAS. If growth continues linearly, annual infrastructure budget will be exceeded by $1.8M.",
+          "source": "capacity-review-2026-03",
+          "confidence": 0.84,
+          "created": "2026-03-20 09:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "88f1f9fbe0be",
+          "hash": "88f1f9fbe0be2dd6c9757f8b7d6c04cc0cafe99d9a5bf043457abc160fd475f3",
+          "content": "MEDIUM RISK: Integration testing gaps between ATLAS and SENTINEL. Risk score handoff uses eventual consistency model with up to 30-second delay. During high-volume periods, stale risk scores may result in incorrect transaction assessments.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.8,
+          "created": "2026-02-18 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "587d045304b1",
+          "hash": "587d045304b1ba662f85111178e2f155a4ff785efda2426fb1899ef62799efa0",
+          "content": "LOW RISK: Developer experience friction with MERIDIAN AI PLATFORM. Onboarding a new agent takes average 3 weeks due to underdocumented APIs and complex configuration. Platform team prioritizing developer portal for Q2 2026.",
+          "source": "q1-review-2026",
+          "confidence": 0.75,
+          "created": "2026-03-15 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "3e32b9798443",
+          "hash": "3e32b9798443d431c2ca023ca1cffea1b6b9446b96038b00d0e7db8521cab566",
+          "content": "MEDIUM RISK: BRIDGE document processing pipeline lacks graceful degradation. Single malformed document can block entire batch processing queue. Circuit breaker pattern not yet implemented.",
+          "source": "sprint-review-2026-03-14",
+          "confidence": 0.82,
+          "created": "2026-03-14 15:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a2b92e85661a",
+          "hash": "a2b92e85661a3aaf2ae2709f79710a896dd9f06e5374d868fed91ee4a0d9c0b6",
+          "content": "HIGH RISK: Shadow AI usage detected — 34% of surveyed employees report using personal ChatGPT accounts for work tasks including drafting client communications and analyzing financial data. Data leakage risk is significant.",
+          "source": "security-assessment-2026-02",
+          "confidence": 0.93,
+          "created": "2026-02-12 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "75d829945998",
+          "hash": "75d8299459986ad8499eab65815be0877aa9d42873b592257bf9f08b01f6ff4c",
+          "content": "MEDIUM RISK: Model versioning inconsistencies across environments. Production ATLAS runs model v2.3 while staging has v2.5. Rollback procedures untested. Need standardized model registry and deployment pipeline.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.78,
+          "created": "2026-03-22 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c401657823e6",
+          "hash": "c401657823e624f8c951e57398ffeaca9e6820c1c5a1264ea485c8969169b3e6",
+          "content": "LOW RISK: Monitoring blind spot — GUARDIAN dashboard does not yet track prompt latency percentiles for COMPASS semantic search. Users report intermittent slowness but no data to diagnose root cause.",
+          "source": "risk-register-2026-03",
+          "confidence": 0.74,
+          "created": "2026-03-05 09:45:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a5cac960c22b",
+          "hash": "a5cac960c22b4d8728395111ccbecfb62a42bce98e1363cdc31668e1bd503860",
+          "content": "MEDIUM RISK: Disaster recovery plan does not account for AI-specific assets (model weights, vector databases, prompt libraries). Current backup strategy only covers traditional application data. Gap assessment due by end of Q2 2026.",
+          "source": "risk-register-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-05 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "93cb2dee8c20",
+          "hash": "93cb2dee8c2090f846968df5095c9566f4d3f1692b95ff1f55729e6ae218cce2",
+          "content": "HIGH RISK: Competitive pressure — two major competitors announced AI-powered customer service agents in Q1 2026. Meridian must accelerate ATLAS feature roadmap or risk losing market differentiation. Board review scheduled for April 2026.",
+          "source": "q1-review-2026",
+          "confidence": 0.86,
+          "created": "2026-03-15 12:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "decisions": {
+      "hash": "6f467b3362a0d3a7990122acea6ed7d27bccc507003c554766abb08e0ef682d9",
+      "leaves": [
+        {
+          "id": "809bcf98d393",
+          "hash": "809bcf98d393c9f7d04e472e3abaf9e0d47ef13c94089f14580fa5511832c74c",
+          "content": "DECISION: Adopt Claude API as primary LLM provider for all new agent development, replacing mixed GPT-4/Gemini setup. Rationale: superior instruction following, better safety properties, competitive pricing at scale. Approved by CTO on 2026-01-08.",
+          "source": "architecture-meeting-2026-01",
+          "confidence": 0.96,
+          "created": "2026-01-08 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "30fffc0d8439",
+          "hash": "30fffc0d843941b3d4e76a4b9160610bc3f2a0db8495d422dd0f0ea7957a8908",
+          "content": "DECISION: Implement mandatory human-in-the-loop for all ATLAS responses involving financial advice or account modifications exceeding $10,000. Driven by regulatory guidance and risk committee recommendation.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.94,
+          "created": "2026-01-30 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "2f4cdb1fcdf2",
+          "hash": "2f4cdb1fcdf2677d38326ab62c4e61f38f608485702af3ab6d7c40b268649cc7",
+          "content": "DECISION: Standardize on LangGraph for agent orchestration across all projects. Replaces ad-hoc state machines in ATLAS and custom DAG executor in SENTINEL. Migration deadline: end of Q2 2026.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.89,
+          "created": "2026-02-18 16:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a064174b3eb3",
+          "hash": "a064174b3eb36872b55c86865cea1811b1b04832d54f85dc15ab84723cc92b23",
+          "content": "DECISION: Deploy SENTINEL in shadow mode for 90 days before enabling automated transaction blocking. All fraud alerts will be logged and reviewed by human analysts during this period. Go-live for automated blocking: June 2026.",
+          "source": "risk-committee-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-25 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "40805049261e",
+          "hash": "40805049261efae8bdfc602dcf74dac853710d7c76b8363e8ea457d79196b941",
+          "content": "DECISION: Establish AI Ethics Review Board with quarterly review cadence. Members: CTO, Chief Risk Officer, Head of Compliance, external AI ethics advisor, and two rotating engineering leads. First session: March 2026.",
+          "source": "executive-meeting-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-15 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bca9bbdbfef2",
+          "hash": "bca9bbdbfef26fbf9543252a8c9bf932f0efd6fd24a758469a077c01b95e6c1f",
+          "content": "DECISION: All AI agents must implement structured logging using OpenTelemetry standard. Traces must include prompt/completion tokens, model version, latency, and confidence scores. Enforcement via MERIDIAN AI PLATFORM middleware.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.88,
+          "created": "2026-02-18 17:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5b60b28a9005",
+          "hash": "5b60b28a90052a4214b07c590cf6fe6d5472c4649461172d03d92ea16bf76dd2",
+          "content": "DECISION: Reject proposal to use customer data for model fine-tuning. Data governance committee ruled that current consent framework does not cover AI training use case. Synthetic data generation approved as alternative.",
+          "source": "data-governance-2026-02",
+          "confidence": 0.95,
+          "created": "2026-02-10 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a22bed7e1a56",
+          "hash": "a22bed7e1a56b5ea47f62399ba29a065a90256ef80f31919a91b8ba7db2258f2",
+          "content": "DECISION: BRIDGE document processing will use on-premise GPU infrastructure instead of cloud API for OCR and data extraction. Rationale: sensitive financial documents must not leave corporate network boundary.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-18 17:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "4693a105c565",
+          "hash": "4693a105c565985ffb0b9a43fa0653cdfa70e7c8abe264d2a33122e4f657ffc4",
+          "content": "DECISION: Adopt red team testing as mandatory pre-production gate for all customer-facing AI agents. Minimum 40 hours of adversarial testing required. Security team to maintain standardized attack playbook.",
+          "source": "security-assessment-2026-02",
+          "confidence": 0.93,
+          "created": "2026-02-12 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "72ffe41ff42e",
+          "hash": "72ffe41ff42e092a5384e71fe2fcc668e5e6492907ad1ec444c5e89b36a8262d",
+          "content": "DECISION: Implement A/B testing framework for ATLAS response strategies. 10% of interactions will receive alternative prompting approaches. Success metric: customer satisfaction score delta. Minimum test duration: 4 weeks.",
+          "source": "q1-review-2026",
+          "confidence": 0.84,
+          "created": "2026-03-15 13:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e783cee18084",
+          "hash": "e783cee18084c8c8d4c8734a7c36dae7b5750a45408b95befd79e97442ba1073",
+          "content": "DECISION: Cap maximum context window usage at 80% for all production agents to maintain response latency SLA of under 3 seconds. Agents exceeding this must implement conversation summarization.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.87,
+          "created": "2026-02-18 18:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "bff7bb032f89",
+          "hash": "bff7bb032f89e269a42997cb852e9ad136d9007946a85d31dcb11ff94bceea6a",
+          "content": "DECISION: ECHO voice analytics project paused pending resolution of data residency requirements. Budget reallocated to accelerate BRIDGE development. Reassessment scheduled for Q3 2026.",
+          "source": "executive-meeting-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-01 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "cbd95d791ada",
+          "hash": "cbd95d791adac9efe8b4ed671afc6a4fd6c711f3ff8ff7837cfbe9bd4e821c7c",
+          "content": "DECISION: All model artifacts must be stored in centralized model registry (MLflow) with full lineage tracking. No production deployment permitted without registry entry and approval chain.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-18 18:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c467ababb690",
+          "hash": "c467ababb69081fd42de8b8852f3b4084c9132f88668d7a055546df2185299b7",
+          "content": "DECISION: Establish SLA tiers for AI agent availability. Tier 1 (ATLAS, SENTINEL): 99.9% uptime. Tier 2 (COMPASS, FORGE): 99.5% uptime. Tier 3 (internal tools): 99.0% uptime. SLA monitoring via GUARDIAN dashboard.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.88,
+          "created": "2026-02-18 19:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "067d3b995e14",
+          "hash": "067d3b995e147c01f1c30d922b89d805600f868235efba106db04e6373cdf8f9",
+          "content": "DECISION: Approve $2.1M budget for multi-region GPU deployment to eliminate single point of failure. Implementation: primary region US-East, failover US-West. Target completion: August 2026.",
+          "source": "executive-meeting-2026-03",
+          "confidence": 0.86,
+          "created": "2026-03-01 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e8e1312f1e07",
+          "hash": "e8e1312f1e071dc2b1f0bb638e3d6dd330d7f9d71dd63f648c7b6a900e9b8b24",
+          "content": "DECISION: ATLAS will not support investment advisory use cases in current phase. Regulatory requirements for SEC-registered investment advisor are out of scope for FY2026. Revisit in FY2027 planning.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-30 16:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "3654a4b40532",
+          "hash": "3654a4b4053265234f5d5b2d56073328b5e93b64f1142c883141dae6f92e98c9",
+          "content": "DECISION: Implement prompt versioning system with rollback capability. All production prompts stored in Git with CI/CD pipeline for deployment. No manual prompt changes in production environments.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.89,
+          "created": "2026-02-18 19:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "eec0d2b415de",
+          "hash": "eec0d2b415dedebe339f49dd0a409bdcc9906e74eba19a44e36417b4b42b552a",
+          "content": "DECISION: Create dedicated AI incident response playbook, separate from general IT incident response. Covers model degradation, adversarial attacks, data poisoning, and unintended bias detection scenarios.",
+          "source": "risk-committee-2026-02",
+          "confidence": 0.87,
+          "created": "2026-02-25 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "46390c072b6d",
+          "hash": "46390c072b6dff3802f92b8df493c0e22cb9a748cbc8a655e5d8d26903525070",
+          "content": "DECISION: NEXUS supply chain project will use federated learning approach to enable collaboration with external logistics partners without sharing raw data. Architecture review completed, proof of concept approved.",
+          "source": "architecture-meeting-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-18 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c62126be8a4e",
+          "hash": "c62126be8a4e669bbc07bc65a827049f77df60668e5fa9777a40b8ad8347a66b",
+          "content": "DECISION: Mandate quarterly model retraining for all production agents. Retraining triggers: scheduled quarterly cycle, drift detection alert from GUARDIAN, or significant data distribution change.",
+          "source": "architecture-meeting-2026-03",
+          "confidence": 0.86,
+          "created": "2026-03-18 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "compliance": {
+      "hash": "123cf9d02e61f9f07de347d6399ac0aa3e26f93a20f0abc796ca4b8ba7c2d9f1",
+      "leaves": [
+        {
+          "id": "48e0c3176ec6",
+          "hash": "48e0c3176ec683cc27fd066ce61006fd5ae7e6cf9ba238b7d6d03e82e648001a",
+          "content": "EU AI Act assessment completed for SENTINEL fraud detection system. Classification: high-risk AI system under Annex III, Section 5(b). Required actions: conformity assessment, technical documentation, registration in EU database. Deadline: August 2026.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.93,
+          "created": "2026-01-30 17:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "dce9e577a6b9",
+          "hash": "dce9e577a6b9aa99730ebee41fd92cb355c53f980e4894aa1a83b5a08c07a9e4",
+          "content": "ATLAS customer service agent classified as limited-risk under EU AI Act. Primary obligation: transparency — customers must be informed they are interacting with an AI system. Disclosure banner implemented in all customer-facing channels.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.9,
+          "created": "2026-01-30 17:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "81d19206ac59",
+          "hash": "81d19206ac59ffa328529fbac26d576a40052dcb6d50da019e3fb4cfac33ff55",
+          "content": "Data Protection Impact Assessment (DPIA) completed for BRIDGE document processing. Finding: processing of financial documents constitutes large-scale processing of special category data. Enhanced security controls and access logging required.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.88,
+          "created": "2026-01-30 17:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "6ad37e04c4fe",
+          "hash": "6ad37e04c4fe9d263cf8f1d5e7b7e0f518612f90a3fea69527c56e3dc66e24c7",
+          "content": "SOC 2 Type II audit scope expanded to include AI agent infrastructure. New control objectives: model access controls, training data governance, output monitoring, and incident response for AI-specific scenarios. Audit period: April-September 2026.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.85,
+          "created": "2026-01-30 18:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e35d7aa1fc2c",
+          "hash": "e35d7aa1fc2c2fe88184b8c66b02d79080df686f805c9dbbcef27247301a26d2",
+          "content": "Third-party AI vendor risk assessment framework established. All LLM API providers must complete security questionnaire, provide SOC 2 report, and demonstrate data handling practices. Current providers assessed: 3 of 5 compliant.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.87,
+          "created": "2026-01-30 18:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "194341f9b62c",
+          "hash": "194341f9b62cd773be865f1da601c8b55f0e0a2eb543288de0c8fc074e0fc256",
+          "content": "Internal audit finding: 7 of 23 AI-related data pipelines lack documented data lineage. Remediation plan requires all pipelines to implement data cataloging using Apache Atlas by end of Q2 2026. Owner: Data Engineering team.",
+          "source": "internal-audit-2026-02",
+          "confidence": 0.82,
+          "created": "2026-02-15 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "41533bd44bd1",
+          "hash": "41533bd44bd168c6b7d49cf06288799ae4d83bc06a34e44ec93104125253d940",
+          "content": "Model explainability requirements defined for all customer-impacting decisions. SENTINEL must provide feature importance scores for each fraud flag. ATLAS must cite source documents for factual claims. Implementation deadline: Q2 2026.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.89,
+          "created": "2026-01-30 18:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "8174e0a4ea83",
+          "hash": "8174e0a4ea834125e67ba769ce7cd23d3dd2e81a059748b88cd6d144e84f2e19",
+          "content": "PCI DSS v4.0 compliance review for AI agents handling payment card data. Finding: SENTINEL processes card transaction metadata but not cardholder data directly. Compensating controls documented. ATLAS requires additional tokenization for dispute resolution flows.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.86,
+          "created": "2026-01-30 19:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d482a09df35a",
+          "hash": "d482a09df35a864b348016b81bcc65676b398d3e276a093ad94c59410e0343b6",
+          "content": "Records retention policy updated to include AI artifacts: model weights retained for 7 years, training data provenance records retained indefinitely, prompt logs retained for 3 years, agent interaction logs retained for 5 years.",
+          "source": "data-governance-2026-02",
+          "confidence": 0.84,
+          "created": "2026-02-10 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "687b6eee7eb6",
+          "hash": "687b6eee7eb6872ed9028b73498daf214b5053668dc396461b1b589dd506502b",
+          "content": "Anti-money laundering (AML) regulatory review of SENTINEL. Finding: AI-assisted transaction monitoring meets regulatory expectations but requires human analyst sign-off on all Suspicious Activity Reports (SARs). Automated SAR filing prohibited.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-30 19:15:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e139081d1b4b",
+          "hash": "e139081d1b4b77a64ea34e99f97f818ab9e8d31b5a8da003cf7909a82fba6aba",
+          "content": "Accessibility compliance assessment for ATLAS customer interface. WCAG 2.1 AA compliance achieved for web channel. Mobile app and voice channel assessments pending. Remediation items: 4 minor contrast issues, 2 screen reader navigation gaps.",
+          "source": "compliance-audit-2026-03",
+          "confidence": 0.8,
+          "created": "2026-03-08 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "322738baf335",
+          "hash": "322738baf335bc0a223e613a3882f7a8e6161cb7fc296b208117ac96623d6b5a",
+          "content": "Cross-border data transfer assessment for MERIDIAN AI PLATFORM. Finding: model inference requests from EU customers must be processed within EU jurisdiction. Current architecture routes all requests through US-East. Geo-routing implementation required.",
+          "source": "compliance-audit-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-08 09:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0ea0277d7133",
+          "hash": "0ea0277d713345361e77c69560a333d8f67db3b2e91f213e60fcdb389b1bf348",
+          "content": "AI transparency report prepared for Q1 2026 regulatory filing. Metrics reported: total AI-assisted decisions (4.2M), human override rate (8.7%), customer complaint rate for AI interactions (0.3%), model accuracy metrics by domain.",
+          "source": "compliance-audit-2026-03",
+          "confidence": 0.86,
+          "created": "2026-03-08 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e927fef96ff5",
+          "hash": "e927fef96ff5d349a84c0a9de66fb36c4817e3b6360b9aeb0f4cd010e62c2d9f",
+          "content": "Employee AI usage policy finalized and distributed. Key provisions: no customer PII in external AI tools, mandatory training completion before AI tool access, reporting obligation for AI-generated content in client deliverables.",
+          "source": "data-governance-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-10 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b441b1d70640",
+          "hash": "b441b1d70640c69f8079c52213c41b4fe1cae6600374f3891fcecc509f49c94b",
+          "content": "GDPR right-to-erasure implementation for AI systems. Finding: customer data used in COMPASS knowledge base must be erasable within 30 days. Current architecture does not support selective document removal from vector embeddings. Technical solution required.",
+          "source": "compliance-audit-2026-03",
+          "confidence": 0.83,
+          "created": "2026-03-08 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ecb8f9f15a3e",
+          "hash": "ecb8f9f15a3e451bc1503e5b639982f6310ead76bd4e4f572402675fc45249cf",
+          "content": "Insurance coverage review for AI-related liabilities. Current E&O policy does not explicitly cover AI-generated advice. Broker negotiating AI-specific endorsement. Estimated premium increase: 12-15%. Coverage effective date target: July 2026.",
+          "source": "risk-committee-2026-02",
+          "confidence": 0.78,
+          "created": "2026-02-25 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "034211f7feb5",
+          "hash": "034211f7feb5aa1df0f3391e010905a1ebd367b32d7a2dc5eb933250e1bc29ee",
+          "content": "Anonymous reporting channel established for AI safety concerns. Employees can confidentially report observed AI system failures, biased outputs, or safety bypass attempts. Reports routed to AI Ethics Review Board.",
+          "source": "executive-meeting-2026-01",
+          "confidence": 0.85,
+          "created": "2026-01-15 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "55230ef8ca71",
+          "hash": "55230ef8ca717034136880795d2c72af0aaae7f0255287f470df09701bf4da51",
+          "content": "Vendor contract amendment completed with primary LLM provider. Key terms: zero data retention for API calls, annual security audit rights, 72-hour breach notification, geographic processing restrictions, and model deprecation notice period of 180 days.",
+          "source": "data-governance-2026-02",
+          "confidence": 0.92,
+          "created": "2026-02-10 12:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "c5550a1cfc25",
+          "hash": "c5550a1cfc25ef338afb3f3483e6d1d1431292877d09b30219dfafb7eb777423",
+          "content": "Regulatory sandbox application submitted for SENTINEL automated transaction blocking feature. Regulator response expected within 60 days. Interim operation under existing manual review framework.",
+          "source": "compliance-audit-2026-03",
+          "confidence": 0.81,
+          "created": "2026-03-08 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "e3bb4569a1da",
+          "hash": "e3bb4569a1da38595653bcf0f5a057b9e7b7c7eaf6ccfc79eac6d8546d53e19b",
+          "content": "Annual AI risk assessment submitted to Board of Directors. Key findings: overall AI program risk rated MEDIUM (down from HIGH in 2025). Major improvements: formal governance structure, red team testing, and monitoring capabilities. Remaining gaps: data lineage, multi-region resilience.",
+          "source": "risk-committee-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-25 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    },
+    "lessons": {
+      "hash": "4a477b1dfca522b3ee58819b8ee9451e042d507ecf3c6d14c6ff38ccf8761053",
+      "leaves": [
+        {
+          "id": "d8cd49b998b1",
+          "hash": "d8cd49b998b121fc2e3f0a5d8fe5b2fc6b0d84991c3c36de06f88015891a19cd",
+          "content": "LESSON: Embedding model upgrades must be coordinated with vector database reindexing. COMPASS experienced 48-hour degraded search quality when embedding model was updated without rebuilding the index. Now part of standard deployment checklist.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.92,
+          "created": "2026-03-05 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0c28daaf96a9",
+          "hash": "0c28daaf96a9bd7155abdaee5dd3e0d192047227e7b8bfd8d42c275621ad259e",
+          "content": "LESSON: Synthetic data for testing AI agents must include adversarial edge cases. Initial ATLAS testing used only well-formed customer queries, missing 15% of production failure modes. Test suite now includes 200+ adversarial prompts.",
+          "source": "postmortem-2026-02",
+          "confidence": 0.89,
+          "created": "2026-02-20 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "d33ddd07525f",
+          "hash": "d33ddd07525fc88aaa6dcd97156b159c1c40a1434fb32410762e8a364e4308dc",
+          "content": "LESSON: Agent orchestration frameworks should be evaluated with production-scale concurrency, not just functional correctness. LangGraph performed well in unit tests but revealed memory leaks under 500+ concurrent sessions during load testing.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-10 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0611623f7016",
+          "hash": "0611623f7016aeca4402dd19bd5f38dfbcf0d1fe93a16e4d882fd3267bdd6ea6",
+          "content": "LESSON: Prompt engineering should be treated as software engineering — version controlled, peer reviewed, and tested against regression suites. Ad-hoc prompt changes caused 3 production incidents in Q4 2025 before formal process was established.",
+          "source": "q1-review-2026",
+          "confidence": 0.94,
+          "created": "2026-03-15 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "73a91c60680a",
+          "hash": "73a91c60680afcb5f51c61d060b6244c8df71b5c99759ec6d1aec8269e204373",
+          "content": "LESSON: Human-in-the-loop review creates bottlenecks if not designed for scale. SENTINEL shadow mode generated 2,400 daily alerts requiring human review, overwhelming the 5-person analyst team. Implemented priority-based triage and auto-resolution for low-confidence alerts.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.86,
+          "created": "2026-03-12 09:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "b9cfa2a41523",
+          "hash": "b9cfa2a41523a28674aef03cc92507245d125b6f5932fe78fb2bb53b97365361",
+          "content": "LESSON: Model evaluation metrics must align with business outcomes, not just technical benchmarks. ATLAS achieved 95% accuracy on academic NLU benchmarks but only 82% task completion rate on actual customer intents. Redesigned evaluation framework around business KPIs.",
+          "source": "q1-review-2026",
+          "confidence": 0.91,
+          "created": "2026-03-15 14:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "9edee7e8b689",
+          "hash": "9edee7e8b6899c6e26c18ac0aae1bdc0ffc0de9d0ff9b19cce93089f877eeda0",
+          "content": "LESSON: Cross-team API contracts for AI agents need explicit schema versioning and deprecation policies. ATLAS-SENTINEL integration broke twice in Q1 2026 due to unannounced payload format changes. Adopted OpenAPI spec with breaking change review process.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.88,
+          "created": "2026-03-22 11:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "7d3a4beb2acd",
+          "hash": "7d3a4beb2acde8ff2b012c3bbbc5ba2bc18a4f3e7f9073c56f81857c1c9c5b1d",
+          "content": "LESSON: GPU resource contention between training and inference workloads requires explicit scheduling. Unscheduled model retraining job consumed 80% of cluster capacity, degrading ATLAS response times to 12 seconds. Implemented resource quotas and scheduling windows.",
+          "source": "postmortem-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-28 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "56c8472e7bda",
+          "hash": "56c8472e7bda47c7bed7245faf9f772f9cd2dbf21b0b114dc55d90dffc97a012",
+          "content": "LESSON: Customer trust in AI agents drops sharply after a single bad experience. Post-incident survey after ATLAS hallucination event showed 34% of affected customers reduced usage for 2+ weeks. Recovery requires proactive outreach and visible improvements.",
+          "source": "q1-review-2026",
+          "confidence": 0.85,
+          "created": "2026-03-15 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "682df57aab0c",
+          "hash": "682df57aab0c3f82bb2cce8326f241ca2aa8da883ad2994a3c3fc81b0d4e90f2",
+          "content": "LESSON: Observability for AI agents requires different instrumentation than traditional services. Standard APM tools miss critical signals like token usage patterns, retrieval quality, and prompt-completion coherence. Custom GUARDIAN dashboard filled this gap.",
+          "source": "architecture-meeting-2026-02",
+          "confidence": 0.88,
+          "created": "2026-02-18 20:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "0ca11159fbbc",
+          "hash": "0ca11159fbbc80c56df236d5aaee52808f3904334f3f99730c6a8e0161079ba0",
+          "content": "LESSON: Rollback procedures for AI agents are more complex than traditional deployments. Must consider model state, vector database state, prompt versions, and feature flags simultaneously. Developed unified rollback runbook covering all components.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.86,
+          "created": "2026-03-22 11:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ce82cefa39d6",
+          "hash": "ce82cefa39d676e38048212b5e4e2b3f6e41969d8863f67897f7a86efa71bc28",
+          "content": "LESSON: Vendor LLM API rate limits and quota changes can happen without warning. Experienced 2-hour service degradation when provider reduced rate limit during maintenance window. Implemented token bucket with circuit breaker and automatic fallback to secondary provider.",
+          "source": "postmortem-2026-01",
+          "confidence": 0.83,
+          "created": "2026-01-18 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "16c5f8733cb0",
+          "hash": "16c5f8733cb0febaf1ac7a3544be76f734a3f19d797bc8059ed5fc81801759c9",
+          "content": "LESSON: Data drift detection must be continuous, not periodic. Monthly model performance reviews missed a gradual accuracy decline in SENTINEL that accumulated over 3 weeks. GUARDIAN now monitors drift metrics hourly with automated alerting.",
+          "source": "postmortem-2026-02",
+          "confidence": 0.9,
+          "created": "2026-02-15 14:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "fb0d87573d22",
+          "hash": "fb0d87573d223cbdcb3b3d45eb200d881836dbe3ae916c176ac412e15553516f",
+          "content": "LESSON: Compliance requirements should be embedded in the development process, not bolted on after deployment. Retrofitting EU AI Act requirements into SENTINEL cost 3x more engineering effort than if addressed during initial design.",
+          "source": "compliance-audit-2026-01",
+          "confidence": 0.93,
+          "created": "2026-01-30 20:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "f2878e55762c",
+          "hash": "f2878e55762c064c6ed36d2202a5a10e697c0342ede6b69498b227ad1d9e0451",
+          "content": "LESSON: AI agent error messages should be designed for end users, not developers. ATLAS initially returned technical error codes that confused customers and increased call center escalations by 8%. Redesigned error handling with user-friendly explanations and suggested actions.",
+          "source": "q1-review-2026",
+          "confidence": 0.84,
+          "created": "2026-03-15 15:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "7bdd27884bd1",
+          "hash": "7bdd27884bd15988fbf4b8b975ec88cb8f53936f49797a627cd6797a15ead45d",
+          "content": "LESSON: Multi-agent architectures require clear ownership boundaries and SLAs between agents. When ATLAS delegated queries to COMPASS, unclear responsibility for response quality led to finger-pointing during incidents. Established explicit contract testing between agent teams.",
+          "source": "architecture-meeting-2026-03",
+          "confidence": 0.87,
+          "created": "2026-03-18 15:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "5f3976eddc33",
+          "hash": "5f3976eddc33793ad328c592c9be54b87c0d478aa36d0f0ee36f42a406a26a41",
+          "content": "LESSON: Feature flags for AI behavior changes are essential for safe rollouts. Deploying a new ATLAS conversation strategy to 100% of users simultaneously caused a 15% spike in escalation rate. Now all behavioral changes go through gradual rollout with automatic rollback triggers.",
+          "source": "postmortem-2026-01",
+          "confidence": 0.91,
+          "created": "2026-01-25 10:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "a69191a219e0",
+          "hash": "a69191a219e0ad9300e578c0942c26eae8ae49f04b767edeadbcf1c4a6f44f9f",
+          "content": "LESSON: Documentation for AI systems must include not just what the system does, but what it should NOT do. FORGE code review agent started suggesting refactoring beyond its scope because boundaries were not explicitly defined in the system prompt. Added negative constraints to all agent specifications.",
+          "source": "postmortem-2026-03",
+          "confidence": 0.85,
+          "created": "2026-03-22 12:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "fe283271146d",
+          "hash": "fe283271146d1f4aad93788428bf681cbc84f89b6664d5969e486f1765744f0d",
+          "content": "LESSON: Load testing AI agents should simulate realistic conversation patterns, not just throughput. ATLAS handled 10,000 requests/second in synthetic benchmarks but struggled with 3,000 realistic multi-turn conversations due to context management overhead.",
+          "source": "postmortem-2026-02",
+          "confidence": 0.88,
+          "created": "2026-02-28 10:30:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        },
+        {
+          "id": "ac41ab82e99b",
+          "hash": "ac41ab82e99b54fb43331a2069638d2ba6b84aa621202552317e957dcc14a4f2",
+          "content": "LESSON: Executive stakeholder communication about AI capabilities requires managing expectations carefully. Overpromising SENTINEL detection rates led to misaligned expectations and difficult conversations when production metrics fell short. Now using confidence intervals in all performance reporting.",
+          "source": "q1-review-2026",
+          "confidence": 0.82,
+          "created": "2026-03-15 16:00:00 UTC",
+          "promoted_to": null,
+          "is_counter": false
+        }
+      ]
+    }
+  },
+  "combined_root_hash": "430ae87d87a62a002065c9f4ec03fe1a42a241472bf9ac3800dc32d268f400d6"
+}
