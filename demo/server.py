@@ -350,13 +350,11 @@ def api_adversarial():
     return jsonify({"counters": counters[:5], "total_counters": len(counters)})
 
 
-@app.route("/api/gigachat-validation")  # kept for backward compat
+@app.route("/api/external-validation")
 @app.route("/api/adversarial-validation")
-def api_gigachat_validation():
+def api_external_validation():
     """Return adversarial validation run results."""
     validation_file = os.path.join(DEMO_DIR, "external_validation_run.json")
-    if not os.path.exists(validation_file):
-        validation_file = os.path.join(DEMO_DIR, "gigachat_validation_run.json")
     if not os.path.exists(validation_file):
         validation_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
     if not os.path.exists(validation_file):

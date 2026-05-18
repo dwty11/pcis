@@ -19,11 +19,10 @@ Independent analysis of production AI memory systems reveals seven predictable f
 | **Storage cost collapse** | Developers delete memories or hit hard limits; knowledge base destroyed | `knowledge_prune.py` — evidence-based pruning, not size-based deletion |
 
 > *"Memory is not the problem. Epistemology is."*
-> — Independent technical review, March 2026
 
 ---
 
-## v1.0 (current)
+## v1.4.1 (current)
 
 - [x] Persistent knowledge tree — JSON-based, branch/leaf structure
 - [x] Merkle integrity verification — SHA-256 root hash, tamper-evident
@@ -39,28 +38,32 @@ Independent analysis of production AI memory systems reveals seven predictable f
 
 ---
 
-## v2.0 — What's next
+## Already shipped in 1.x
 
-- [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention
-- [x] Docker image — `docker compose up` with no local Python setup (ollama-init pulls model on first run)
-- [x] Proper Merkle tree — binary tree with inclusion proofs (`generate_proof` / `verify_proof`), `--proof` and `--verify-proof` CLI commands (141 tests)
-- [ ] **External root anchoring** — sign root hashes with an ed25519 key; optionally post to a Sigstore-compatible transparency log on a schedule. Closes the gap between tamper-detection (current) and tamper-evidence against a privileged attacker (v2.0).
-- [ ] Config validation — helpful errors when config.json is missing or malformed
+- [x] Docker image — `docker compose up` with no local Python setup
+- [x] Proper Merkle tree — binary tree with inclusion proofs (`generate_proof` / `verify_proof`), `--proof` and `--verify-proof` CLI commands
 - [x] Belief decay — exponential decay (half-life 180 days), constraints/state branches exempt, CLI `--decay [--dry-run]`
-- [ ] LangChain adapter — PCIS as a memory provider for LangChain agents
-- [ ] OpenAI function calling integration — agent reads/writes tree via structured API
-- [ ] Webhook support — gardener posts summary to Slack/Discord after nightly run
-- [ ] Multi-agent shared tree — multiple agents reading from one verified knowledge source
-- [ ] Source credibility weights — evidence from peer-reviewed sources weighted differently from LLM-generated claims
-- [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment
-- [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only
-- [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation agents; probability redistribution is automatic and auditable
-- [ ] **Structural reorganization** — periodic graph reclustering as knowledge domains shift; dead branches collapsed, emergent domains surfaced
-- [ ] Role-based access to tree branches (read/write/admin)
-- [ ] Distributed Merkle tree — multiple nodes, consensus on root hash
-- [ ] Compliance export — audit-ready reports from tree history
-- [ ] Dashboard — web UI for tree health, adversarial history, pruning log
-- [ ] Hosted option — managed PCIS for teams that don't want to self-host
+- [x] Ed25519 root signing — signs the Merkle root with an operator-controlled key (`pcis sign init/root/verify/pubkey`)
+
+## v2.0 — what's next
+
+- [ ] **External root anchoring** — optionally post signed root hashes to a Sigstore-compatible transparency log on a schedule. Closes the gap between tamper-detection (current) and tamper-evidence against a privileged attacker.
+- [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment.
+- [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only.
+- [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation; probability redistribution is automatic and auditable.
+- [ ] **Structural reorganization** — periodic graph reclustering as knowledge domains shift; dead branches collapsed, emergent domains surfaced.
+- [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention.
+- [ ] Config validation — helpful errors when config.json is missing or malformed.
+- [ ] LangChain adapter — PCIS as a memory provider for LangChain agents.
+- [ ] OpenAI function calling integration — agent reads/writes tree via structured API.
+- [ ] Webhook support — gardener posts summary after nightly run.
+- [ ] Multi-agent shared tree — multiple agents reading from one verified knowledge source.
+- [ ] Source credibility weights — evidence from peer-reviewed sources weighted differently from LLM-generated claims.
+- [ ] Role-based access to tree branches (read/write/admin).
+- [ ] Distributed Merkle tree — multiple nodes, consensus on root hash.
+- [ ] Compliance export — audit-ready reports from tree history.
+- [ ] Dashboard — web UI for tree health, adversarial history, pruning log.
+- [ ] Hosted option — managed PCIS for teams that don't want to self-host.
 
 ---
 
@@ -70,7 +73,7 @@ There are other AI memory projects. Here is an honest comparison.
 
 | Project | What it does well | What PCIS does differently |
 |---|---|---|
-| **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | No cryptographic proof — audit trail is logs, not a Merkle root. Requires MatrixOne (Chinese company). Cloud option is a data sovereignty issue for enterprise deployments. PCIS is a JSON file on your own infrastructure. |
+| **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | No cryptographic proof — audit trail is logs, not a Merkle root. Cloud-coupled deployment by default. PCIS is a JSON file on your own infrastructure with a verifiable Merkle root. |
 | **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Consumer market (personal productivity). No tamper evidence, no adversarial belief challenge, no compliance audit trail. |
 | **Letta / MemGPT** | Mature, multi-agent, OS-memory model | No epistemic hygiene — memories accumulate without contradiction detection. No cryptographic integrity. |
 | **Mem0** | Simple API, easy integration | Retrieval only — no belief revision, no gardener, no proof of what the agent knew and when. |
@@ -84,13 +87,12 @@ For regulated environments (finance, healthcare, compliance) where "the AI said 
 
 ---
 
-## Known limitations in v1.0
+## Known limitations
 
-- Merkle integrity is root-hash only (not full branch proofs) — branch proofs are a v1.1 target
-- Confidence values are heuristic, not Bayesian — formal updating is a v2.0 target
-- Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback
-- Adversarial validator supports Anthropic, OpenAI, GigaChat, and Ollama — cloud LLM options are live; additional providers are v1.1 work
-- No authentication on demo server
+- Confidence values are heuristic, not Bayesian — formal updating is a v2.0 target.
+- Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback.
+- Adversarial validator supports Anthropic, OpenAI, Ollama, and any OpenAI-compatible local adapter. Additional cloud providers can be added by extending the validator config.
+- No authentication on the demo server — demo is intended for local use only.
 
 These are real gaps. If any of them block you — open an issue.
 

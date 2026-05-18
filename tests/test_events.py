@@ -32,7 +32,7 @@ def test_emit_escalation_returns_valid_event(tmp_journal):
     from events import emit_escalation
 
     ev = emit_escalation(
-        agent_id="whis",
+        agent_id="agent_a",
         reason="confidence below threshold",
         leaf_id="leaf-abc",
         branch="lessons",
@@ -42,7 +42,7 @@ def test_emit_escalation_returns_valid_event(tmp_journal):
     assert ev["event_id"]
     assert ev["event_type"] == "ESCALATION_SENT"
     assert ev["timestamp"]
-    assert ev["agent_id"] == "whis"
+    assert ev["agent_id"] == "agent_a"
     assert ev["leaf_id"] == "leaf-abc"
     assert ev["branch"] == "lessons"
     assert ev["reason"] == "confidence below threshold"
@@ -58,7 +58,7 @@ def test_event_hash_is_reproducible(tmp_journal):
     from events import emit_escalation
 
     ev = emit_escalation(
-        agent_id="whis", reason="r", journal_path=tmp_journal
+        agent_id="agent_a", reason="r", journal_path=tmp_journal
     )
     payload = {k: v for k, v in ev.items() if k != "event_hash"}
     canonical = json.dumps(
@@ -77,7 +77,7 @@ def test_resolve_escalation_links_to_sent(tmp_journal):
     from events import emit_escalation, resolve_escalation
 
     sent = emit_escalation(
-        agent_id="whis",
+        agent_id="agent_a",
         reason="needs human review",
         leaf_id="leaf-xyz",
         branch="identity",
@@ -124,9 +124,9 @@ def test_resolve_unknown_event_id_raises(tmp_journal):
 def test_load_journal_returns_in_order(tmp_journal):
     from events import emit_escalation, load_journal
 
-    a = emit_escalation(agent_id="whis", reason="A", journal_path=tmp_journal)
-    b = emit_escalation(agent_id="whis", reason="B", journal_path=tmp_journal)
-    c = emit_escalation(agent_id="whis", reason="C", journal_path=tmp_journal)
+    a = emit_escalation(agent_id="agent_a", reason="A", journal_path=tmp_journal)
+    b = emit_escalation(agent_id="agent_a", reason="B", journal_path=tmp_journal)
+    c = emit_escalation(agent_id="agent_a", reason="C", journal_path=tmp_journal)
 
     events = load_journal(tmp_journal)
     assert len(events) == 3
@@ -150,8 +150,8 @@ def test_load_journal_empty_when_no_file(tmp_journal):
 def test_verify_chain_passes_on_intact_chain(tmp_journal):
     from events import emit_escalation, verify_chain
 
-    emit_escalation(agent_id="whis", reason="A", journal_path=tmp_journal)
-    emit_escalation(agent_id="whis", reason="B", journal_path=tmp_journal)
+    emit_escalation(agent_id="agent_a", reason="A", journal_path=tmp_journal)
+    emit_escalation(agent_id="agent_a", reason="B", journal_path=tmp_journal)
 
     result = verify_chain(tmp_journal)
     assert result["valid"] is True
@@ -162,7 +162,7 @@ def test_verify_chain_fails_if_event_tampered(tmp_journal):
     """Modify an event's content after-the-fact — verify must fail."""
     from events import emit_escalation, verify_chain
 
-    emit_escalation(agent_id="whis", reason="original", journal_path=tmp_journal)
+    emit_escalation(agent_id="agent_a", reason="original", journal_path=tmp_journal)
 
     # Tamper: read journal, change reason, write back
     with open(tmp_journal, "r") as f:
@@ -179,8 +179,8 @@ def test_verify_chain_fails_if_event_tampered(tmp_journal):
 def test_verify_chain_fails_if_prev_link_wrong(tmp_journal):
     from events import emit_escalation, verify_chain
 
-    emit_escalation(agent_id="whis", reason="A", journal_path=tmp_journal)
-    emit_escalation(agent_id="whis", reason="B", journal_path=tmp_journal)
+    emit_escalation(agent_id="agent_a", reason="A", journal_path=tmp_journal)
+    emit_escalation(agent_id="agent_a", reason="B", journal_path=tmp_journal)
 
     # Tamper: read both events, swap the second's prev_event_hash
     with open(tmp_journal, "r") as f:
@@ -220,7 +220,7 @@ def test_journal_path_defaults_under_pcis_base_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("PCIS_BASE_DIR", str(tmp_path))
     from events import emit_escalation
 
-    emit_escalation(agent_id="whis", reason="default-path test")
+    emit_escalation(agent_id="agent_a", reason="default-path test")
 
     expected = tmp_path / "data" / "events.action.jsonl"
     assert expected.exists(), f"Default journal should land at {expected}"
@@ -235,8 +235,8 @@ def test_two_escalations_chain_correctly(tmp_journal):
     """Second event's prev_event_hash must equal first event's event_hash."""
     from events import emit_escalation
 
-    a = emit_escalation(agent_id="whis", reason="first", journal_path=tmp_journal)
-    b = emit_escalation(agent_id="whis", reason="second", journal_path=tmp_journal)
+    a = emit_escalation(agent_id="agent_a", reason="first", journal_path=tmp_journal)
+    b = emit_escalation(agent_id="agent_a", reason="second", journal_path=tmp_journal)
 
     assert a["prev_event_hash"] is None  # first in chain
     assert b["prev_event_hash"] == a["event_hash"]

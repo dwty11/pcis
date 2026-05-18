@@ -353,7 +353,7 @@ class TestIdentityPortability(unittest.TestCase):
         root_hash_default = kt.compute_root_hash(tree)
 
         # Simulate different model configs — none should affect the hash
-        for model_name in ["gpt-4", "claude-sonnet-4-6", "llama-3-70b", "gigachat-pro", "qwen3:30b"]:
+        for model_name in ["gpt-4", "claude-sonnet-4-6", "llama-3-70b", "mistral-7b", "qwen3:30b"]:
             # The config field exists in config.json but must never touch the hash pipeline
             tree["_model_config"] = model_name  # inject a config marker
             root_hash_with_config = kt.compute_root_hash(tree)

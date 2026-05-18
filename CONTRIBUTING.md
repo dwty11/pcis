@@ -1,6 +1,6 @@
 # Contributing to PCIS
 
-PCIS is a v1.0 project — the architecture is solid, the implementation has known gaps. Both are worth working on.
+PCIS is a v1.x project — the architecture is solid, the implementation has known gaps. Both are worth working on.
 
 ---
 
@@ -11,7 +11,7 @@ PCIS is a v1.0 project — the architecture is solid, the implementation has kno
 **Feature requests** — check [ROADMAP.md](ROADMAP.md) first. If it's on the roadmap, +1 it in issues. If it's not, open a discussion.
 
 **Pull requests** — welcome. Focus areas where PRs have the most impact:
-- Test coverage — 128 tests cover core tree, synapses, belief traversal, search API, and upload API; integration tests and edge cases welcome
+- Test coverage — current suite covers core tree, synapses, belief traversal, search API, and ingestion; integration tests and edge cases welcome
 - Docker setup
 - LangChain / agent framework adapters
 

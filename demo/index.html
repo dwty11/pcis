@@ -706,7 +706,7 @@ body {
   <div class="tab" data-tab="adversarial">Adversarial</div>
   <div class="tab" data-tab="history">History</div>
   <div class="tab" data-tab="ingest">Ingest</div>
-  <div class="tab" data-tab="gigachat">External Validation</div>
+  <div class="tab" data-tab="external">External Validation</div>
 </div>
 
 <div class="content">
@@ -863,8 +863,8 @@ body {
     <div id="ingestResults"></div>
   </div>
 
-  <!-- ══════ GIGACHAT VALIDATION SCREEN ══════ -->
-  <div class="screen" id="screen-gigachat">
+  <!-- ══════ EXTERNAL VALIDATION SCREEN ══════ -->
+  <div class="screen" id="screen-external">
     <div style="margin-bottom:28px">
       <h2 style="font-size:22px;font-weight:700;margin-bottom:8px">External Adversarial Validation</h2>
       <p style="font-size:13px;color:var(--text-dim);line-height:1.7;max-width:800px">
@@ -907,7 +907,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     }
     if (tab.dataset.tab === 'adversarial' && !advLoaded) loadAdversarial();
     if (tab.dataset.tab === 'history' && !historyLoaded) loadHistory();
-    if (tab.dataset.tab === 'gigachat' && !gcLoaded) loadGigaChat();
+    if (tab.dataset.tab === 'external' && !extLoaded) loadExternalValidation();
   });
 });
 
@@ -1537,14 +1537,14 @@ async function loadAdversarial() {
   }
 }
 
-// ── GigaChat Validation Screen ──
-let gcLoaded = false;
+// ── External Validation Screen ──
+let extLoaded = false;
 
-async function loadGigaChat() {
+async function loadExternalValidation() {
   try {
-    const res = await fetch('/api/gigachat-validation');
+    const res = await fetch('/api/external-validation');
     const data = await res.json();
-    gcLoaded = true;
+    extLoaded = true;
 
     if (data.status === 'not_run') {
       document.getElementById('gcStats').innerHTML = '';
@@ -1626,8 +1626,8 @@ async function runLiveValidation() {
     const res = await fetch('/api/run-validation', { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Validation failed');
-    gcLoaded = false;
-    await loadGigaChat();
+    extLoaded = false;
+    await loadExternalValidation();
   } catch (e) {
     alert('Live validation error: ' + e.message);
   } finally {

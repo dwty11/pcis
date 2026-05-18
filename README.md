@@ -11,7 +11,7 @@ Build on PCIS and your agent doesn't just remember — it produces a tamper-evid
 
 PCIS is a **notarized agent journal** — what the agent claimed to know, signed and tamper-evident. It is complementary to identity and attestation layers (PKI, DIDs, runtime attestation), not a replacement for them. PCIS proves what *this keypair* asserted at *this moment in time*; binding the keypair to a real-world organization or person is a separate concern and sits on top.
 
-[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/dwty11/pcis/releases) [![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)](https://github.com/dwty11/pcis/commits/main)
+[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](https://github.com/dwty11/pcis/releases) [![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)](https://github.com/dwty11/pcis/commits/main)
 
 ---
 
@@ -30,7 +30,7 @@ PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-
 
 PCIS doesn't just store knowledge — it maintains it. Four components run continuously to keep the tree honest. The **Adversarial Gardener** makes a nightly pass where an external LLM challenges high-confidence beliefs, searching for contradictions and weak reasoning; when a challenge holds, a COUNTER leaf enters the tree and confidence updates propagate. The **Gap-scan** reads session logs, extracts significant facts and decisions, and cross-checks them against the existing tree — anything missing is staged for addition. **Belief Decay** degrades confidence on stale leaves over time, so the tree stays sharp, not just big. And the **External Validator** — a second LLM, running outside the system with no shared context — audits the tree independently, catching blind spots the gardener can't see from inside.
 
-Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed. You don't just get a self-improving agent. Every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed and logged. External anchoring (root signing + transparency log) is on the v2.0 roadmap.
+Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed and logged. External anchoring (root signing + transparency log) is on the v2.0 roadmap.
 
 ---
 
@@ -44,12 +44,6 @@ bash start_demo.sh
 ```
 
 Open `http://localhost:5555` — nine tabs showing the full architecture live.
-
----
-
-## Quick Start (Docker)
-
-> Docker support is coming in v2.0. For now, use the Python setup above.
 
 ---
 
@@ -136,7 +130,7 @@ PCIS is a cognitive infrastructure layer for AI agents. It gives agents persiste
 
 PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory continuity that makes agents trustworthy over years, not sessions.
 
-PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model — including GigaChat for on-prem deployments. Switching the underlying model requires no changes to the memory layer.
+PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model. Switching the underlying model requires no changes to the memory layer.
 
 For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
@@ -208,7 +202,7 @@ The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero per
 **For the adversarial gardener (recommended):**
 - [Ollama](https://ollama.com) running locally
 - A model pulled: `ollama pull qwen3:14b` (or any compatible model)
-- An LLM API key (Anthropic, OpenAI, or GigaChat) — optional; Ollama is the default
+- An LLM API key (Anthropic or OpenAI) — optional; Ollama is the default
 
 **For semantic search:**
 - Ollama + `ollama pull nomic-embed-text`
@@ -240,7 +234,7 @@ The validator supports four providers — set `llm_provider` in `config.json`:
 |----------|---------------|---------|
 | Anthropic | `"anthropic"` | `llm_api_key` in config.json or `ANTHROPIC_API_KEY` env var |
 | OpenAI | `"openai"` | `llm_api_key` in config.json or `OPENAI_API_KEY` env var |
-| GigaChat | `"gigachat"` | `GIGACHAT_KEY` env var — requires a local OpenAI-compatible adapter running on `localhost:7860` that handles GigaChat OAuth internally |
+| OpenAI-compatible local adapter | `"openai_compat"` | `OPENAI_COMPAT_KEY` env var — points at a local adapter (default `http://localhost:7860`) implementing the OpenAI chat-completions interface |
 | Ollama (local, default) | `"ollama"` | No key required — runs against `http://localhost:11434` |
 
 If no provider is configured, defaults to Ollama. Falls back to pre-generated challenges if no API key is found.

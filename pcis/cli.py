@@ -17,7 +17,6 @@ Usage:
     pcis links <leaf_id>
     pcis gardener [--dry-run] [--branch BRANCH] [--verbose]
     pcis gardener --gap-scan
-    pcis connections [--limit N] [--dry-run]
     pcis healthcheck
     pcis drift [--model MODEL]
     pcis status
@@ -306,19 +305,6 @@ def cmd_gardener(args):
         sys.argv.append("--gap-scan")
 
     from gardener import main
-    main()
-
-
-def cmd_connections(args):
-    """Run synapse discovery."""
-    _set_base_dir(args)
-    sys.argv = ["gardener_connections.py"]
-    if args.dry_run:
-        sys.argv.append("--dry-run")
-    if args.limit:
-        sys.argv.extend(["--limit", str(args.limit)])
-
-    from gardener_connections import main
     main()
 
 
@@ -754,11 +740,6 @@ def main():
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--gap-scan", action="store_true", help="Gap-scan mode")
 
-    # connections
-    p = sub.add_parser("connections", help="Run synapse discovery")
-    p.add_argument("--limit", type=int, default=20, help="Max pairs to evaluate")
-    p.add_argument("--dry-run", action="store_true")
-
     # healthcheck
     sub.add_parser("healthcheck", help="Check gardener health")
 
@@ -851,7 +832,6 @@ def main():
         "link": cmd_link,
         "links": cmd_links,
         "gardener": cmd_gardener,
-        "connections": cmd_connections,
         "healthcheck": cmd_healthcheck,
         "drift": cmd_drift,
         "status": cmd_status,

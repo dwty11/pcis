@@ -12,10 +12,11 @@ Give any compatible agent persistent, cryptographically verifiable long-term mem
    pip install -e .
    ```
 
-2. Copy (or symlink) the `agent-plugin/` directory into your agent's plugins path:
+2. Copy (or symlink) the `agent-plugin/` directory into wherever your agent framework loads plugins from. The exact path depends on your framework — common examples:
 
    ```bash
-   cp -r agent-plugin/ ~/.agent/plugins/pcis/
+   # Generic example — replace with your framework's actual plugins path
+   cp -r agent-plugin/ /path/to/your/agent/plugins/pcis/
    ```
 
 3. Configure the plugin in your agent config:
