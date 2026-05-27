@@ -97,13 +97,18 @@ def base_url(tmp_path):
 
 # ── Route tests ──────────────────────────────────────────────────────────
 
-def test_hub_returns_html(base_url):
-    r = requests.get(f"{base_url}/hub")
-    # hub.html is excluded from the repo (contains deployment-specific links).
-    # Accept 200 (local dev with hub.html present) or 500 (CI without it).
-    assert r.status_code in (200, 500), f"Unexpected status: {r.status_code}"
-    if r.status_code == 200:
-        assert "text/html" in r.headers.get("Content-Type", "")
+def test_root_redirects_to_demo(base_url):
+    # The landing route redirects to the working demo page. The old /hub route
+    # and its hub.html (deployment-specific links) were removed from the repo.
+    r = requests.get(f"{base_url}/", allow_redirects=False)
+    assert r.status_code in (301, 302), f"Unexpected status: {r.status_code}"
+    assert r.headers.get("Location", "").endswith("/demo")
+
+
+def test_demo_returns_html(base_url):
+    r = requests.get(f"{base_url}/demo")
+    assert r.status_code == 200, f"Unexpected status: {r.status_code}"
+    assert "text/html" in r.headers.get("Content-Type", "")
 
 
 def test_api_health(base_url):
