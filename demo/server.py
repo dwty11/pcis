@@ -71,12 +71,7 @@ def load_tree():
 
 @app.route("/")
 def index():
-    return redirect("/hub")
-
-
-@app.route("/hub")
-def hub():
-    return send_file("hub.html")
+    return redirect("/demo")
 
 
 @app.route("/demo")
