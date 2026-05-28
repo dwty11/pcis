@@ -20,12 +20,17 @@ if [ ! -f "$REPO/demo/server.py" ]; then
 fi
 
 # ── 2. Check dependencies ─────────────────────────────────────────────────
-echo "  [1/5] Checking Python dependencies..."
+echo "  [1/5] Checking Python..."
+if ! $PYTHON -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+  PYV=$($PYTHON -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "unknown")
+  echo "  ✗  Python 3.10+ required (found $PYV). Re-run with: PYTHON=/path/to/python3.10+ ./start_demo.sh"
+  exit 1
+fi
 if ! $PYTHON -c "import flask" 2>/dev/null; then
   echo "  ✗  Flask not found. Run: pip install flask"
   exit 1
 fi
-echo "  ✓  Flask OK"
+echo "  ✓  Python $($PYTHON -c 'import sys; print("%d.%d" % sys.version_info[:2])') + Flask OK"
 
 # ── 3. Verify demo tree integrity ─────────────────────────────────────────
 echo "  [2/5] Verifying demo tree integrity..."
@@ -47,14 +52,19 @@ else
   FAILED=1
 fi
 
-# ── 4. External validator check (optional) ────────────────────────────────
-echo "  [3/5] Checking External validator (localhost:7860)..."
-EXT_STATUS=$(curl -s --max-time 2 http://localhost:7860/health 2>/dev/null)
-if echo "$EXT_STATUS" | grep -q '"status":"ok"'; then
-  echo "  ✓  External validator: RUNNING"
+# ── 4. Ollama check for the live "Run validation" button (optional) ────────
+echo "  [3/5] Checking Ollama for the live 'Run validation' button (localhost:11434)..."
+OLLAMA_TAGS=$(curl -s --max-time 2 http://localhost:11434/api/tags 2>/dev/null)
+if echo "$OLLAMA_TAGS" | grep -q '"models"'; then
+  if echo "$OLLAMA_TAGS" | grep -q 'qwen3:14b'; then
+    echo "  ✓  Ollama running with qwen3:14b — live 'Run validation' button enabled"
+  else
+    echo "  ⚠  Ollama running but qwen3:14b not pulled — run: ollama pull qwen3:14b"
+    echo "     (Optional — the demo and the External Validation tab work offline from pre-computed data.)"
+  fi
 else
-  echo "  ⚠  External validator not running on localhost:7860"
-  echo "     Start it before demo: External Validation tab will fail without it"
+  echo "  ⚠  Ollama not running on localhost:11434"
+  echo "     (Optional — only the live 'Run validation' button needs it; everything else works offline.)"
 fi
 
 # ── 5. Run test suite ───────────────────────────────────────────────────────

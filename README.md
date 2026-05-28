@@ -188,7 +188,7 @@ This architecture maps directly onto the stability-plasticity tradeoff that make
 | **Adversarial** | Counter-leaves generated automatically by challenging high-confidence entries |
 | **History** | Full audit trail — every confidence update, counter-argument, and decay event |
 | **Ingest** | Add new knowledge to the tree from text or file |
-| **External Validation** | External LLM validation run with before/after Merkle roots |
+| **External Validation** | External LLM validation run with before/after Merkle roots (pre-computed; the live "Run validation" button re-runs it against a local Ollama + `qwen3:14b`) |
 
 The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero personal data.
 
@@ -208,7 +208,7 @@ The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero per
 - Ollama + `ollama pull nomic-embed-text`
 - Without it, search falls back to keyword matching (still functional)
 
-**Demo mode** works without any of the above — synthetic data, no external calls.
+**Demo mode** works without any of the above — synthetic data, no external calls. The one exception is the live "Run validation" button in the External Validation tab, which calls a local Ollama + `qwen3:14b`; every other tab renders from pre-computed data offline.
 
 ---
 
