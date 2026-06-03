@@ -1,5 +1,5 @@
 """
-PCIS — Persistent Cognitive Identity Systems.
+PCIS — Provable Cognitive Integrity System.
 
     from pcis import load_tree, add_knowledge, prune_leaf, compute_root_hash, tree_lock, search
 """

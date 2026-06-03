@@ -1,36 +1,55 @@
-# PCIS — Reasoning Ledger for AI Agents
-### Every belief. Every challenge. Every update. Verifiable.
+# PCIS — The Cognitive Integrity Layer for AI Agents
+### What did your agent believe, and when? And can you prove no one changed the record?
 
-Most AI systems produce outputs you can't audit. You see the answer — not the reasoning behind it, not when it formed, not whether it was ever challenged. PCIS is a reasoning ledger: a tamper-evident record of what the agent believed, why it believed it, and every time that belief was updated or challenged. When your compliance team asks *what did the agent know when it made that call* — PCIS is the answer.
+An AI agent makes a call: approves the transaction, gives the advice, takes the action. Later a regulator, an auditor, or a customer's lawyer asks *why — and what did it know at the time?* (SR 11-7, adverse-action, GDPR Art. 22, the EU AI Act — the questions are already on the exam.) Today the only answer is a log you could have edited yesterday, sitting on a memory that has been quietly accumulating contradictions no one caught. There's nothing to trust the record with — and nothing watching the agent as its own beliefs drift, conflict, or go stale.
 
-The knowledge tree is not a database. It is a verified belief record — every leaf hashed, every change logged, a Merkle root that detects any modification including silent ones. An adversarial gardener challenges high-confidence beliefs nightly using an external LLM. When a challenge holds, it enters the tree as a COUNTER leaf and confidence updates propagate. Nothing is overwritten. Everything is auditable.
-
-Build on PCIS and your agent doesn't just remember — it produces a tamper-evident record of what it believed and when, with a full challenge history.
+PCIS (Provable Cognitive Integrity System) closes that gap. It gives an agent a belief record that is **self-challenging** and **tamper-evident**. An adversarial process attacks the agent's high-confidence beliefs, hunting contradictions and weak reasoning. Challenges it can't answer without contradicting an existing entry become permanent COUNTER entries, confidence propagates downstream, and nothing is ever overwritten — and the whole record can be proven unaltered. So when someone asks *what did this agent know when it made that call*, you have an answer that survives the question.
 
 > **RAG retrieves. PCIS proves.**
+> **Memory is not the problem. Epistemology is.**
 
-PCIS is a **notarized agent journal** — what the agent claimed to know, signed and tamper-evident. It is complementary to identity and attestation layers (PKI, DIDs, runtime attestation), not a replacement for them. PCIS proves what *this keypair* asserted at *this moment in time*; binding the keypair to a real-world organization or person is a separate concern and sits on top.
+> **Status:** The self-challenging belief record runs today — an external-LLM gardener attacks the agent's beliefs nightly and writes the COUNTER entries you can read in the knowledge tree; the one-click *demo* of it is on the near-term roadmap. The packaged demo that ships now is the **Liar's Demo**: a tamper-evident, locally verifiable run over locked canonical multi-agent fixtures (the live conversation runner is stubbed in v1) that catches an agent misrepresenting what it said or remembered — its `verify_room.py` returns CLEAN / REFUTED / INCONCLUSIVE on each, a verdict anyone can reproduce offline.
+
+**What PCIS is *not*.** Not a blockchain. Yes, the record is append-only and hash-linked — that part is mundane and solved. The difference: a blockchain immortalizes data it never questions; PCIS spends its compute attacking its own. No chain, no consensus, no token, no network; just one agent, locally verifiable. Not a vector database — it doesn't merely store and return what it holds; it *challenges* it. The cryptography (a Merkle-hashed tree, SHA-256 root) is *how* the record stays honest: plumbing, not the pitch.
+
+PCIS is a **layer**, not a platform: it wraps your agent's memory and decision calls and sits alongside your identity and attestation stack (PKI, DIDs, runtime attestation), proving what a given agent asserted at a given moment — not replacing any of them.
+
+> **On governance:** the gardener changes the *record*, not the agent. It appends adversarial challenges and confidence metadata (append-only — nothing is overwritten or deleted; synapses and constitutional counters are staged for human review). No weights, code, tools, or decision rules are modified.
 
 [![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](https://github.com/dwty11/pcis/releases) [![Last Commit](https://img.shields.io/github/last-commit/dwty11/pcis)](https://github.com/dwty11/pcis/commits/main)
 
 ---
 
-Built by **Jan Imamniyazov** ([@dwty_11](https://x.com/dwty_11))
-
----
-
-Current agents amnesia on every restart → contradictions, lost context, no audit trail.  
-PCIS fixes that with a **persistent Merkle-anchored knowledge tree** + a **self-challenging adversarial gardener**.
-
-> **RAG retrieves. PCIS proves.**
+Built by [@dwty_11](https://x.com/dwty_11)
 
 ---
 
 ## Self-Improving Knowledge Loop
 
-PCIS doesn't just store knowledge — it maintains it. Four components run continuously to keep the tree honest. The **Adversarial Gardener** makes a nightly pass where an external LLM challenges high-confidence beliefs, searching for contradictions and weak reasoning; when a challenge holds, a COUNTER leaf enters the tree and confidence updates propagate. The **Gap-scan** reads session logs, extracts significant facts and decisions, and cross-checks them against the existing tree — anything missing is staged for addition. **Belief Decay** degrades confidence on stale leaves over time, so the tree stays sharp, not just big. And the **External Validator** — a second LLM, running outside the system with no shared context — audits the tree independently, catching blind spots the gardener can't see from inside.
+PCIS doesn't just store knowledge — it challenges it. Four components run on a maintenance pass (recommended nightly) to keep the tree honest. The **Adversarial Gardener** makes a nightly pass where an external LLM challenges high-confidence beliefs, searching for contradictions and weak reasoning; when a challenge holds, a COUNTER leaf enters the tree and confidence updates propagate. The **Gap-scan** reads session logs, extracts significant facts and decisions, and cross-checks them against the existing tree — anything missing is staged for addition. **Belief Decay** degrades confidence on stale leaves over time, so the tree stays sharp, not just big. And the **External Validator** — a second LLM, running outside the system with no shared context — audits the tree independently, catching blind spots the gardener can't see from inside.
 
-Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed and logged. External anchoring (root signing + transparency log) is on the v2.0 roadmap.
+Other systems claim learning loops. The difference here: every change — every counter-leaf, every confidence adjustment, every decay event — is Merkle-hashed and logged. Root signing (Ed25519 over the Merkle root) ships today; *external* anchoring — posting that signed root to a public transparency log — is on the v2.0 roadmap.
+
+The adversarial gardener and external validator need a local Ollama model or an LLM API key. The fully reproducible, zero-external-call proof is the **Liar's Demo** below.
+
+---
+
+## See it in action
+
+PCIS comes with two demos:
+
+**Nine-tab web demo** — run `bash start_demo.sh` from the repo root. Opens at `localhost:5555`. Shows the full architecture: Merkle integrity, knowledge tree, query, adversarial gardener, external validation.
+
+**The Liar's Demo** — a CLI proof-of-concept demonstrating tamper-evident agent memory. Two AI agents converse; one later claims it said something different. The math catches the lie — verifiably, offline, in one command. (v1 replays six locked canonical runs; the live conversation runner is stubbed and lands in v1.1.) Run it:
+
+```bash
+cd demo/liars-demo
+pip3 install -r requirements.txt
+./run_demo.sh --verify-self      # confirm script + fixture fingerprint
+./run_demo.sh --text-only        # REFUTED — text substitution caught
+```
+
+See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
 
 ---
 
@@ -81,14 +100,14 @@ python3 core/knowledge_search.py "what do we know about performance?"
 **Challenge your own beliefs:**
 
 ```bash
-python3 core/gardener.py --dry-run
+PCIS_BASE_DIR=. python3 core/gardener.py --dry-run
 ```
 
-The gardener reads your tree, finds overconfident leaves, and generates counter-arguments. `--dry-run` shows what it would do without writing anything.
+The gardener reads your tree, finds overconfident leaves, and generates counter-arguments. `--dry-run` shows what it would do without writing anything. (The gardener refuses to run without `PCIS_BASE_DIR` — a deliberate safety check; see [Operational Safety](#operational-safety).)
 
 **Prove tamper detection works:**
 
-Open `data/tree.json` in a text editor. Change one character in any leaf. Save. Then run:
+(Run `bash setup.sh` first to initialize `data/tree.json`.) Open it in a text editor. Change one character in any leaf. Save. Then run:
 
 ```bash
 python3 -c "
@@ -104,33 +123,13 @@ It fails. Undo the change. It passes. That's Merkle integrity — one changed by
 
 ---
 
-## See It in Action
-
-**Boot — Merkle integrity check, computed in real time:**
-![Boot - Merkle Verified](docs/screenshots/boot-verified.png)
-
-**Knowledge Tree — 5 branches, 103 leaves, Merkle root visible:**
-![Knowledge Tree](docs/screenshots/tree.png)
-
-**Query — answers pinned to verified leaves with SHA-256 hashes:**
-![Query Result](docs/screenshots/query-result.png)
-
-**Adversarial — self-challenge generating counter-arguments:**
-![Adversarial Pass](docs/screenshots/adversarial.png)
-
----
-
 ## What PCIS Does
 
-Most AI assistants fail long-term for the same reason: they store memories but never maintain them. After a few months you get contradictory beliefs, outdated facts, messy retrieval — and an assistant that's less reliable than no assistant at all.
+PCIS is the **Cognitive Integrity Layer** for AI agents: it holds an agent's beliefs as a record that is *self-challenging* and *tamper-evident*, so what the agent knew — and when — can be proven after the fact.
 
-The root cause isn't competence. It's the absence of epistemic maintenance.
+The record persists across sessions, yes — but persistence (memory) is table stakes. The point is what sits on top of it. Every belief carries its source and confidence; an adversarial process attacks the high-confidence ones, and challenges that hold become permanent COUNTER entries — nothing is overwritten. A Merkle root (SHA-256) over every leaf detects any modification, including silent ones. So the agent doesn't just remember: it knows *why* it holds a belief, the record shows how that belief held up under challenge, and the whole thing can be proven unaltered.
 
-PCIS is a cognitive infrastructure layer for AI agents. It gives agents persistent, verified memory across sessions — not a database to query, but a knowledge structure the agent genuinely owns, with a verifiable record of what it believed and when, anchored by a Merkle root that detects any modification. The agent doesn't just remember. It knows *why* it believes what it believes, can defend it under challenge, and flags when confidence should decay.
-
-PCIS sits beneath the orchestration layer and beneath the LLM, providing the memory continuity that makes agents trustworthy over years, not sessions.
-
-PCIS is model-agnostic. It runs on GPT-4, Claude, Llama, or any local model. Switching the underlying model requires no changes to the memory layer.
+PCIS sits beneath the orchestration layer and beneath the LLM, and it is **model-agnostic** — GPT, Claude, Llama, or a local model; switching the model touches nothing in the integrity layer.
 
 For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
@@ -138,7 +137,7 @@ For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ## What PCIS Does NOT Do
 
-PCIS is one slice of the agent-audit problem — the provenance-of-memory slice. Other slices live elsewhere, and PCIS does not claim to solve them.
+PCIS is one slice of the agent-audit problem — the provable-belief / cognitive-integrity slice. Other slices live elsewhere, and PCIS does not claim to solve them.
 
 - **Not a replacement for identity binding.** PCIS proves that a given keypair claimed a given belief at a given time. Binding that keypair to a real-world organization, person, or accredited operator is the job of PKI, DIDs, or runtime attestation. Out-of-band trust establishment sits on top.
 - **Not a guarantee that the agent's output reflects the tree.** The signature proves the agent committed to assertion A at logical time T. Whether the message that followed was actually derived from A is testimony, not proof of internal causation. A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
@@ -152,9 +151,9 @@ These limits are deliberate. Identity-binding, witnessing/equivocation-detection
 
 ## PCIS as External Memory Continual Learning (EMCL)
 
-Continual learning — teaching AI systems to accumulate knowledge over time without forgetting what they already know — is one of the central unsolved problems in AI research. Traditional approaches update model weights directly, which leads to catastrophic forgetting: new knowledge overwrites old.
+*A note for ML readers — memory externalization is the commodity substrate here; the wedge is still the self-challenging gardener. This is just how that substrate maps onto continual-learning.*
 
-PCIS takes a different path. Instead of retraining the model, it externalizes memory into a structured, verifiable tree:
+Updating model weights directly to learn over time causes catastrophic forgetting — new knowledge overwrites old. PCIS sidesteps it by keeping knowledge outside the weights, in a structured, verifiable tree, with the adversarial gardener (PCIS's wedge) supplying the stability pressure:
 
 - The **knowledge tree** functions as a replay buffer — prior knowledge is never overwritten, only extended or challenged
 - The **adversarial gardener** applies stability pressure — high-confidence beliefs are challenged nightly, preventing overfit to recent context
@@ -167,12 +166,12 @@ This architecture maps directly onto the stability-plasticity tradeoff that make
 
 ## What's in the box
 
-1. **Persistent Knowledge Tree** — structured memory that survives session restarts
-2. **Merkle Integrity** — tamper-detectable record of what the agent knew and when
-3. **Adversarial Gardener** — external LLM challenges existing knowledge, generates counter-leaves
+1. **Adversarial Gardener** — an external LLM attacks high-confidence beliefs and writes COUNTER leaves: the self-challenge that is the point
+2. **Merkle Integrity** — tamper-detectable record of what the agent knew and when (SHA-256 root over every leaf)
+3. **Persistent Knowledge Tree** — the structured substrate the gardener runs on; survives session restarts
 4. **Gap-Scan** — finds what the agent *doesn't* know, not just what's wrong
 5. **Soft-Prune Protocol** — stale leaves are marked pruned without erasing the Merkle record; active operations stay sharp, audit queries stay complete
-6. **Model-Agnostic** — swap the LLM without touching the memory layer
+6. **Model-Agnostic** — swap the LLM without touching the integrity layer
 
 ---
 
@@ -188,7 +187,7 @@ This architecture maps directly onto the stability-plasticity tradeoff that make
 | **Adversarial** | Counter-leaves generated automatically by challenging high-confidence entries |
 | **History** | Full audit trail — every confidence update, counter-argument, and decay event |
 | **Ingest** | Add new knowledge to the tree from text or file |
-| **External Validation** | External LLM validation run with before/after Merkle roots (pre-computed; the live "Run validation" button re-runs it against a local Ollama + `qwen3:14b`) |
+| **External Validation** | External LLM validation run with before/after Merkle roots |
 
 The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero personal data.
 
@@ -208,7 +207,7 @@ The demo runs on `demo_tree.json` — a clean synthetic knowledge base, zero per
 - Ollama + `ollama pull nomic-embed-text`
 - Without it, search falls back to keyword matching (still functional)
 
-**Demo mode** works without any of the above — synthetic data, no external calls. The one exception is the live "Run validation" button in the External Validation tab, which calls a local Ollama + `qwen3:14b`; every other tab renders from pre-computed data offline.
+**Demo mode** works without any of the above — synthetic data, no external calls.
 
 ---
 
@@ -242,6 +241,8 @@ If no provider is configured, defaults to Ollama. Falls back to pre-generated ch
 ---
 
 ## Configuration
+
+Copy `config.example.json` to `config.json` and edit — optional, since the gardener and validator default to Ollama with no config:
 
 ```json
 {
@@ -304,7 +305,7 @@ Drop-in behavioral guides for AI agents using PCIS. Copy the relevant SKILL.md i
 
 - [ROADMAP.md](ROADMAP.md) — where this is going
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help
-- [ARCHITECTURE.md](ARCHITECTURE.md) — deep dive on the six contributions
+- [ARCHITECTURE.md](ARCHITECTURE.md) — deep dive on the architecture
 
 ---
 

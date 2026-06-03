@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pcis"
 version = "1.4.1"
-description = "Persistent Cognitive Identity Systems — cryptographically verifiable long-term memory for AI agents"
+description = "Provable Cognitive Integrity System — a self-challenging, tamper-evident belief record for AI agents"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"

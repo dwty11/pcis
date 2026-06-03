@@ -4,6 +4,16 @@ Honest about what v1.0 is and what comes next.
 
 ---
 
+## Three positions
+
+PCIS is one substrate that sells into three distinct audiences via three distinct framings.
+
+- **Position A — Multi-agent coordination.** Lies between AI agents are cryptographically detectable by anyone, with math, without trusting any operator. Demonstrated by Demo 1 (The Liar's Demo, below).
+- **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Future demo.
+- **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not. Future demo (Pianist Swap).
+
+---
+
 ## Why most AI memory architectures fail
 
 Independent analysis of production AI memory systems reveals seven predictable failure modes. Most systems hit them within six months. PCIS was designed around all seven.
@@ -35,6 +45,24 @@ Independent analysis of production AI memory systems reveals seven predictable f
 - [x] Model-agnostic design — swap LLM without touching memory layer
 - [x] Belief version history — append-only log of every confidence change, counter-argument, and update; full audit trail via belief_history.py
 - [x] Demo UI — nine-tab Flask app, runs locally in 60 seconds
+
+---
+
+## Demo 1 — The Liar's Demo
+
+A CLI proof-of-concept demonstrating tamper-evident agent memory (Position A — multi-agent coordination). Two agents have a conversation; one later claims to have said something different. The math catches it in under 90 seconds.
+
+```bash
+cd demo/liars-demo
+./run_demo.sh --honest                     # CLEAN
+./run_demo.sh --text-only                  # REFUTED — text substitution
+./run_demo.sh --memory-only                # REFUTED — memory substitution
+./run_demo.sh --replay forged-signature    # REFUTED — bad signature
+```
+
+Verify all script and fixture hashes: `./run_demo.sh --verify-self`
+
+See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
 
 ---
 
