@@ -1,14 +1,14 @@
 # PCIS — The Cognitive Integrity Layer for AI Agents
-### What did your agent believe, and when? And can you prove no one changed the record?
+### What did your agent commit to, and when? And can you prove no one changed the record?
 
 An AI agent makes a call: approves the transaction, gives the advice, takes the action. Later a regulator, an auditor, or a customer's lawyer asks *why — and what did it know at the time?* (SR 11-7, adverse-action, GDPR Art. 22, the EU AI Act — the questions are already on the exam.) Today the only answer is a log you could have edited yesterday, sitting on a memory that has been quietly accumulating contradictions no one caught. There's nothing to trust the record with — and nothing watching the agent as its own beliefs drift, conflict, or go stale.
 
-PCIS (Provable Cognitive Integrity System) closes that gap. It gives an agent a belief record that is **self-challenging** and **tamper-evident**. An adversarial process attacks the agent's high-confidence beliefs, hunting contradictions and weak reasoning. Challenges it can't answer without contradicting an existing entry become permanent COUNTER entries, confidence propagates downstream, and nothing is ever overwritten — and the whole record can be proven unaltered. So when someone asks *what did this agent know when it made that call*, you have an answer that survives the question.
+PCIS (Provable Cognitive Integrity System) closes that gap. It gives an agent a claim record that is **self-challenging** and **tamper-evident**. An adversarial process attacks the agent's high-confidence claims, hunting contradictions and weak reasoning. Challenges it can't answer without contradicting an existing entry become permanent COUNTER entries, confidence propagates downstream, and nothing is ever overwritten — and the whole record can be proven unaltered. So when someone asks *what did this agent commit to when it made that call*, you have an answer that survives the question.
 
 > **RAG retrieves. PCIS proves.**
 > **Memory is not the problem. Epistemology is.**
 
-> **Status:** The self-challenging belief record runs today — an external-LLM gardener attacks the agent's beliefs nightly and writes the COUNTER entries you can read in the knowledge tree; the one-click *demo* of it is on the near-term roadmap. The packaged demo that ships now is the **Liar's Demo**: a tamper-evident, locally verifiable run over locked canonical multi-agent fixtures (the live conversation runner is stubbed in v1) that catches an agent misrepresenting what it said or remembered — its `verify_room.py` returns CLEAN / REFUTED / INCONCLUSIVE on each, a verdict anyone can reproduce offline.
+> **Status:** The self-challenging claim record runs today — an external-LLM gardener attacks the agent's high-confidence claims nightly and writes the COUNTER entries you can read in the knowledge tree; the one-click *demo* of it is on the near-term roadmap. The packaged demo that ships now is the **Liar's Demo**: a tamper-evident, locally verifiable run over locked canonical multi-agent fixtures (the live conversation runner is stubbed in v1) that catches an agent misrepresenting what it said or remembered — its `verify_room.py` returns CLEAN / REFUTED / INCONCLUSIVE on each, a verdict anyone can reproduce offline.
 
 **What PCIS is *not*.** Not a blockchain. Yes, the record is append-only and hash-linked — that part is mundane and solved. The difference: a blockchain immortalizes data it never questions; PCIS spends its compute attacking its own. No chain, no consensus, no token, no network; just one agent, locally verifiable. Not a vector database — it doesn't merely store and return what it holds; it *challenges* it. The cryptography (a Merkle-hashed tree, SHA-256 root) is *how* the record stays honest: plumbing, not the pitch.
 
@@ -125,9 +125,9 @@ It fails. Undo the change. It passes. That's Merkle integrity — one changed by
 
 ## What PCIS Does
 
-PCIS is the **Cognitive Integrity Layer** for AI agents: it holds an agent's beliefs as a record that is *self-challenging* and *tamper-evident*, so what the agent knew — and when — can be proven after the fact.
+PCIS is the **Cognitive Integrity Layer** for AI agents: it holds an agent's claims as a record that is *self-challenging* and *tamper-evident*, so what the agent committed to — and when — can be proven after the fact.
 
-The record persists across sessions, yes — but persistence (memory) is table stakes. The point is what sits on top of it. Every belief carries its source and confidence; an adversarial process attacks the high-confidence ones, and challenges that hold become permanent COUNTER entries — nothing is overwritten. A Merkle root (SHA-256) over every leaf detects any modification, including silent ones. So the agent doesn't just remember: it knows *why* it holds a belief, the record shows how that belief held up under challenge, and the whole thing can be proven unaltered.
+The record persists across sessions, yes — but persistence (memory) is table stakes. The point is what sits on top of it. Every claim carries its source and confidence; an adversarial process attacks the high-confidence ones, and challenges that hold become permanent COUNTER entries — nothing is overwritten. A Merkle root (SHA-256) over every leaf detects any modification, including silent ones. So the agent doesn't just remember: it can show *why* it asserted a claim, the record shows how that claim held up under challenge, and the whole thing can be proven unaltered.
 
 PCIS sits beneath the orchestration layer and beneath the LLM, and it is **model-agnostic** — GPT, Claude, Llama, or a local model; switching the model touches nothing in the integrity layer.
 
@@ -137,9 +137,9 @@ For the full architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ## What PCIS Does NOT Do
 
-PCIS is one slice of the agent-audit problem — the provable-belief / cognitive-integrity slice. Other slices live elsewhere, and PCIS does not claim to solve them.
+PCIS is one slice of the agent-audit problem — the provable-claim / cognitive-integrity slice. Other slices live elsewhere, and PCIS does not claim to solve them.
 
-- **Not a replacement for identity binding.** PCIS proves that a given keypair claimed a given belief at a given time. Binding that keypair to a real-world organization, person, or accredited operator is the job of PKI, DIDs, or runtime attestation. Out-of-band trust establishment sits on top.
+- **Not a replacement for identity binding.** PCIS proves that a given keypair committed a given claim at a given time. Binding that keypair to a real-world organization, person, or accredited operator is the job of PKI, DIDs, or runtime attestation. Out-of-band trust establishment sits on top.
 - **Not a guarantee that the agent's output reflects the tree.** The signature proves the agent committed to assertion A at logical time T. Whether the message that followed was actually derived from A is testimony, not proof of internal causation. A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
 - **Not equivocation-proof on its own.** A dishonest operator can in principle maintain two trees and show different versions to different parties — both verify against signed roots from the same key. Closing this gap requires an independent witness layer (third-party co-signer of every committed root). The witness service is a separate component, not part of PCIS proper.
 - **Not a state commitment.** The tree is an *attestation log* — history-shaped. To find an agent's current view of a topic, walk the leaves applying supersedes-resolution and confidence rules. A true sparse-Merkle state commitment is a larger, separate project. PCIS is the honest version of what the underlying tree actually proves.
@@ -167,7 +167,7 @@ This architecture maps directly onto the stability-plasticity tradeoff that make
 ## What's in the box
 
 1. **Adversarial Gardener** — an external LLM attacks high-confidence beliefs and writes COUNTER leaves: the self-challenge that is the point
-2. **Merkle Integrity** — tamper-detectable record of what the agent knew and when (SHA-256 root over every leaf)
+2. **Merkle Integrity** — tamper-detectable record of what the agent committed to and when (SHA-256 root over every leaf)
 3. **Persistent Knowledge Tree** — the structured substrate the gardener runs on; survives session restarts
 4. **Gap-Scan** — finds what the agent *doesn't* know, not just what's wrong
 5. **Soft-Prune Protocol** — stale leaves are marked pruned without erasing the Merkle record; active operations stay sharp, audit queries stay complete
