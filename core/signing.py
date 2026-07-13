@@ -9,6 +9,7 @@ Requires PyNaCl (optional dependency):
     pip install pcis[signing]
 """
 
+import hashlib
 import json
 import os
 import stat
@@ -22,6 +23,7 @@ _NACL_IMPORT_ERROR = None
 try:
     import nacl.signing
     import nacl.encoding
+    import nacl.exceptions
 except ImportError as exc:
     _NACL_AVAILABLE = False
     _NACL_IMPORT_ERROR = exc
@@ -51,7 +53,8 @@ def _default_key_path(filename):
 
 PRIVATE_KEY_FILE = "pcis_signing.key"
 PUBLIC_KEY_FILE = "pcis_signing.pub"
-SIGNATURE_FILE = "root_signature.json"
+SIGNATURE_FILE = "root_signature.json"          # legacy bare-root cert — kept present, OFF the gate path
+APPROVED_CERT_FILE = "approved_root_cert.json"  # full-claim J-approved-root cert (the ceremony output)
 
 
 # --- Public API ---------------------------------------------------------
@@ -210,6 +213,72 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
     )
     result["signed_at"] = sig_data.get("signed_at", "")
     return result
+
+
+def _canonical_claim(obj):
+    """Canonical JSON bytes for a claim — the exact form the ceremony signs and both verify
+    paths recompute. Must match pcis_sign.py / pcis_prepare_claim.py byte-for-byte."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def verify_claim(cert, pin_fpr, snapshot_path=None):
+    """Canonical FULL-CLAIM J-approved-root verification — THE single source of truth shared by
+    the on-disk N2 gate (`pcis sign verify`) and the off-machine pcis_verify_claim.py, so the two
+    paths cannot drift (that drift is exactly the bug this closes).
+
+        cert          parsed cert dict: {claim, claim_hash, signature, public_key}
+        pin_fpr       the 64-hex PINNED fingerprint; the caller resolves it (sha256 of the on-disk
+                      .pub for the gate, the off-machine literal for J). NO embedded-key trust —
+                      cert['public_key'] must fingerprint to this pin.
+        snapshot_path tree bytes (data/tree.json on the gate side, the pulled snapshot off-machine).
+                      When given, the SIGNED tree_snapshot_sha256 AND root_hash are re-verified
+                      against the actual tree — all four steps, both sides (defense in depth).
+
+    Returns (ok: bool, detail: str). Fail-closed on ANY mismatch.
+    """
+    _require_nacl()
+    try:
+        claim = cert["claim"]
+        pub = cert["public_key"]
+    except (KeyError, TypeError):
+        return False, "malformed cert (missing 'claim'/'public_key')"
+
+    # (1) the signing key MUST be the pinned key — no embedded-key trust
+    got_fpr = hashlib.sha256(pub.encode()).hexdigest()
+    if got_fpr != pin_fpr:
+        return False, f"pubkey fingerprint {got_fpr[:16]}… != pinned {str(pin_fpr)[:16]}…"
+
+    # (2) signature covers the FULL canonical claim — tamper ANY field and this fails
+    try:
+        nacl.signing.VerifyKey(pub, encoder=nacl.encoding.HexEncoder).verify(
+            _canonical_claim(claim), bytes.fromhex(cert["signature"]))
+    except nacl.exceptions.BadSignatureError:
+        return False, "signature INVALID (claim tampered or wrong key)"
+    except Exception as exc:  # noqa: BLE001
+        return False, f"signature verification error: {exc}"
+
+    # (3) claim_hash identifier is consistent with the signed claim
+    if cert.get("claim_hash") != hashlib.sha256(_canonical_claim(claim)).hexdigest():
+        return False, "claim_hash mismatch"
+
+    # (4) tree-consistency: the SIGNED snapshot sha + root_hash must match actual tree bytes
+    if snapshot_path and os.path.exists(snapshot_path):
+        with open(snapshot_path, "rb") as f:
+            snap = f.read()
+        if hashlib.sha256(snap).hexdigest() != claim.get("tree_snapshot_sha256"):
+            return False, "tree_snapshot_sha256 != actual snapshot bytes"
+        try:
+            from core.knowledge_tree import compute_root_hash, load_tree
+        except ImportError:
+            try:
+                from knowledge_tree import compute_root_hash, load_tree
+            except ImportError as exc:
+                return False, f"cannot recompute root (knowledge_tree unavailable): {exc}"
+        if compute_root_hash(load_tree(snapshot_path)) != claim.get("root_hash"):
+            return False, "signed root_hash != Merkle root recomputed over the snapshot"
+        return True, "signature by the PINNED key over the full claim + tree-consistent"
+
+    return True, "signature by the PINNED key over the full claim (claim-only; no snapshot given)"
 
 
 def verify_root_standalone(root_hash_hex, signature_hex, public_key_hex):

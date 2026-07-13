@@ -24,6 +24,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -429,19 +430,41 @@ def cmd_sign_root(args):
 
 
 def cmd_sign_verify(args):
-    """Verify signature against current tree."""
+    """Verify the full-claim J-approved-root cert (data/approved_root_cert.json) against the
+    on-disk PINNED key + the current tree — the N2 gate's leg (a). Uses the SAME
+    signing.verify_claim as off-machine pcis_verify_claim.py, so the two verify paths agree by
+    construction. Snapshot = data/tree.json so the SIGNED tree_snapshot_sha256 + root_hash are
+    re-verified against actual tree bytes (all four steps on the on-disk side too)."""
     _set_base_dir(args)
     sys.path.insert(0, os.path.join(_ROOT, "core"))
-    from signing import verify_root
+    from signing import (
+        APPROVED_CERT_FILE,
+        PUBLIC_KEY_FILE,
+        _default_key_path,
+        verify_claim,
+    )
 
-    result = verify_root()
-    if result["valid"]:
-        print(f"VALID — {result['detail']}")
-        print(f"  Root hash:  {result['root_hash'][:24]}...")
-        print(f"  Signed at:  {result['signed_at']}")
+    cert_path = _default_key_path(APPROVED_CERT_FILE)
+    pub_path = _default_key_path(PUBLIC_KEY_FILE)
+    tree_path = _default_key_path("tree.json")
+
+    if not os.path.exists(cert_path):
+        print(f"INVALID — no approved_root_cert.json at {cert_path}")
+        sys.exit(1)
+    if not os.path.exists(pub_path):
+        print(f"INVALID — pinned public key absent: {pub_path} (refusing embedded-key trust)")
+        sys.exit(1)
+
+    with open(cert_path) as f:
+        cert = json.load(f)
+    with open(pub_path) as f:
+        pin_fpr = hashlib.sha256(f.read().strip().encode()).hexdigest()
+
+    ok, detail = verify_claim(cert, pin_fpr, tree_path if os.path.exists(tree_path) else None)
+    if ok:
+        print(f"VALID — {detail}")
     else:
-        print(f"INVALID — {result['detail']}")
-        print(f"  Root hash:  {result['root_hash'][:24]}...")
+        print(f"INVALID — {detail}")
         sys.exit(1)
 
 
