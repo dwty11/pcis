@@ -184,12 +184,18 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
     with open(signature_path, "r") as f:
         sig_data = json.load(f)
 
-    # Load public key — prefer file, fall back to embedded in signature
-    if os.path.exists(public_key_path):
-        with open(public_key_path, "r") as f:
-            public_key_hex = f.read().strip()
-    else:
-        public_key_hex = sig_data.get("public_key", "")
+    # Load public key from the on-disk .pub ONLY. NO fallback to the signature's own
+    # embedded public_key — a self-embedded key lets a forged sig validate under its own
+    # key (adversarial finding #1). Absent .pub is a hard fail, not an embedded-key path.
+    if not os.path.exists(public_key_path):
+        return {
+            "valid": False,
+            "root_hash": root_hash,
+            "signed_at": sig_data.get("signed_at", ""),
+            "detail": f"Public key file absent: {public_key_path} — refusing embedded-key fallback.",
+        }
+    with open(public_key_path, "r") as f:
+        public_key_hex = f.read().strip()
 
     if not public_key_hex:
         return {

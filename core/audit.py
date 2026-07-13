@@ -20,7 +20,8 @@ Bundle format (zip, .belief.bundle):
 
 Verify layers (each pass/fail independently):
     1. snapshot     — re-hash leaves, recompute root, must equal manifest.root_hash
-    2. signature    — verify_root_standalone(recomputed_root, sig.signature, sig.public_key)
+    2. signature    — verify_root_standalone(recomputed_root, sig.signature, PINNED .pub)
+                      (the on-disk pinned key, NOT the key embedded in the signature)
     3. events_chain — verify_chain over the bundled journal (empty journal = warn)
     4. cross_check  — root_signature.json root_hash must match snapshot root
 
@@ -192,7 +193,7 @@ def _empty_layers(detail):
     }
 
 
-def verify_bundle(bundle_path):
+def verify_bundle(bundle_path, public_key_path=None):
     """Verify a .belief.bundle. Returns the full layered status dict."""
     if not os.path.exists(bundle_path):
         return {
@@ -214,9 +215,9 @@ def verify_bundle(bundle_path):
             snapshot_bytes = zf.read("tree_snapshot.belief.jsonl")
             journal_bytes = zf.read("events.action.jsonl")
             sig_bytes = zf.read("root_signature.json")
-            # pcis_signing.pub is included for offline auditors but not used in
-            # the four verify layers (signature uses sig['public_key'] embedded
-            # in root_signature.json, per spec).
+            # NOTE: the signature layer verifies against the on-disk PINNED .pub
+            # (public_key_path / _default_key_path), NOT the key embedded in
+            # root_signature.json — see Layer 2 (adversarial finding #4).
     except zipfile.BadZipFile as e:
         return {"overall": "fail", "layers": _empty_layers(f"corrupt zip: {e}")}
 
@@ -325,27 +326,47 @@ def verify_bundle(bundle_path):
             }
         else:
             try:
-                from signing import verify_root_standalone
-                sig_result = verify_root_standalone(
-                    recomputed_root,
-                    sig_data["signature"],
-                    sig_data["public_key"],
+                from signing import (
+                    PUBLIC_KEY_FILE,
+                    _default_key_path,
+                    verify_root_standalone,
                 )
-                if sig_result["valid"]:
-                    signed_at = sig_data.get("signed_at", "")
-                    layers["signature"] = {
-                        "status": "ok",
-                        "detail": f"signed {signed_at}",
-                    }
-                else:
+                # Verify against the on-disk PINNED public key — NOT the public_key
+                # embedded in root_signature.json. A self-embedded key lets a forged
+                # cert validate under its own key (adversarial finding #4). Absent pin
+                # is a hard fail, not an embedded-key fallback — mirrors verify_root.
+                pin_path = public_key_path or _default_key_path(PUBLIC_KEY_FILE)
+                if not os.path.exists(pin_path):
                     layers["signature"] = {
                         "status": "fail",
-                        "detail": sig_result.get("detail", "signature invalid"),
+                        "detail": f"pinned public key absent: {pin_path} — refusing embedded-key fallback.",
                     }
+                else:
+                    with open(pin_path, "r") as pf:
+                        pinned_pub = pf.read().strip()
+                    if not pinned_pub:
+                        layers["signature"] = {
+                            "status": "fail",
+                            "detail": "pinned public key empty — refusing embedded-key fallback.",
+                        }
+                    else:
+                        sig_result = verify_root_standalone(
+                            recomputed_root, sig_data["signature"], pinned_pub
+                        )
+                        if sig_result["valid"]:
+                            layers["signature"] = {
+                                "status": "ok",
+                                "detail": f"signed {sig_data.get('signed_at', '')}",
+                            }
+                        else:
+                            layers["signature"] = {
+                                "status": "fail",
+                                "detail": sig_result.get("detail", "signature invalid vs pinned key"),
+                            }
             except Exception as e:
                 layers["signature"] = {
                     "status": "fail",
-                    "detail": f"verify_root_standalone raised: {e}",
+                    "detail": f"signature verify raised: {e}",
                 }
 
     # ── Layer 3: events_chain ──────────────────────────────────────────

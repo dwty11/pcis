@@ -311,3 +311,122 @@ def test_cli_audit_verify_prints_verified(tmp_audit_setup):
         f"verify stderr: {verify.stderr}\nstdout: {verify.stdout}"
     )
     assert "VERIFIED" in verify.stdout
+
+
+# -----------------------------------------------------------------------
+# 7. Embedded-key forge vector (adversarial finding #4) — the signature layer
+#    must verify against the on-disk PINNED .pub, NOT the public_key embedded
+#    in root_signature.json. A forged cert (attacker key signing attacker root)
+#    is internally consistent (snapshot + cross_check pass), so it isolates the
+#    signature layer.
+# -----------------------------------------------------------------------
+
+
+def _keypair():
+    import nacl.encoding
+    import nacl.signing
+
+    sk = nacl.signing.SigningKey.generate()
+    pub = sk.verify_key.encode(encoder=nacl.encoding.HexEncoder).decode()
+    return sk, pub
+
+
+def _build_consistent_tree(data_dir, content):
+    """A tree whose leaf/branch/root hashes are self-consistent, so the snapshot
+    layer recomputes to the manifest root (the attacker controls the whole tree)."""
+    from knowledge_tree import (
+        DEFAULT_BRANCHES,
+        add_knowledge,
+        compute_branch_hash,
+        compute_root_hash,
+        now_utc,
+    )
+
+    tree = {
+        "version": 1,
+        "created": now_utc(),
+        "last_updated": now_utc(),
+        "root_hash": "",
+        "instance": "forge-test",
+        "branches": {},
+    }
+    for b in DEFAULT_BRANCHES:
+        tree["branches"][b] = {"hash": "", "leaves": []}
+    add_knowledge(tree, "technical", content, confidence=0.99)
+    for bn in tree["branches"]:
+        tree["branches"][bn]["hash"] = compute_branch_hash(tree["branches"][bn]["leaves"])
+    tree["root_hash"] = compute_root_hash(tree)
+    p = os.path.join(str(data_dir), "forged_tree.json")
+    with open(p, "w") as f:
+        json.dump(tree, f, indent=2)
+    return p, tree["root_hash"]
+
+
+def _write_root_signature(path, root_hash, sk):
+    sig_hex = sk.sign(root_hash.encode()).signature.hex()
+    import nacl.encoding
+
+    pub_hex = sk.verify_key.encode(encoder=nacl.encoding.HexEncoder).decode()
+    with open(path, "w") as f:
+        json.dump(
+            {
+                "root_hash": root_hash,
+                "signature": sig_hex,
+                "signed_at": "2026-07-13T00:00:00+00:00",
+                "public_key": pub_hex,
+            },
+            f,
+            indent=2,
+        )
+    return pub_hex
+
+
+def test_forged_bundle_signature_rejected_under_pin(tmp_audit_setup):
+    """Attacker forges tree + signs its root with a key THEY control, embedding that
+    key in root_signature.json and pcis_signing.pub. The pinned anchor
+    (data/pcis_signing.pub) is the LEGIT key. The signature layer must REJECT it."""
+    from audit import create_bundle, verify_bundle
+
+    data = tmp_audit_setup["data"]  # already holds data/pcis_signing.pub = LEGIT (pinned) key
+    sk_forged, pub_forged = _keypair()
+    forged_tree, forged_root = _build_consistent_tree(
+        data, "FORGED belief injected by an attacker"
+    )
+    forged_sig = os.path.join(str(data), "forged_root_signature.json")
+    _write_root_signature(forged_sig, forged_root, sk_forged)
+    forged_pub = os.path.join(str(data), "forged_pcis_signing.pub")
+    with open(forged_pub, "w") as f:
+        f.write(pub_forged)
+
+    out = str(tmp_audit_setup["base"] / "forged.belief.bundle")
+    create_bundle(forged_tree, forged_sig, tmp_audit_setup["journal_path"], forged_pub, out)
+    result = verify_bundle(out)
+
+    # Internally consistent → these pass, isolating the signature layer as the discriminator.
+    assert result["layers"]["snapshot"]["status"] == "ok"
+    assert result["layers"]["cross_check"]["status"] == "ok"
+    # THE GUARANTEE: verified against the pinned key → the forged (non-pinned) sig fails.
+    assert result["layers"]["signature"]["status"] == "fail", (
+        "forged bundle signed by a NON-pinned key was accepted — embedded-key trust vector open"
+    )
+    assert result["overall"] == "fail"
+
+
+def test_missing_pinned_pub_refuses_no_embedded_fallback(tmp_audit_setup):
+    """If the on-disk pinned .pub is absent, the signature layer HARD-FAILS — never a
+    fallback to the key embedded in the signature file."""
+    from audit import create_bundle, verify_bundle
+
+    out = str(tmp_audit_setup["base"] / "legit.belief.bundle")
+    create_bundle(
+        tmp_audit_setup["tree_path"],
+        tmp_audit_setup["sig_path"],
+        tmp_audit_setup["journal_path"],
+        tmp_audit_setup["pub_path"],
+        out,
+    )
+    os.remove(os.path.join(str(tmp_audit_setup["data"]), "pcis_signing.pub"))  # drop the pin
+    result = verify_bundle(out)
+    assert result["layers"]["signature"]["status"] == "fail"
+    detail = result["layers"]["signature"]["detail"].lower()
+    assert "embedded" in detail or "absent" in detail or "pinned" in detail
