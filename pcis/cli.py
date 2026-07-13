@@ -440,13 +440,17 @@ def cmd_sign_verify(args):
     from signing import (
         APPROVED_CERT_FILE,
         PUBLIC_KEY_FILE,
+        _base_dir,
         _default_key_path,
         verify_claim,
     )
 
     cert_path = _default_key_path(APPROVED_CERT_FILE)
     pub_path = _default_key_path(PUBLIC_KEY_FILE)
-    tree_path = _default_key_path("tree.json")
+    # Snapshot = THE canonical tree the substrate reasons from (<base>/.whis-knowledge-tree.json),
+    # NOT the retired data/tree.json shadow. Keeps the gate's tree-consistency check bound to the
+    # same tree the ceremony signs + the substrate reads — no split.
+    tree_path = os.path.join(_base_dir(), ".whis-knowledge-tree.json")
 
     if not os.path.exists(cert_path):
         print(f"INVALID — no approved_root_cert.json at {cert_path}")

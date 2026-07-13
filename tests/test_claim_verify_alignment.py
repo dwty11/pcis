@@ -70,11 +70,11 @@ def claim_setup(tmp_path):
     tree["root_hash"] = compute_root_hash(tree)
 
     tree_bytes = json.dumps(tree, indent=2).encode()
-    (data / "tree.json").write_bytes(tree_bytes)
-    (base / "tree.snapshot.json").write_bytes(tree_bytes)  # off-machine pulled snapshot (same bytes)
+    (base / ".whis-knowledge-tree.json").write_bytes(tree_bytes)  # THE canonical tree the gate reads
+    (base / "tree.snapshot.json").write_bytes(tree_bytes)         # off-machine pulled snapshot (same bytes)
 
-    # the root_hash the gate will recompute from load_tree(data/tree.json)
-    signed_root = compute_root_hash(load_tree(str(data / "tree.json")))
+    # the root_hash the gate will recompute from load_tree(<base>/.whis-knowledge-tree.json)
+    signed_root = compute_root_hash(load_tree(str(base / ".whis-knowledge-tree.json")))
 
     sk = nacl.signing.SigningKey.generate()
     pub = sk.verify_key.encode(encoder=nacl.encoding.HexEncoder).decode()
