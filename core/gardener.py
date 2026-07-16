@@ -752,6 +752,83 @@ def gap_scan():
     log.info("✅ Gap scan complete — %s", now_local())
 
 
+# --- Offline demo (no LLM) -------------------------------------------------
+# Hand-authored SYNTHETIC counters (fiction about the demo's own Meridian
+# content) used ONLY to demonstrate that a gardener COUNTER moves the Merkle
+# root. NOT derived from any real tree. (The demo tree's own readable counters
+# are seeded by demo/seed_demo_counters.py.)
+_DEMO_CANNED_COUNTERS = [
+    {
+        "branch": "risks",
+        "content": (
+            "COUNTER: [93cb2dee8c20] Framing competitor launches as a reason to "
+            "'accelerate the roadmap' assumes speed is the differentiator; if ATLAS's "
+            "task-completion gap is the real churn driver, acceleration ships more of "
+            "the wrong thing faster."
+        ),
+        "confidence": 0.58,
+    },
+    {
+        "branch": "lessons",
+        "content": (
+            "COUNTER: [d8cd49b998b1] Adding the reindex step to a checklist treats a "
+            "systemic coupling as a process miss; the same degradation recurs on any "
+            "un-gated embedding change until the deploy pipeline blocks index/model "
+            "version drift by construction."
+        ),
+        "confidence": 0.60,
+    },
+]
+
+
+def run_demo(seed_path=None, out_path=None, counters=None):
+    """Offline demonstration (NO LLM/Ollama): inject synthetic COUNTER leaves
+    into a COPY of the demo tree and show that the Merkle root moves.
+
+    Prints root-before -> root-after. Writes only if out_path is given; the
+    default reads demo/demo_tree.json and never mutates it.
+    """
+    if seed_path is None:
+        seed_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "demo", "demo_tree.json",
+        )
+    if counters is None:
+        counters = _DEMO_CANNED_COUNTERS
+
+    with open(seed_path) as f:
+        tree = json.load(f)
+
+    root_before = compute_root_hash(tree)
+    added = 0
+    for c in counters:
+        leaf_id = add_leaf(tree, c["branch"], c["content"], "gardener-demo", c["confidence"])
+        if leaf_id is not None and c["content"].startswith("COUNTER:"):
+            added += 1
+    root_after = compute_root_hash(tree)
+
+    print("gardener --demo (offline, no LLM)")
+    print(f"  counters added : {added}")
+    print(f"  root-before    : {root_before}")
+    print(f"  root-after     : {root_after}")
+    print(f"  root moved      : {root_before != root_after}")
+
+    if out_path:
+        for branch in tree["branches"].values():
+            branch["hash"] = compute_branch_hash(branch["leaves"])
+        tree["root_hash"] = compute_root_hash(tree)
+        with open(out_path, "w") as f:
+            json.dump(tree, f, ensure_ascii=False, indent=2)
+        print(f"  wrote          : {out_path}")
+
+    return {
+        "root_before": root_before,
+        "root_after": root_after,
+        "counters_added": added,
+        "tree": tree,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Agent Knowledge Tree Gardener")
     parser.add_argument("--dry-run", action="store_true", help="Report only, no writes")
@@ -759,7 +836,13 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Show raw LLM output")
     parser.add_argument("--apply-staging", action="store_true", help="Commit staged synapses and clear staging file")
     parser.add_argument("--gap-scan", action="store_true", help="Extract today's results, find knowledge-tree gaps")
+    parser.add_argument("--demo", action="store_true", help="Offline demo: inject synthetic COUNTERs into a COPY of the demo tree and print root-before->after. No LLM.")
     args = parser.parse_args()
+
+    # Shortcut: offline demo — no Ollama/LLM, never touches the live tree.
+    if args.demo:
+        run_demo()
+        return
 
     # Shortcut: gap-scan mode — extract today's results, find missing knowledge
     if args.gap_scan:

@@ -53,8 +53,8 @@ def _default_key_path(filename):
 
 PRIVATE_KEY_FILE = "pcis_signing.key"
 PUBLIC_KEY_FILE = "pcis_signing.pub"
-SIGNATURE_FILE = "root_signature.json"          # legacy bare-root cert — kept present, OFF the gate path
-APPROVED_CERT_FILE = "approved_root_cert.json"  # full-claim J-approved-root cert (the ceremony output)
+SIGNATURE_FILE = "root_signature.json"          # legacy bare-root cert (unused by the verify path)
+APPROVED_CERT_FILE = "approved_root_cert.json"  # full-claim approved-root cert (the signing output)
 
 
 # --- Public API ---------------------------------------------------------
@@ -101,7 +101,11 @@ def generate_keypair(key_dir=None):
 
 
 def _tree_file():
-    """Return the current tree file path (respects PCIS_BASE_DIR at call time)."""
+    """Tree file the gate snapshots. Override with PCIS_TREE_FILE (absolute, or relative to
+    the base dir); neutral default: <base>/data/tree.json."""
+    override = os.environ.get("PCIS_TREE_FILE")
+    if override:
+        return override if os.path.isabs(override) else os.path.join(_base_dir(), override)
     return os.path.join(_base_dir(), "data", "tree.json")
 
 
@@ -216,19 +220,19 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
 
 
 def _canonical_claim(obj):
-    """Canonical JSON bytes for a claim — the exact form the ceremony signs and both verify
-    paths recompute. Must match pcis_sign.py / pcis_prepare_claim.py byte-for-byte."""
+    """Canonical JSON bytes for a claim — the exact form that is signed and that every verify
+    path recomputes. Must be byte-stable across all callers or the recomputed forms diverge."""
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 
 def verify_claim(cert, pin_fpr, snapshot_path=None):
-    """Canonical FULL-CLAIM J-approved-root verification — THE single source of truth shared by
-    the on-disk N2 gate (`pcis sign verify`) and the off-machine pcis_verify_claim.py, so the two
-    paths cannot drift (that drift is exactly the bug this closes).
+    """Canonical full-claim verification — THE single source of truth shared by the CLI
+    `pcis sign verify` and the off-machine verifier, so the two paths cannot drift (that drift
+    is exactly the bug this closes).
 
         cert          parsed cert dict: {claim, claim_hash, signature, public_key}
         pin_fpr       the 64-hex PINNED fingerprint; the caller resolves it (sha256 of the on-disk
-                      .pub for the gate, the off-machine literal for J). NO embedded-key trust —
+                      .pub for the gate, the pinned literal off-machine). NO embedded-key trust —
                       cert['public_key'] must fingerprint to this pin.
         snapshot_path tree bytes (data/tree.json on the gate side, the pulled snapshot off-machine).
                       When given, the SIGNED tree_snapshot_sha256 AND root_hash are re-verified

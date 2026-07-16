@@ -40,11 +40,13 @@ authored it. The shared tree file uses the existing file-level locking
 ## Access Control
 
 - **Read:** all agents can read all branches. No read restrictions.
-- **Write:** configurable per branch via `tree["branch_permissions"]` (optional).
-  When present, maps `branch_name -> list[agent_id]`. If a branch has no entry,
-  all agents can write. If it has an entry, only listed agents can write.
-- Permissions are advisory — enforced by `add_knowledge_as()`, not at the
-  file-system level.
+- **Write:** the tree records authorship — `add_knowledge_as()` sets each new
+  leaf's `author` field — but **does not currently enforce write permissions**.
+  Any agent can write to any branch; authorship is a record of *who wrote* a
+  leaf, not a gate on who was allowed to.
+- A `tree["branch_permissions"]` map (`branch_name -> list[agent_id]`) is
+  reserved for a future enforcement layer. It is **not** consulted by
+  `add_knowledge_as()` today.
 
 ## Discovery
 

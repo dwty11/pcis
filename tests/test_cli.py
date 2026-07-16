@@ -93,6 +93,25 @@ class TestIntegrity:
         assert rc == 0
         assert len(out.strip()) == 64  # SHA-256 hex
 
+    def test_verify_detects_content_tamper(self, fresh_tree):
+        # RED before P1: `pcis verify` compares stored root_hash to
+        # compute_root_hash, which folds the *cached* branch hash — so a
+        # content-only edit that leaves every hash field untouched prints
+        # CLEAN. The real check (verify_tree_integrity) re-derives from content.
+        run_cli(["add", "lessons", "original content"], base_dir=fresh_tree)
+        tree_file = fresh_tree / "data" / "tree.json"
+        with open(tree_file) as f:
+            tree = json.load(f)
+        leaf = tree["branches"]["lessons"]["leaves"][0]
+        assert leaf["content"] == "original content"
+        leaf["content"] = "0riginal content"  # one byte, no hash touched
+        with open(tree_file, "w") as f:
+            json.dump(tree, f)
+        out, rc = run_cli(["verify"], base_dir=fresh_tree)
+        assert rc == 1, out
+        assert "TAMPERED" in out
+        assert "content-hash mismatch" in out
+
 
 class TestStatus:
     def test_status_output(self, fresh_tree):
@@ -101,6 +120,61 @@ class TestStatus:
         assert "Leaves:" in out
         assert "Branches:" in out
         assert "Integrity:" in out
+
+    def test_status_reports_content_tamper(self, fresh_tree):
+        # RED before P1: cmd_status shares the cached-hash blind spot and
+        # never exits nonzero on a content tamper.
+        run_cli(["add", "lessons", "original content"], base_dir=fresh_tree)
+        tree_file = fresh_tree / "data" / "tree.json"
+        with open(tree_file) as f:
+            tree = json.load(f)
+        tree["branches"]["lessons"]["leaves"][0]["content"] = "0riginal content"
+        with open(tree_file, "w") as f:
+            json.dump(tree, f)
+        out, rc = run_cli(["status"], base_dir=fresh_tree)
+        assert rc == 1, out
+        assert "TAMPERED" in out
+        assert "CLEAN" not in out
+
+    def test_status_healthcheck_field_resolves(self, fresh_tree):
+        # RED before P1: cmd_status imports the wrong symbol (check_health);
+        # the ImportError is swallowed and the Gardener field degrades to '?'.
+        (fresh_tree / "data" / "gardener-last.log").write_text(
+            "Gardener starting\nGardening complete\n"
+        )
+        out, rc = run_cli(["status"], base_dir=fresh_tree)
+        assert rc == 0, out
+        gardener_line = [l for l in out.splitlines() if l.strip().startswith("Gardener:")]
+        assert gardener_line, out
+        assert "OK" in gardener_line[0]
+        assert "?" not in gardener_line[0]
+
+    def test_status_is_read_only(self, fresh_tree):
+        # status must report health WITHOUT the side-effecting check() that
+        # writes gardener-health.flag — an integrity tool's inspect commands
+        # must not mutate state. Fresh tree => health is MISSING (non-OK), the
+        # case where check() would write the flag.
+        out, rc = run_cli(["status"], base_dir=fresh_tree)
+        assert rc == 0, out
+        assert not (fresh_tree / "data" / "gardener-health.flag").exists()
+
+
+class TestHealthcheck:
+    def test_healthcheck_runs_without_import_error(self, fresh_tree):
+        # RED before P1: cmd_healthcheck does `from gardener_healthcheck import
+        # check_health` (no such symbol) with NO try/except, so `pcis
+        # healthcheck` crashes with an uncaught ImportError on every run.
+        (fresh_tree / "data" / "gardener-last.log").write_text(
+            "Gardener starting\nGardening complete\n"
+        )
+        result = subprocess.run(
+            CLI + ["--dir", str(fresh_tree), "healthcheck"],
+            capture_output=True, text=True,
+        )
+        assert "ImportError" not in result.stderr
+        assert "cannot import name" not in result.stderr
+        assert result.returncode == 0, result.stderr
+        assert "OK" in result.stdout
 
 
 class TestSearch:

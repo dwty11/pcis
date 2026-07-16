@@ -20,12 +20,12 @@ Independent analysis of production AI memory systems reveals seven predictable f
 
 | Failure mode | What happens | PCIS response |
 |---|---|---|
-| **Memory entropy** | Duplicates accumulate, outdated beliefs persist, retrieval returns noise | Gardener prunes stale leaves, gap-scan deduplicates on commit |
-| **No belief revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves, adversarial pass, confidence updates on challenge |
+| **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener prunes stale leaves, gap-scan deduplicates on commit |
+| **No claim revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves, adversarial pass, confidence updates on challenge |
 | **Summarization collapse** | Recursive compression destroys detail; memory becomes "various topics discussed" | Architecture avoids recursive summarization — one compression layer only |
-| **Retrieval bias** | Vector search reinforces popular/recent beliefs regardless of truth | Adversarial pass specifically targets high-confidence echo chambers |
+| **Retrieval bias** | Vector search reinforces popular/recent claims regardless of truth | Adversarial pass specifically targets high-confidence echo chambers |
 | **Identity fragmentation** | Memory clusters become disconnected; agent contradicts itself across sessions | Cross-branch synapses, single Merkle-verified root |
-| **No epistemic hygiene** | Errors accumulate silently; no mechanism to challenge beliefs | Gardener is dedicated epistemic maintenance — this is the entire architecture |
+| **No epistemic hygiene** | Errors accumulate silently; no mechanism to challenge claims | Gardener is dedicated epistemic maintenance — this is the entire architecture |
 | **Storage cost collapse** | Developers delete memories or hit hard limits; knowledge base destroyed | `knowledge_prune.py` — evidence-based pruning, not size-based deletion |
 
 > *"Memory is not the problem. Epistemology is."*
@@ -78,7 +78,7 @@ See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
 - [ ] **External root anchoring** — optionally post signed root hashes to a Sigstore-compatible transparency log on a schedule. Closes the gap between tamper-detection (current) and tamper-evidence against a privileged attacker.
 - [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment.
 - [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only.
-- [ ] **Contradiction resolution engine** — conflicting beliefs trigger investigation; probability redistribution is automatic and auditable.
+- [ ] **Contradiction resolution engine** — conflicting claims trigger investigation; probability redistribution is automatic and auditable.
 - [ ] **Structural reorganization** — periodic graph reclustering as knowledge domains shift; dead branches collapsed, emergent domains surfaced.
 - [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention.
 - [ ] Config validation — helpful errors when config.json is missing or malformed.
@@ -102,14 +102,14 @@ There are other AI memory projects. Here is an honest comparison.
 | Project | What it does well | What PCIS does differently |
 |---|---|---|
 | **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | No cryptographic proof — audit trail is logs, not a Merkle root. Cloud-coupled deployment by default. PCIS is a JSON file on your own infrastructure with a verifiable Merkle root. |
-| **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Consumer market (personal productivity). No tamper evidence, no adversarial belief challenge, no compliance audit trail. |
+| **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Consumer market (personal productivity). No tamper evidence, no adversarial claim challenge, no compliance audit trail. |
 | **Letta / MemGPT** | Mature, multi-agent, OS-memory model | No epistemic hygiene — memories accumulate without contradiction detection. No cryptographic integrity. |
-| **Mem0** | Simple API, easy integration | Retrieval only — no belief revision, no gardener, no proof of what the agent knew and when. |
-| **Traditional RAG** | Fast, scalable, well-understood | Retrieves documents. Does not maintain beliefs, does not detect contradictions, does not prove identity. |
+| **Mem0** | Simple API, easy integration | Retrieval only — no claim revision, no gardener, no proof of what the agent knew and when. |
+| **Traditional RAG** | Fast, scalable, well-understood | Retrieves documents. Does not maintain a challenged claim record, does not detect contradictions, does not prove identity. |
 
-**The core distinction:** most AI memory tools solve *retrieval*. PCIS solves *identity* — what an agent believes, how those beliefs have been challenged, and cryptographic proof of the state at any point in time.
+**The core distinction:** most AI memory tools solve *retrieval*. PCIS is an **accountability substrate** — it records what an agent claimed, how those claims have been challenged, and cryptographic proof of the state at any point in time.
 
-For regulated environments (finance, healthcare, compliance) where "the AI said so" is not enough — PCIS is the only architecture that produces an auditable, tamper-evident belief record.
+For regulated environments (finance, healthcare, compliance) where "the AI said so" is not enough, PCIS pairs a tamper-evident claim record with an adversarial process that challenges the agent's own high-confidence claims — and the self-challenge, not the tamper-evidence, is the wedge. Tamper-evident append-only records are well-established (Certificate Transparency, Sigstore/Rekor, hash-chained logs); a substrate that attacks its own record for contradictions and staleness is the novel part.
 
 > *Memoria remembers. PCIS proves.*
 

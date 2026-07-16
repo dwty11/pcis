@@ -1,8 +1,8 @@
 {
   "version": 1,
   "instance": "pcis-demo",
-  "root_hash": "7139729a528d560937bef1dbcb67552b3fff293ccf4b9c831324baad0f11816f",
-  "last_updated": "2026-04-07 11:43:38 UTC",
+  "root_hash": "07dd20bb0f5bba3464c94ce3f7609c2b8386b42b687b59bc8cfb31ccfba80015",
+  "last_updated": "2026-04-07 06:33:15 UTC",
   "branches": {
     "projects": {
       "hash": "67f033502555a159b65c4ff78505743cc36cf9938c0bee0f36b7f3d13364b41c",
@@ -210,7 +210,7 @@
       ]
     },
     "risks": {
-      "hash": "619fa1fcab08df96b515901d4d3c7851d6dd1badcb7008e715cf420f6729f9e3",
+      "hash": "e1a6a804ae7c0f50960d05ab91f6c1819df3ef05d6db631b6828dbd907f0c4fd",
       "leaves": [
         {
           "id": "0ad6aa95e44d",
@@ -411,11 +411,21 @@
           "created": "2026-03-15 12:30:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "8817f6ae7dbc",
+          "hash": "8817f6ae7dbc64fecc68ec520e812f6e91ebdd83758df2cac74e86c3a5b79e6e",
+          "content": "COUNTER: [01f3a4ac52bf] Patching the discovered injection path 'within 48 hours' closes one instance, not the class. Multi-turn manipulation is a property of the interaction surface, not a single bug; without a standing adversarial-eval gate, a closed ticket reads as safety while the mechanism stays live.",
+          "source": "gardener-demo-2026-04-07",
+          "confidence": 0.58,
+          "created": "2026-04-07 06:33:12 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     },
     "decisions": {
-      "hash": "6f467b3362a0d3a7990122acea6ed7d27bccc507003c554766abb08e0ef682d9",
+      "hash": "a82ccf18463073a5a11599b047e386d18e4e848124952c3d8ea315392bed268c",
       "leaves": [
         {
           "id": "809bcf98d393",
@@ -616,11 +626,21 @@
           "created": "2026-03-18 14:30:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "e405b26ba1ef",
+          "hash": "e405b26ba1ef9b56b43b36c6ecb4f0dfb9ecbdae5e2dec4e47406c7e2ce51351",
+          "content": "COUNTER: [809bcf98d393] The 'competitive pricing at scale' rationale rests on list pricing, not Meridian's negotiated enterprise volume — and committing to a single provider forfeits exactly the pricing leverage a 2.3M-customer inference load would command. The decision standardizes before the platform's model-swap abstraction has been proven on more than a third of the fleet.",
+          "source": "gardener-demo-2026-04-07",
+          "confidence": 0.6,
+          "created": "2026-04-07 06:33:11 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     },
     "compliance": {
-      "hash": "123cf9d02e61f9f07de347d6399ac0aa3e26f93a20f0abc796ca4b8ba7c2d9f1",
+      "hash": "7da7ee4e5e50e1f58a8c5873e6e8b7135168aeaad35fbc358b96680b5a556bcf",
       "leaves": [
         {
           "id": "48e0c3176ec6",
@@ -821,11 +841,31 @@
           "created": "2026-03-25 10:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "8d7524536f09",
+          "hash": "8d7524536f09fe42a764f3941b806fba8d7936641ad096f7b06c4f7f466bbea4",
+          "content": "COUNTER: [e927fef96ff5] A 'finalized and distributed' policy measures publication, not adherence. The shadow-AI finding shows a third of staff already route work through personal tools; without enforcement telemetry, 'finalized' overstates coverage of the very behavior the policy exists to prevent.",
+          "source": "gardener-demo-2026-04-07",
+          "confidence": 0.6,
+          "created": "2026-04-07 06:33:13 UTC",
+          "promoted_to": null,
+          "is_counter": true
+        },
+        {
+          "id": "c9a50e4ba36d",
+          "hash": "c9a50e4ba36d05829256831d18c17e8263b3a428071ec5176fa0aef8af1c5c42",
+          "content": "COUNTER: [48e0c3176ec6] The SENTINEL conformity timeline assumes a notified body is available on schedule. Article-6 high-risk assessment capacity has been the sector-wide bottleneck; an August deadline pinned to external throughput the program does not control is optimistic, not planned.",
+          "source": "gardener-demo-2026-04-07",
+          "confidence": 0.59,
+          "created": "2026-04-07 06:33:15 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     },
     "lessons": {
-      "hash": "4a477b1dfca522b3ee58819b8ee9451e042d507ecf3c6d14c6ff38ccf8761053",
+      "hash": "6ccac66cb0e0a2fb162708746f80cfc44cd6bac8cc83fe05cb8d6df2f725b257",
       "leaves": [
         {
           "id": "d8cd49b998b1",
@@ -1026,9 +1066,19 @@
           "created": "2026-03-15 16:00:00 UTC",
           "promoted_to": null,
           "is_counter": false
+        },
+        {
+          "id": "6bcd0f750359",
+          "hash": "6bcd0f750359e033da66c54f790619e37a4ab06916b01b4c4422746bfc24dd02",
+          "content": "COUNTER: [56c8472e7bda] The claim generalizes a 34% figure from one post-incident survey. Severity, customer segment, and concurrent press coverage are uncontrolled; treating the number as a universal law risks over-investing in outreach theater instead of the underlying reliability fix.",
+          "source": "gardener-demo-2026-04-07",
+          "confidence": 0.57,
+          "created": "2026-04-07 06:33:14 UTC",
+          "promoted_to": null,
+          "is_counter": true
         }
       ]
     }
   },
-  "combined_root_hash": "430ae87d87a62a002065c9f4ec03fe1a42a241472bf9ac3800dc32d268f400d6"
+  "combined_root_hash": "c242bbe3460dcfcc73e0dbe314f98c03ab605c8924e68236584a57e69fd09688"
 }

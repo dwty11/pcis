@@ -304,15 +304,26 @@ def compute_root_hash(tree):
 
 
 def verify_tree_integrity(tree):
-    """Recompute every hash from content up. Returns (ok, errors)."""
+    """Recompute every hash from content up. Returns (ok, errors).
+
+    Tolerates branches written without a stored ``hash`` (e.g. a freshly
+    ``init``-ed tree writes ``{"leaves": []}``): an EMPTY hashless branch is
+    clean, while a *populated* branch missing its hash is flagged. Populated
+    hashed trees behave exactly as before, so existing callers are unaffected.
+    """
     errors = []
     for bname, branch in tree.get("branches", {}).items():
-        for leaf in branch.get("leaves", []):
+        leaves = branch.get("leaves", [])
+        for leaf in leaves:
             expected = hash_leaf(leaf["content"], bname, leaf["created"])
-            if expected != leaf["hash"]:
+            if expected != leaf.get("hash"):
                 errors.append(f"leaf {leaf['id']} in {bname}: content-hash mismatch")
-        expected_bh = compute_branch_hash(branch["leaves"])
-        if expected_bh != branch["hash"]:
+        stored_bh = branch.get("hash")
+        expected_bh = compute_branch_hash(leaves)
+        if stored_bh is None:
+            if leaves:
+                errors.append(f"branch {bname}: missing hash")
+        elif expected_bh != stored_bh:
             errors.append(f"branch {bname}: hash mismatch")
     expected_root = compute_root_hash(tree)
     if expected_root != tree.get("root_hash", ""):

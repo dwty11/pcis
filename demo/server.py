@@ -96,6 +96,20 @@ def api_health():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+def _last_gardener_run():
+    """Most recent validation run_date, if any (read-only)."""
+    for name in ("external_validation_run.json", "adversarial_validation_run.json"):
+        p = os.path.join(DEMO_DIR, name)
+        if os.path.exists(p):
+            try:
+                with open(p) as f:
+                    d = json.load(f)
+                return d.get("run_date") or d.get("timestamp")
+            except (json.JSONDecodeError, KeyError):
+                pass
+    return None
+
+
 @app.route("/api/boot")
 def api_boot():
     """Verify Merkle integrity of the knowledge tree on boot."""
@@ -154,16 +168,8 @@ def api_boot():
                         "net_confidence": round(a["net_confidence"], 2),
                     })
 
-                # Last gardener run from adversarial_validation_run.json
-                last_gardener = None
-                val_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
-                if os.path.exists(val_file):
-                    try:
-                        with open(val_file, "r") as vf:
-                            val_data = json.load(vf)
-                        last_gardener = val_data.get("run_date") or val_data.get("timestamp")
-                    except (json.JSONDecodeError, KeyError):
-                        pass
+                # Last gardener run from the shipped validation run file.
+                last_gardener = _last_gardener_run()
 
                 epistemic = {
                     "total_leaves": total_leaves,
@@ -816,7 +822,7 @@ def api_status():
         },
         "last_updated": tree["last_updated"],
         "last_integrity_check": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "last_gardener_run": None,
+        "last_gardener_run": _last_gardener_run(),
         "instance": tree.get("instance", "pcis-demo"),
         "version": tree.get("version", 1),
         "demo_mode": DEMO_MODE,

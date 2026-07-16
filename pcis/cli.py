@@ -154,20 +154,20 @@ def cmd_root(args):
 
 
 def cmd_verify(args):
-    """Verify tree integrity."""
+    """Verify tree integrity — re-derives every hash from leaf content."""
     _set_base_dir(args)
-    from knowledge_tree import load_tree, compute_root_hash
+    from knowledge_tree import load_tree, compute_root_hash, verify_tree_integrity
 
     tree = load_tree()
-    stored = tree.get("root_hash", "")
-    computed = compute_root_hash(tree)
+    ok, errors = verify_tree_integrity(tree)
+    root = compute_root_hash(tree)
 
-    if stored == computed:
-        print(f"✅ CLEAN — root hash matches: {computed[:24]}...")
+    if ok:
+        print(f"✅ CLEAN — tree integrity verified: {root[:24]}...")
     else:
-        print(f"🔴 TAMPERED — stored root does not match computed!")
-        print(f"   Stored:   {stored[:24]}...")
-        print(f"   Computed: {computed[:24]}...")
+        print(f"🔴 TAMPERED — integrity check failed ({len(errors)} error(s)):")
+        for e in errors:
+            print(f"   - {e}")
         sys.exit(1)
 
 
@@ -312,7 +312,7 @@ def cmd_gardener(args):
 def cmd_healthcheck(args):
     """Check gardener operational health."""
     _set_base_dir(args)
-    from gardener_healthcheck import check_health
+    from gardener_healthcheck import check as check_health
 
     status, detail = check_health()
     icons = {"OK": "✅", "STALE": "⚠️", "ERROR": "🔴", "MISSING": "❓"}
@@ -335,14 +335,14 @@ def cmd_drift(args):
 def cmd_status(args):
     """Show overall PCIS status."""
     _set_base_dir(args)
-    from knowledge_tree import load_tree, compute_root_hash
+    from knowledge_tree import load_tree, compute_root_hash, verify_tree_integrity
 
     tree = load_tree()
     branches = tree.get("branches", {})
     total = sum(len(b.get("leaves", [])) for b in branches.values())
     root = compute_root_hash(tree)
-    stored = tree.get("root_hash", "")
-    integrity = "✅ CLEAN" if stored == root else "🔴 MISMATCH"
+    ok, _integrity_errors = verify_tree_integrity(tree)
+    integrity = "✅ CLEAN" if ok else "🔴 TAMPERED"
 
     # Synapse count
     try:
@@ -352,10 +352,10 @@ def cmd_status(args):
     except Exception:
         syn_count = "?"
 
-    # Healthcheck
+    # Healthcheck (read-only probe — status must not write the health flag)
     try:
-        from gardener_healthcheck import check_health
-        health_status, _ = check_health()
+        from gardener_healthcheck import probe as _health_probe
+        health_status, _ = _health_probe()
     except Exception:
         health_status = "?"
 
@@ -367,6 +367,9 @@ def cmd_status(args):
     print(f"  Root:        {root[:24]}...")
     print(f"  Integrity:   {integrity}")
     print(f"  Gardener:    {health_status}")
+
+    if not ok:
+        sys.exit(1)
 
 
 def cmd_ingest(args):
@@ -430,27 +433,27 @@ def cmd_sign_root(args):
 
 
 def cmd_sign_verify(args):
-    """Verify the full-claim J-approved-root cert (data/approved_root_cert.json) against the
-    on-disk PINNED key + the current tree — the N2 gate's leg (a). Uses the SAME
-    signing.verify_claim as off-machine pcis_verify_claim.py, so the two verify paths agree by
-    construction. Snapshot = data/tree.json so the SIGNED tree_snapshot_sha256 + root_hash are
-    re-verified against actual tree bytes (all four steps on the on-disk side too)."""
+    """Verify the approved-root cert (data/approved_root_cert.json) against the on-disk PINNED
+    key and the current tree. Runs the full-claim check via signing.verify_claim — pinned key
+    (no embedded-key trust), signature over canonical(claim), claim-hash consistency, and
+    tree-consistency (the signed tree_snapshot_sha256 + root_hash re-verified against the actual
+    tree bytes). The same function the off-machine verifier uses, so the two paths agree by
+    construction."""
     _set_base_dir(args)
     sys.path.insert(0, os.path.join(_ROOT, "core"))
     from signing import (
         APPROVED_CERT_FILE,
         PUBLIC_KEY_FILE,
-        _base_dir,
         _default_key_path,
+        _tree_file,
         verify_claim,
     )
 
     cert_path = _default_key_path(APPROVED_CERT_FILE)
     pub_path = _default_key_path(PUBLIC_KEY_FILE)
-    # Snapshot = THE canonical tree the substrate reasons from (<base>/.whis-knowledge-tree.json),
-    # NOT the retired data/tree.json shadow. Keeps the gate's tree-consistency check bound to the
-    # same tree the ceremony signs + the substrate reads — no split.
-    tree_path = os.path.join(_base_dir(), ".whis-knowledge-tree.json")
+    # Snapshot = the tree the gate reads, so its tree-consistency check binds the same bytes the
+    # ceremony signed. Configurable via PCIS_TREE_FILE (default: <base>/data/tree.json).
+    tree_path = _tree_file()
 
     if not os.path.exists(cert_path):
         print(f"INVALID — no approved_root_cert.json at {cert_path}")

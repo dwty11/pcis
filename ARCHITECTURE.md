@@ -24,7 +24,7 @@ PCIS does not depend on any specific language model. The knowledge tree, integri
 
 `core/knowledge_synapses.py`
 
-Cross-leaf relationships are first-class objects. Each synapse is a directed typed edge between two leaves — SUPPORTS, CONTRADICTS, REFINES, DERIVES_FROM, or SUPERSEDES — stored in `data/synapses.json` and tamper-evident via SHA-256. When the gardener commits a COUNTER leaf, it automatically wires a CONTRADICTS synapse back to the challenged leaf. This turns a flat tree of facts into a belief network where confidence propagates through evidence chains.
+Cross-leaf relationships are first-class objects. Each synapse is a directed typed edge between two leaves — SUPPORTS, CONTRADICTS, REFINES, DERIVES_FROM, or SUPERSEDES — stored in `data/synapses.json` and tamper-evident via SHA-256. When the gardener commits a COUNTER leaf, it automatically wires a CONTRADICTS synapse back to the challenged leaf. This turns a flat tree of facts into a network of claims where confidence propagates through evidence chains.
 
 The combined root hash (`sha256(tree_root + synapse_root)`) is computed at boot, ensuring structural integrity across both the knowledge tree and its relationship graph.
 
@@ -32,9 +32,9 @@ The combined root hash (`sha256(tree_root + synapse_root)`) is computed at boot,
 
 `core/belief_traversal.py`
 
-`assess_belief(leaf_id)` walks the synapse graph via BFS, aggregating evidence: supporting leaves boost confidence, contradictions reduce it, depth decay applies per hop. The result is a net confidence score, a stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), and a plain-English explanation of why the agent holds that belief at that confidence level.
+`assess_belief(leaf_id)` walks the synapse graph via BFS, aggregating evidence: supporting leaves boost confidence, contradictions reduce it, depth decay applies per hop. The result is a net confidence score, a stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), and a plain-English explanation of why the claim carries that confidence.
 
-`query_belief(text)` accepts a natural-language query, runs semantic search to find the most relevant leaf, then calls `assess_belief` on it. The agent can now answer not just *what it knows* but *how sure it is and why*.
+`query_belief(text)` accepts a natural-language query, runs semantic search to find the most relevant leaf, then calls `assess_belief` on it. The agent can now answer not just *what a claim says* but *what confidence it carries, and why*.
 
 This is the first step toward the Bayesian belief updating planned in v2.0 — the architecture is in place, the update rule is currently heuristic rather than formally Bayesian.
 
@@ -46,11 +46,11 @@ PCIS takes a different approach: externalize memory entirely, and manage the sta
 
 The mapping is direct:
 - **Replay buffer** → the knowledge tree (prior knowledge is always available, never overwritten by new model updates)
-- **Stability** → the adversarial gardener (nightly pressure-testing prevents overconfidence in stale beliefs)
+- **Stability** → the adversarial gardener (pressure-testing prevents overconfidence in stale claims)
 - **Plasticity** → gap-scan (identifies what's missing, drives targeted knowledge addition)
 - **Forgetting** → pruning protocol (explicit, deliberate removal of confirmed-stale leaves)
 
-The result: an agent that accumulates knowledge over time, challenges its own beliefs, and can prove what it knew and when — without retraining, without weight updates, and without losing prior context.
+The result: an agent that accumulates knowledge over time, challenges its own claims, and can prove what it committed to and when — without retraining, without weight updates, and without losing prior context.
 
 ## Identity Portability
 
@@ -68,7 +68,7 @@ This means the root hash is a model-agnostic identity. An agent can switch under
 
 Four critical functions:
 - `hash_leaf` — SHA-256 from content + branch + timestamp
-- `compute_branch_hash` — builds a binary Merkle tree from sorted leaf hashes (pairwise combination, odd leaves duplicated)
+- `compute_branch_hash` — builds a binary Merkle tree from sorted leaf hashes with RFC 6962 domain separation (`0x00` leaf / `0x01` node prefixes); odd levels are padded with a zero-hash (`MERKLE_PAD`), **not** duplicated, to prevent CVE-2012-2459 collisions
 - `compute_root_hash` — takes all branch hashes, iteratively pairs and hashes upward in a binary tree until one root remains
 - `tree_lock()` — context manager wrapping the full read-modify-write cycle under an exclusive file lock: load → mutate → write, all atomic
 
@@ -115,9 +115,9 @@ All prune actions logged to `data/prune-log.json`.
 
 **`demo/server.py`** — Flask web server exposing the knowledge tree through a REST API. Endpoints: `/api/boot` (Merkle root + file integrity), `/api/tree` (full branch structure with leaf counts), `/api/query` (keyword search scored by hits × confidence), `/api/adversarial` (COUNTER-prefixed leaves linked to their originals), `/api/adversarial-validation` (saved validation run results), `/api/status` (system health). Binds to `127.0.0.1:5555`.
 
-**`core/adversarial_validator.py`** — External adversarial validation agent. Picks highest-confidence leaves, sends them to an external LLM API for challenge, parses counter-leaves, and saves the full run (with before/after Merkle roots) to JSON. Complements the nightly gardener: where `gardener.py` runs locally and continuously, `adversarial_validator.py` is the external second opinion — a different model, a different perspective, no shared context with the system it is auditing.
+**`core/adversarial_validator.py`** — External adversarial validation agent. Picks highest-confidence leaves, sends them to an external LLM API for challenge, parses counter-leaves, and saves the full run (with before/after Merkle roots) to JSON. Complements the local gardener: where `gardener.py` is the local maintenance pass you run, `adversarial_validator.py` is the external second opinion — a different model, a different perspective, no shared context with the system it is auditing.
 
-**`demo/demo_tree.json`** — Synthetic knowledge tree: 5 branches, 19 leaves, zero personal data (enforced by a test). Used to seed `data/tree.json` and drive the demo server.
+**`demo/demo_tree.json`** — Synthetic knowledge tree: 5 branches, 105 leaves (including 5 seeded COUNTER leaves), zero personal data (enforced by a test). Used to seed `data/tree.json` and drive the demo server.
 
 **`demo/index.html`** — Single-file frontend. Nine tabs: Boot (live Merkle verification), Search (semantic search with hash-pinned results), Knowledge Tree (branch browser), Query (keyword search), Belief (traversal engine — confidence, stance, evidence chain), Adversarial (counter-leaves with originals), History (full audit trail), Ingest (add knowledge from text or file), External Validation. Dark theme, vanilla JS, no framework.
 
@@ -125,7 +125,7 @@ All prune actions logged to `data/prune-log.json`.
 
 ### Tests (`tests/test_pcis.py`)
 
-32 tests across 9 classes:
+43 tests across 14 classes:
 
 | Class | What it verifies |
 |-------|-----------------|
@@ -137,7 +137,12 @@ All prune actions logged to `data/prune-log.json`.
 | `TestConcurrentSaveTree` | Two threads × 5 writes under `tree_lock()` → exactly 10 leaves, zero data loss |
 | `TestIdentityPortability` | Root hash identical across model configs — model-agnostic identity enforced |
 | `TestMerkleProofs` | Inclusion proofs: generate, verify, tampered-hash rejection, wrong-root rejection, cross-branch isolation, invalidation on leaf removal, depth = ceil(log₂(n)) |
-| `TestBinaryMerkleTreeStructure` | Structural assertions: single leaf = identity, two leaves = pair hash, odd-leaf duplication |
+| `TestBinaryMerkleTreeStructure` | Domain separation (`0x00` leaf / `0x01` node prefixes); odd level padded with `MERKLE_PAD`, not duplicated |
+| `TestCounterParsing` | COUNTER content parsing — challenged-ID extraction, prefix handling, backward-compat |
+| `TestGardenerDedupGate` | Near-duplicate COUNTER leaves skipped via embedding similarity; embedding-failure fallback |
+| `TestVerifyTreeIntegrity` | Content tampering caught even when hash fields are left untouched (re-derives from content) |
+| `TestNoDuplicateLeafCollision` | CVE-2012-2459 duplicate-leaf collision is absent (pad, not duplicate) |
+| `TestDomainSeparation` | RFC 6962 domain separation: a domain-separated leaf hash ≠ raw SHA-256 of the same content |
 
 Run with: `python -m pytest tests/ -v`
 

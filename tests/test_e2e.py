@@ -143,6 +143,25 @@ def test_api_adversarial(base_url):
     assert isinstance(data.get("total_counters"), int)
 
 
+def test_api_adversarial_lights_up(base_url):
+    # After the demo tree is reseeded, the Adversarial tab has real content:
+    # >=3 COUNTERs and each resolves its challenged 'original' leaf.
+    r = requests.get(f"{base_url}/api/adversarial")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total_counters"] >= 3, data
+    assert len(data["counters"]) >= 1
+    assert data["counters"][0]["original"] is not None
+
+
+def test_api_status_last_gardener_run_non_null(base_url):
+    # status must surface a real last_gardener_run (from the shipped
+    # external_validation_run.json), not a hardcoded null.
+    r = requests.get(f"{base_url}/api/status")
+    assert r.status_code == 200
+    assert r.json()["last_gardener_run"] is not None
+
+
 def test_api_belief(base_url):
     r = requests.post(f"{base_url}/api/belief", json={"query": "test"})
     assert r.status_code == 200

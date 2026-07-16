@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Full-claim verify alignment (the format-drift fix).
 
-The N2 gate's `pcis sign verify` must verify the SAME full-claim cert that the ceremony
-signs (per SIGNING-CEREMONY-MANUAL), via the SAME algorithm as pcis_verify_claim.py — so
-the two verify paths cannot disagree. Cert format: {claim, claim_hash, signature, public_key},
-signature over canonical(claim); combined_root_hash lives INSIDE claim.
+`pcis sign verify` must verify the SAME full-claim cert that the signing ceremony signs, via
+the SAME algorithm as the off-machine verifier — so the two verify paths cannot disagree. Cert
+format: {claim, claim_hash, signature, public_key}, signature over canonical(claim);
+combined_root_hash lives INSIDE claim.
 
-Whis's key guard = the agreement test: same cert+pin, `pcis sign verify` (snapshot=data/tree.json)
-and pcis_verify_claim.py (snapshot=pulled) must return IDENTICAL verdicts, valid + each tamper.
+The agreement guard: same cert+pin, the CLI `pcis sign verify` (snapshot=data/tree.json) and the
+off-machine verifier (snapshot=pulled) must return IDENTICAL verdicts, valid + each tamper. Set
+PCIS_OFFMACHINE_VERIFY to that verifier to run the guard; it skips otherwise.
 
-Run: cd ~/openclaw-workspaces/pcis && python3 -m pytest tests/test_claim_verify_alignment.py -v
+Run: python3 -m pytest tests/test_claim_verify_alignment.py -v
 """
 import copy
 import hashlib
@@ -29,8 +30,9 @@ _ROOT = os.path.dirname(_HERE)
 sys.path.insert(0, os.path.join(_ROOT, "core"))
 sys.path.insert(0, _ROOT)
 
-# the off-machine verifier (workspace script) — the OTHER path in the agreement test
-WS_VERIFY = "/Users/whis/.openclaw/workspace/pcis_verify_claim.py"
+# the off-machine verifier — the OTHER path in the agreement test. Not shipped in this repo;
+# set PCIS_OFFMACHINE_VERIFY to its path to run the agreement test (it skips when unset/absent).
+WS_VERIFY = os.environ.get("PCIS_OFFMACHINE_VERIFY", "")
 
 
 def _canonical(o):
@@ -70,11 +72,11 @@ def claim_setup(tmp_path):
     tree["root_hash"] = compute_root_hash(tree)
 
     tree_bytes = json.dumps(tree, indent=2).encode()
-    (base / ".whis-knowledge-tree.json").write_bytes(tree_bytes)  # THE canonical tree the gate reads
-    (base / "tree.snapshot.json").write_bytes(tree_bytes)         # off-machine pulled snapshot (same bytes)
+    (data / "tree.json").write_bytes(tree_bytes)           # the tree the gate reads (default path)
+    (base / "tree.snapshot.json").write_bytes(tree_bytes)  # an independently-pulled snapshot (same bytes)
 
-    # the root_hash the gate will recompute from load_tree(<base>/.whis-knowledge-tree.json)
-    signed_root = compute_root_hash(load_tree(str(base / ".whis-knowledge-tree.json")))
+    # the root_hash the gate will recompute from load_tree(<base>/data/tree.json)
+    signed_root = compute_root_hash(load_tree(str(data / "tree.json")))
 
     sk = nacl.signing.SigningKey.generate()
     pub = sk.verify_key.encode(encoder=nacl.encoding.HexEncoder).decode()
@@ -85,7 +87,7 @@ def claim_setup(tmp_path):
     claim = {
         "schema": "pcis-approved-root/v1",
         "root_hash": signed_root,
-        "combined_root_hash": _sha(b"combined-arbitrary"),  # verify_claim doesn't check this; leg (b) does
+        "combined_root_hash": _sha(b"combined-arbitrary"),  # verify_claim doesn't check this; the combined-root leg does
         "tree_snapshot_sha256": _sha(tree_bytes),
         "leaf_count": 1, "branch_count": len(DEFAULT_BRANCHES), "synapse_count": 0,
         "chain_index": 1, "prev_cert_sha256": None,
@@ -147,7 +149,7 @@ def test_verify_claim_rejects_nonpinned_key(claim_setup):
     assert not ok and "fingerprint" in detail.lower()  # pubkey != pin, no embedded-key trust
 
 
-# ── pcis sign verify (the gate's leg-a CLI) ────────────────────────────────────
+# ── pcis sign verify (the CLI verify path) ─────────────────────────────────────
 
 def test_pcis_sign_verify_exit0_on_valid_claim(claim_setup):
     r = _cli_sign_verify(claim_setup)
@@ -163,12 +165,14 @@ def test_pcis_sign_verify_nonzero_on_tampered_claim(claim_setup):
     assert r.returncode != 0
 
 
-# ── THE AGREEMENT TEST (Whis's key guard) ──────────────────────────────────────
+# ── THE AGREEMENT TEST ─────────────────────────────────────────────────────────
 
 def test_two_verify_paths_agree_valid_and_every_tamper(claim_setup):
-    """`pcis sign verify` (snapshot=data/tree.json) and pcis_verify_claim.py (snapshot=pulled)
-    must return IDENTICAL verdicts on the same cert+pin — valid AND each tampered field. This is
-    the single test that would have caught the current drift."""
+    """The CLI `pcis sign verify` (snapshot=data/tree.json) and the off-machine verifier
+    (snapshot=pulled) must return IDENTICAL verdicts on the same cert+pin — valid AND each
+    tampered field. Requires the off-machine verifier; skips when it is not configured."""
+    if not WS_VERIFY or not os.path.exists(WS_VERIFY):
+        pytest.skip("off-machine verifier not configured (set PCIS_OFFMACHINE_VERIFY)")
     # valid: both must PASS
     assert (_cli_sign_verify(claim_setup).returncode == 0) is True
     assert (_ws_claim_verify(claim_setup).returncode == 0) is True
@@ -184,3 +188,24 @@ def test_two_verify_paths_agree_valid_and_every_tamper(claim_setup):
         assert gate_ok is False, f"tampered {field} must be rejected by the gate"
         cert["claim"][field] = orig
         json.dump(cert, open(claim_setup["cert_path"], "w"))
+
+
+# ── tree-file parameterization (PCIS_TREE_FILE) ────────────────────────────────
+
+def test_tree_file_default_is_neutral(monkeypatch):
+    """Default gate tree path is exactly <base>/data/tree.json — a neutral filename."""
+    from signing import _tree_file
+    monkeypatch.delenv("PCIS_TREE_FILE", raising=False)
+    monkeypatch.setenv("PCIS_BASE_DIR", "/tmp/pcis-base-neutral")
+    assert _tree_file() == os.path.join("/tmp/pcis-base-neutral", "data", "tree.json")
+
+
+def test_tree_file_respects_env_override(monkeypatch, tmp_path):
+    """PCIS_TREE_FILE overrides the default: absolute honored, relative joined to base."""
+    from signing import _tree_file
+    abs_override = str(tmp_path / "custom-tree.json")
+    monkeypatch.setenv("PCIS_TREE_FILE", abs_override)
+    assert _tree_file() == abs_override
+    monkeypatch.setenv("PCIS_BASE_DIR", "/tmp/pcis-base-rel")
+    monkeypatch.setenv("PCIS_TREE_FILE", "sub/tree.json")
+    assert _tree_file() == os.path.join("/tmp/pcis-base-rel", "sub", "tree.json")
