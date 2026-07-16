@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Full-claim verify alignment (the format-drift fix).
 
-`pcis sign verify` must verify the SAME full-claim cert that the signing ceremony signs, via
-the SAME algorithm as the off-machine verifier — so the two verify paths cannot disagree. Cert
+`pcis sign verify` and any external caller must verify the SAME full-claim cert via
+the SAME canonical algorithm — so multiple verify paths return identical verdicts. Cert
 format: {claim, claim_hash, signature, public_key}, signature over canonical(claim);
 combined_root_hash lives INSIDE claim.
 
-The agreement guard: same cert+pin, the CLI `pcis sign verify` (snapshot=data/tree.json) and the
-off-machine verifier (snapshot=pulled) must return IDENTICAL verdicts, valid + each tamper. Set
-PCIS_OFFMACHINE_VERIFY to that verifier to run the guard; it skips otherwise.
+The agreement guard: same cert+pin, the CLI `pcis sign verify` (snapshot=data/tree.json) and any
+external caller (snapshot=pulled) must return IDENTICAL verdicts, valid + each tamper. Set
+PCIS_EXTERNAL_VERIFY to that verifier's path to run the guard; it skips otherwise.
 
 Run: python3 -m pytest tests/test_claim_verify_alignment.py -v
 """
@@ -30,9 +30,9 @@ _ROOT = os.path.dirname(_HERE)
 sys.path.insert(0, os.path.join(_ROOT, "core"))
 sys.path.insert(0, _ROOT)
 
-# the off-machine verifier — the OTHER path in the agreement test. Not shipped in this repo;
-# set PCIS_OFFMACHINE_VERIFY to its path to run the agreement test (it skips when unset/absent).
-WS_VERIFY = os.environ.get("PCIS_OFFMACHINE_VERIFY", "")
+# the external verifier — the OTHER path in the agreement test. Not shipped in this repo;
+# set PCIS_EXTERNAL_VERIFY to its path to run the agreement test (it skips when unset/absent).
+EXTERNAL_VERIFY = os.environ.get("PCIS_EXTERNAL_VERIFY", "")
 
 
 def _canonical(o):
@@ -111,9 +111,9 @@ def _cli_sign_verify(setup):
     )
 
 
-def _ws_claim_verify(setup):
+def _external_claim_verify(setup):
     return subprocess.run(
-        [sys.executable, WS_VERIFY, setup["cert_path"], setup["pin"], setup["snapshot"]],
+        [sys.executable, EXTERNAL_VERIFY, setup["cert_path"], setup["pin"], setup["snapshot"]],
         capture_output=True, text=True,
     )
 
@@ -168,24 +168,24 @@ def test_pcis_sign_verify_nonzero_on_tampered_claim(claim_setup):
 # ── THE AGREEMENT TEST ─────────────────────────────────────────────────────────
 
 def test_two_verify_paths_agree_valid_and_every_tamper(claim_setup):
-    """The CLI `pcis sign verify` (snapshot=data/tree.json) and the off-machine verifier
+    """The CLI `pcis sign verify` (snapshot=data/tree.json) and any external caller
     (snapshot=pulled) must return IDENTICAL verdicts on the same cert+pin — valid AND each
-    tampered field. Requires the off-machine verifier; skips when it is not configured."""
-    if not WS_VERIFY or not os.path.exists(WS_VERIFY):
-        pytest.skip("off-machine verifier not configured (set PCIS_OFFMACHINE_VERIFY)")
+    tampered field. Requires the external verifier; skips when it is not configured."""
+    if not EXTERNAL_VERIFY or not os.path.exists(EXTERNAL_VERIFY):
+        pytest.skip("external verifier not configured (set PCIS_EXTERNAL_VERIFY)")
     # valid: both must PASS
     assert (_cli_sign_verify(claim_setup).returncode == 0) is True
-    assert (_ws_claim_verify(claim_setup).returncode == 0) is True
+    assert (_external_claim_verify(claim_setup).returncode == 0) is True
 
     for field in ("root_hash", "combined_root_hash", "tree_snapshot_sha256"):
         cert = json.load(open(claim_setup["cert_path"]))
         orig = cert["claim"][field]
         cert["claim"][field] = "TAMPERED"
         json.dump(cert, open(claim_setup["cert_path"], "w"))
-        gate_ok = _cli_sign_verify(claim_setup).returncode == 0
-        off_ok = _ws_claim_verify(claim_setup).returncode == 0
-        assert gate_ok == off_ok, f"paths DISAGREE on tampered {field}: gate={gate_ok} off={off_ok}"
-        assert gate_ok is False, f"tampered {field} must be rejected by the gate"
+        cli_ok = _cli_sign_verify(claim_setup).returncode == 0
+        external_ok = _external_claim_verify(claim_setup).returncode == 0
+        assert cli_ok == external_ok, f"paths DISAGREE on tampered {field}: cli={cli_ok} external={external_ok}"
+        assert cli_ok is False, f"tampered {field} must be rejected by the CLI"
         cert["claim"][field] = orig
         json.dump(cert, open(claim_setup["cert_path"], "w"))
 

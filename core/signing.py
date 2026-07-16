@@ -227,14 +227,14 @@ def _canonical_claim(obj):
 
 def verify_claim(cert, pin_fpr, snapshot_path=None):
     """Canonical full-claim verification — THE single source of truth shared by the CLI
-    `pcis sign verify` and the off-machine verifier, so the two paths cannot drift (that drift
+    `pcis sign verify` and any external caller, so multiple verify paths cannot drift (that drift
     is exactly the bug this closes).
 
         cert          parsed cert dict: {claim, claim_hash, signature, public_key}
-        pin_fpr       the 64-hex PINNED fingerprint; the caller resolves it (sha256 of the on-disk
-                      .pub for the gate, the pinned literal off-machine). NO embedded-key trust —
+        pin_fpr       the 64-hex PINNED fingerprint; the caller resolves it (sha256 of the
+                      on-disk .pub, or the pinned literal). NO embedded-key trust —
                       cert['public_key'] must fingerprint to this pin.
-        snapshot_path tree bytes (data/tree.json on the gate side, the pulled snapshot off-machine).
+        snapshot_path tree bytes (data/tree.json, or a pulled snapshot for external verification).
                       When given, the SIGNED tree_snapshot_sha256 AND root_hash are re-verified
                       against the actual tree — all four steps, both sides (defense in depth).
 

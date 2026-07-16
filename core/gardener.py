@@ -549,7 +549,7 @@ def write_notify_flag(committed_counters, staged_synapses, flags, dry_run=False,
         "",
     ]
     if staged_counters:
-        lines.append("constitutional_staged (requires J review):")
+        lines.append("constitutional_staged (requires human review):")
         for c in staged_counters:
             lines.append(f"  - [{c['branch']}] {c['content'][:100]}")
     if committed_counters:
@@ -611,7 +611,7 @@ GAP_SCAN_PROMPT = (
     "array of strings — no markdown, no explanation, no preamble. Each string is "
     "one significant result: a number, benchmark, decision, proof, or thing that "
     "was built or measured. Example output: "
-    '[\"PCIS load test: 300 agents, 346 MB\", \"MiniMax M2.7 configured on OpenRouter\"]. '
+    '[\"PCIS load test: 300 agents, 346 MB\", \"Model-X configured on Provider-Y\"]. '
     "If there are no significant results, output []. Output ONLY the JSON array."
 )
 
@@ -964,7 +964,7 @@ def main():
         for fl in flags:
             log.info("[%s] %s", fl['leaf_id'], fl['reason'])
 
-    # Tiered gate: constitutional branches require ceremony (staged for J review)
+    # Tiered commit: constitutional branches require human review before commit
     # Operational branches auto-commit — adversarial pressure runs free
     CONSTITUTIONAL_BRANCHES = {"identity", "philosophy", "core"}
 
@@ -1061,7 +1061,7 @@ def main():
             from events import emit_escalation
             evt = emit_escalation(
                 agent_id="gardener",
-                reason=f"{len(staged_counters)} constitutional counter-leaf(ves) staged for J review — branches: {sorted({c['branch'] for c in staged_counters})}",
+                reason=f"{len(staged_counters)} constitutional counter-leaf(ves) staged for human review — branches: {sorted({c['branch'] for c in staged_counters})}",
                 branch="constitutional",
                 journal_path=EVENTS_JOURNAL,
             )

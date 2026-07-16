@@ -437,8 +437,8 @@ def cmd_sign_verify(args):
     key and the current tree. Runs the full-claim check via signing.verify_claim — pinned key
     (no embedded-key trust), signature over canonical(claim), claim-hash consistency, and
     tree-consistency (the signed tree_snapshot_sha256 + root_hash re-verified against the actual
-    tree bytes). The same function the off-machine verifier uses, so the two paths agree by
-    construction."""
+    tree bytes). The CLI uses the same canonical-verification function any external caller
+    uses, so multiple verify paths agree by construction."""
     _set_base_dir(args)
     sys.path.insert(0, os.path.join(_ROOT, "core"))
     from signing import (
@@ -451,8 +451,8 @@ def cmd_sign_verify(args):
 
     cert_path = _default_key_path(APPROVED_CERT_FILE)
     pub_path = _default_key_path(PUBLIC_KEY_FILE)
-    # Snapshot = the tree the gate reads, so its tree-consistency check binds the same bytes the
-    # ceremony signed. Configurable via PCIS_TREE_FILE (default: <base>/data/tree.json).
+    # Snapshot binds tree-consistency to the same bytes the approved root was signed over.
+    # Configurable via PCIS_TREE_FILE (default: <base>/data/tree.json).
     tree_path = _tree_file()
 
     if not os.path.exists(cert_path):

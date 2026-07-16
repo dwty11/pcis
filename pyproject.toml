@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pcis"
 version = "1.4.1"
-description = "Provable Cognitive Integrity System — a self-challenging, tamper-evident belief record for AI agents"
+description = "Persistent Cognitive Integrity System — a self-challenging, tamper-evident accountability record of an AI agent's claims"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [
-    { name = "Jan Imamniyazov", email = "idwty@proton.me" }
+    { name = "PCIS Authors" }
 ]
 keywords = ["ai", "agents", "memory", "knowledge-graph", "identity", "llm"]
 classifiers = [
