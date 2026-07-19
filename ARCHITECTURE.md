@@ -91,7 +91,7 @@ Tiered commit system:
 - Counter-leaves targeting constitutional branches (`identity`, `philosophy`) → staged for human review
 - Synapses (cross-branch connections) → always staged
 
-A separate `--gap-scan` mode reads daily memory notes, extracts key facts via LLM, then checks each against the tree via semantic search — anything below similarity 0.6 is flagged as a gap. Output: `gardener-log.md`, `gardener-staging.md`, and a notify flag file. Designed as a nightly cron job.
+A separate `--gap-scan` mode reads daily memory notes (optional `memory/YYYY-MM-DD.md` files — none exist by default), extracts key facts via LLM, then checks each against the tree via semantic search — anything below similarity 0.6 is flagged as a gap. Output: `gardener-log.md`, `gardener-staging.md`, and a notify flag file. Run on demand, or scheduled as a daily cron job.
 
 ---
 
@@ -152,8 +152,8 @@ Run with: `python -m pytest tests/ -v`
 
 **`setup.sh`** — Runs `pip install -r requirements.txt`, creates `data/`, copies `demo_tree.json` into it as the starting tree.
 
-**`requirements.txt`** — Just `flask>=3.0.0`. The core modules have zero external dependencies — all vector math, hashing, and API calls use the Python standard library.
+**`requirements.txt`** — `flask>=3.0.0` (demo server), `requests>=2.28.0` (outbound HTTP), and `pytest>=7.0` (tests). The knowledge-tree core — hashing, Merkle, vector math — is pure Python standard library; the listed dependencies are for the demo server, HTTP calls, and the test suite.
 
-**`config.example.json`** — Template with `base_dir`, `llm_api_key`, `model_name`, `demo_mode`. Copy to `config.json` before running adversarial validation.
+**`config.example.json`** — Template with `base_dir`, `llm_provider`, `llm_api_key`, `llm_model`, `demo_mode`. Copy to `config.json` before running adversarial validation.
 
 **`.github/workflows/ci.yml`** — GitHub Actions running the full test suite on Python 3.10, 3.11, and 3.12 on every push and PR to `main`.

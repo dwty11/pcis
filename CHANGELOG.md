@@ -15,7 +15,7 @@ A consolidated release bundling the 1.x feature set on top of the initial 1.0 ar
 - Enhanced document ingestion — PDF and markdown sources
 - Multi-agent support (spec + implementation)
 - Agent plugin for compatible AI agent frameworks
-- `pcis` CLI with 18 subcommands; entry point via `[project.scripts]`
+- `pcis` CLI with 22 subcommands; entry point via `[project.scripts]`
 - Input sanitization (prompt-injection protection)
 - PyNaCl optional dependency under `pcis[signing]`
 

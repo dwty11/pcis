@@ -1,6 +1,6 @@
 #!/bin/bash
 # PCIS Demo Startup Script
-# Boots all required components for the Thursday demo.
+# Boots all required components for the PCIS demo.
 # Run from repo root: ./start_demo.sh
 
 REPO="$(cd "$(dirname "$0")" && pwd)"

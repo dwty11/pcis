@@ -11,13 +11,14 @@ Before answering a question, starting research, or making a recommendation — c
 
 ## Rule: Verify Before You Search
 
-Searching a tampered tree gives you tampered answers. One line, every time:
+Searching a tampered tree gives you tampered answers. On a fresh checkout, initialize the manifest once, then check it before every search:
 
 ```bash
-python3 core/verify_memory.py --status
+python3 core/verify_memory.py --init      # first run only — writes the manifest
+python3 core/verify_memory.py --status    # CLEAN / MODIFIED / NO_MANIFEST
 ```
 
-If this returns anything other than CLEAN — stop. Do not use search results for decisions until integrity is confirmed.
+`--status` verifies the code/manifest integrity — the tree's own tamper-check is `pcis verify`. If it returns `NO_MANIFEST`, run `--init` first. Anything other than CLEAN — stop. Do not use search results for decisions until integrity is confirmed.
 
 ---
 

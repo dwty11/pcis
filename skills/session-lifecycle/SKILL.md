@@ -14,14 +14,15 @@ PCIS is not a database you query on demand. It is your agent's persistent identi
 Run these steps before doing anything else.
 
 ```bash
-# 1. Verify tree integrity — if not CLEAN, stop and alert the user
-python3 core/verify_memory.py --status
+# 1. Verify integrity — on a fresh checkout run --init once (else --status prints NO_MANIFEST)
+python3 core/verify_memory.py --init 2>/dev/null || true   # first run writes the manifest
+python3 core/verify_memory.py --status                     # if not CLEAN, stop and alert the user
 
 # 2. Search for context relevant to the user's first message
 python3 core/knowledge_search.py "<what this session is about>"
 
-# 3. Check for staged gardener challenges
-python3 core/gardener.py --apply-staging --dry-run 2>/dev/null || true
+# 3. Check for staged gardener challenges (read-only — never applies them)
+[ -s memory/gardener-staging.md ] && echo "Staged gardener challenges present — review before applying."
 ```
 
 **If integrity check returns CHANGED or MISSING:** Do not proceed. Report the discrepancy. The tree may have been tampered with or corrupted. Searching a compromised tree is pointless — verify first, then trust.

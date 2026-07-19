@@ -17,7 +17,7 @@ Usage:
     python3 gardener.py --branch lessons   # Focus on one branch only
     python3 gardener.py --gap-scan          # Extract today's results, find knowledge gaps
 
-Schedule: Daily cron, 02:00 UTC (quiet hours) — adversarial pass + gap-scan
+Schedule: not automatic — run on demand, or add your own cron (e.g. daily 02:00 UTC) — adversarial pass + gap-scan
 Model: qwen3:14b (free, local)
 """
 
@@ -890,7 +890,7 @@ def main():
     tree_text = format_tree_for_prompt(tree, focus_branch=args.branch)
     recent_memory = load_recent_memory(days=5)
 
-    # Collect already-challenged leaf IDs to prevent nightly repetition
+    # Collect already-challenged leaf IDs to prevent repeat challenges across runs
     already_challenged = set()
     for branch_data in tree["branches"].values():
         for leaf in branch_data.get("leaves", []):
