@@ -449,8 +449,12 @@ def write_staging_file(synapses, flags, staged_counters=None):
             f.write(json.dumps(rec) + "\n")
 
 
-def apply_staging():
-    """Commit all staged items (synapses, counter-leaves, gaps) from the staging file (JSONL)."""
+def apply_staging(dry_run=False):
+    """Commit all staged items (synapses, counter-leaves, gaps) from the staging file (JSONL).
+
+    With dry_run=True, report what would be applied and return that count without
+    mutating the tree, deleting the staging file, or resolving escalations.
+    """
     if not os.path.exists(GARDEN_STAGING):
         log.info("No staging file found.")
         return 0
@@ -471,6 +475,16 @@ def apply_staging():
     if not records:
         log.info("No staged items found in staging file.")
         return 0
+
+    if dry_run:
+        would_apply = [
+            r for r in records
+            if r.get("type") in ("counter", "gap", "synapse") and (r.get("content") or "").strip()
+        ]
+        for rec in would_apply:
+            log.info("[DRY RUN] would apply %s: %s", rec.get("type"), (rec.get("content") or "")[:80])
+        log.info("[DRY RUN] %d staged item(s) would be applied; staging file left intact.", len(would_apply))
+        return len(would_apply)
 
     source = f"gardener-staged-{today_local()}"
     count = 0
@@ -521,7 +535,7 @@ def apply_staging():
         for evt in unresolved:
             resolve_escalation(
                 event_id=evt["event_id"],
-                resolution=f"J applied staging: {count} item(s) committed via --apply-staging",
+                resolution=f"Staging applied: {count} item(s) committed via --apply-staging",
                 agent_id="gardener",
                 journal_path=EVENTS_JOURNAL,
             )
@@ -851,8 +865,8 @@ def main():
 
     # Shortcut: apply staged synapses without running full gardening pass
     if args.apply_staging:
-        log.info("🌱 Applying staged synapses — %s", now_local())
-        count = apply_staging()
+        log.info("🌱 Staged items — %s%s", now_local(), " (DRY RUN)" if args.dry_run else "")
+        count = apply_staging(dry_run=args.dry_run)
         if count == 0:
             log.info("Nothing to apply.")
         return
