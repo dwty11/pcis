@@ -4,7 +4,9 @@
 # Run from repo root: ./start_demo.sh
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-PYTHON="${PYTHON:-python3}"
+# Prefer the venv setup.sh populated (falls back to system python3); no manual
+# `source .venv/bin/activate` needed for `bash setup.sh && bash start_demo.sh`.
+PYTHON="$(REPO="$REPO" bash "$REPO/scripts/resolve_python.sh")"
 FAILED=0
 
 echo ""

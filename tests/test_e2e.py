@@ -97,13 +97,25 @@ def base_url(tmp_path):
 
 # ── Route tests ──────────────────────────────────────────────────────────
 
-def test_hub_returns_html(base_url):
-    r = requests.get(f"{base_url}/hub")
-    # hub.html is excluded from the repo (contains deployment-specific links).
-    # Accept 200 (local dev with hub.html present) or 500 (CI without it).
-    assert r.status_code in (200, 500), f"Unexpected status: {r.status_code}"
-    if r.status_code == 200:
-        assert "text/html" in r.headers.get("Content-Type", "")
+def test_front_door_serves_html_without_hub(base_url):
+    # A fresh clone / CI has NO hub.html — it's gitignored (deployment-specific).
+    # Reproduce that condition by hiding hub.html, then require the front door
+    # (/, /hub, /demo) to serve HTML and never 500. Regression guard for the
+    # "advertised URL 500s on arrival" bug: previously / redirected to /hub,
+    # which send_file'd the missing hub.html straight into a 500.
+    hub = REPO_ROOT / "demo" / "hub.html"
+    hidden = hub.with_name("hub.html.hidden") if hub.exists() else None
+    if hidden:
+        hub.rename(hidden)
+    try:
+        for route in ("/", "/hub", "/demo"):
+            r = requests.get(f"{base_url}{route}")
+            assert r.status_code == 200, f"{route} returned {r.status_code} (front door broken on a clone)"
+            assert "text/html" in r.headers.get("Content-Type", ""), \
+                f"{route} content-type: {r.headers.get('Content-Type')}"
+    finally:
+        if hidden:
+            hidden.rename(hub)
 
 
 def test_api_health(base_url):

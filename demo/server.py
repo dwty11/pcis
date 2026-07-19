@@ -20,7 +20,7 @@ import tempfile
 import threading
 import urllib.request
 from datetime import datetime, timezone, timedelta
-from flask import Flask, jsonify, redirect, request, send_file
+from flask import Flask, jsonify, request, send_file
 
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -69,19 +69,27 @@ def load_tree():
         return json.load(f)
 
 
+def _landing_file():
+    # hub.html is an optional, gitignored, deployment-specific landing page.
+    # Fall back to the shipped demo UI so a fresh clone serves HTML, not a 500.
+    # Absolute paths keep this correct regardless of the server's working dir.
+    hub = os.path.join(DEMO_DIR, "hub.html")
+    return hub if os.path.exists(hub) else os.path.join(DEMO_DIR, "index.html")
+
+
 @app.route("/")
 def index():
-    return redirect("/hub")
+    return send_file(_landing_file())
 
 
 @app.route("/hub")
 def hub():
-    return send_file("hub.html")
+    return send_file(_landing_file())
 
 
 @app.route("/demo")
 def demo():
-    return send_file("index.html")
+    return send_file(os.path.join(DEMO_DIR, "index.html"))
 
 
 @app.route("/api/health")
