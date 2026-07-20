@@ -36,7 +36,7 @@ PCIS is designed around seven recurring failure modes of production AI memory sy
 
 - [x] Persistent knowledge tree — JSON-based, branch/leaf structure
 - [x] Merkle integrity verification — SHA-256 root hash, tamper-evident
-- [x] Adversarial pass — external LLM challenges high-confidence leaves, generates COUNTER entries
+- [x] Adversarial pass — the gardener challenges high-confidence leaves on a local model, generates COUNTER entries
 - [x] Gap-scan — reads session logs, finds knowledge not yet committed to tree
 - [x] Pruning protocol — flags stale and low-confidence leaves for review
 - [x] Cross-branch synapses — typed edges (SUPPORTS / CONTRADICTS / REFINES / DERIVES_FROM / SUPERSEDES), Merkle-chained
@@ -97,7 +97,7 @@ See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
 
 ## Alternatives and differentiation
 
-Two different fields, two different wedges. Against **AI memory tools**, the wedge is a verifiable, challenged record. Against **tamper-evident audit ledgers**, it's the self-challenge.
+PCIS competes on two fronts, and the differentiator is different on each:
 
 ### vs. AI memory tools — wedge: a verifiable, challenged record
 

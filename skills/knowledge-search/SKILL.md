@@ -15,7 +15,7 @@ Searching a tampered tree gives you tampered answers. On a fresh checkout, initi
 
 ```bash
 python3 core/verify_memory.py --init      # first run only — writes the manifest
-python3 core/verify_memory.py --status    # CLEAN / MODIFIED / NO_MANIFEST
+python3 core/verify_memory.py --status    # CLEAN / CHANGED / NO_MANIFEST
 ```
 
 `--status` verifies the code/manifest integrity — the tree's own tamper-check is `pcis verify`. If it returns `NO_MANIFEST`, run `--init` first. Anything other than CLEAN — stop. Do not use search results for decisions until integrity is confirmed.
@@ -62,10 +62,10 @@ python3 core/knowledge_search.py "how should we handle contradictory evidence"
 When you know what kind of knowledge you need:
 
 ```bash
-python3 core/knowledge_tree.py --show --branch constraints   # standing rules
-python3 core/knowledge_tree.py --show --branch state         # current project state
-python3 core/knowledge_tree.py --show --branch lessons       # past mistakes
-python3 core/knowledge_tree.py --show                        # full tree
+python3 core/knowledge_tree.py --show constraints   # standing rules
+python3 core/knowledge_tree.py --show state         # current project state
+python3 core/knowledge_tree.py --show lessons       # past mistakes
+python3 core/knowledge_tree.py --show               # full tree
 ```
 
 ---

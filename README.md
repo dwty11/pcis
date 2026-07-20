@@ -84,12 +84,15 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 ## Go deeper
 
 - [docs/PCIS.md](docs/PCIS.md) — the full argument
-- [ARCHITECTURE.md](ARCHITECTURE.md) — how it's built (leads with the adversarial pass)
-- [ROADMAP.md](ROADMAP.md) — honest about what's v1 and what's next
+- [ARCHITECTURE.md](ARCHITECTURE.md) — how it's built
+- [ROADMAP.md](ROADMAP.md) — what's in v1 and what's next
 - [demo/liars-demo/README.md](demo/liars-demo/README.md) — the offline proof, step by step
 - [agent-plugin/](agent-plugin/) and [skills/](skills/) — drop-in agent integration; [LangChain adapter](adapters/langchain_memory.py)
-- [CONTRIBUTING.md](CONTRIBUTING.md) — issues and PRs welcome
 
 ## Requirements
 
 Python 3.10+, Linux or macOS (Windows not yet — `fcntl`). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, both fall back to keyword matching / pre-generated challenges. Demo mode needs nothing.
+
+---
+
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).

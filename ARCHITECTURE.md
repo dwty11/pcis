@@ -1,9 +1,9 @@
 # PCIS Architecture
 
-PCIS is built around one idea: an agent's knowledge should be **challenged**, not just stored and signed. The adversarial pass is the wedge; the knowledge tree and its Merkle integrity are the substrate it runs on. The sections lead with the wedge, then the substrate.
+PCIS is built around one idea: an agent's knowledge should be **challenged**, not just stored and signed. The adversarial pass — the gardener — is what makes PCIS more than a tamper-evident log; the knowledge tree and its Merkle integrity are the substrate it runs on.
 
-## 1. Adversarial Pass via External LLM
-PCIS runs a periodic adversarial pass where an external LLM is given existing knowledge leaves and asked to challenge them. The adversary is not looking for errors — it is looking for contradictions, outdated assumptions, and knowledge that no longer holds given new context. Where challenges succeed, COUNTER leaves are generated and staged for review. The tree is not blindly updated — it is pressure-tested. This is what separates PCIS from a tamper-evident log: the record attacks itself.
+## 1. Adversarial Pass (the gardener)
+PCIS runs a periodic adversarial pass where a local LLM — the gardener, on Ollama or MLX — is given the knowledge tree and told to attack its highest-confidence claims: the branches with high mean confidence and low spread, using the last five days of session memory as context. Where a challenge holds, a COUNTER leaf is generated. The commit is tiered: routine counters on operational branches (`technical`, `lessons`) auto-commit, while challenges to constitutional beliefs (`identity`, `philosophy`, `core`) and new synapses are staged for human review. The tree is not blindly updated — it is pressure-tested. This is what separates PCIS from a tamper-evident log: the record attacks itself.
 
 ## 2. Persistent Knowledge Tree
 PCIS stores agent knowledge as a structured tree of leaves, not a flat log or vector index. Each leaf carries a fact, a branch tag, a confidence score, a source reference, and a timestamp. Knowledge is organized by domain, queryable by semantic search, and human-readable at every level. The tree persists across sessions — the agent wakes up knowing what it knew when it last ran.
@@ -11,18 +11,25 @@ PCIS stores agent knowledge as a structured tree of leaves, not a flat log or ve
 ## 3. Merkle Integrity Verification
 Every state of the knowledge tree is fingerprinted using a cryptographic hash chain. Leaf hashes are combined pairwise into a binary Merkle tree at the branch level, and branch roots are combined the same way into the tree root. When the agent boots, it recomputes the root hash from content up and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption.
 
-Beyond tamper detection, the binary tree structure enables **Merkle inclusion proofs**: `generate_proof(tree, branch, leaf_id)` produces a compact proof path (list of sibling hashes) that a third party can use to verify a specific leaf existed in the tree at a given state — without possessing the full tree. `verify_proof(leaf_hash, proof, expected_root)` is a standalone function with zero dependencies on the tree — provable inclusion in the Certificate-Transparency sense. This is substrate for the accountability story, not the pitch of it: the wedge is the adversarial pass above, not the proof format.
+Beyond tamper detection, the binary tree structure enables **Merkle inclusion proofs**: `generate_proof(tree, branch, leaf_id)` produces a compact proof path (list of sibling hashes) that a third party can use to verify a specific leaf existed in the tree at a given state — without possessing the full tree. `verify_proof(leaf_hash, proof, expected_root)` is a standalone function with zero dependencies on the tree — provable inclusion in the Certificate-Transparency sense. Inclusion proofs are substrate for the accountability story; what makes the record more than tamper-evident is the adversarial pass in §1.
 
-## 4. Gap-Scan (Completeness, Not Just Correctness)
+## 4. The Off-Machine Signing Boundary
+The Merkle root proves the record is internally consistent. A signature over that root proves *who* attested it, and *when*. PCIS keeps the private signing key **off the machine that runs the substrate**.
+
+The gardener, the tree, and the entire runtime can compute the current root and request a signature over it — but they cannot read or reach the private key. So a compromised substrate cannot forge an attestation over its own state, and cannot silently re-sign a rewritten past: the most it can do is refuse to advance, which is visible, not deniable.
+
+This is the property the tamper-evident ledgers PCIS is measured against do not have. Their signer typically lives beside the log, so a compromised host is a compromised ledger — it can rewrite history and re-sign it in one move. Moving the key off-box splits that into two separate trust domains: integrity of the record, and authority to attest it. It is a boundary, not plumbing — the one line an attacker who owns the box still cannot cross.
+
+## 5. Gap-Scan (Completeness, Not Just Correctness)
 Most verification systems ask: is what the agent knows correct? Gap-scan asks a different question: what should the agent know that it doesn't? The scanner reads recent session logs and external inputs, extracts significant facts and decisions, and cross-checks them against the knowledge tree. Entries that are missing — never committed, or committed but since pruned — are staged for addition. Correctness and completeness are orthogonal problems. PCIS solves both.
 
-## 5. Pruning Protocol
+## 6. Pruning Protocol
 A knowledge tree that only grows becomes a liability. PCIS includes a pruning protocol that identifies leaves with low confidence scores, high age relative to their domain, or explicit supersession by newer leaves. Pruning is not deletion — candidates are flagged, reviewed, and removed only when confirmed stale. The goal is a tree that stays sharp: high-signal, low-noise, trustworthy.
 
-## 6. Model-Agnostic Design
+## 7. Model-Agnostic Design
 PCIS does not depend on any specific language model. The knowledge tree, integrity layer, adversarial pass, and gap-scan all operate through a standard API interface. The underlying model — GPT-4, Claude, Llama, or any locally-hosted model — can be swapped without touching the memory layer. This means no vendor lock-in, no retraining required when models change, and the ability to run entirely on-premises with local models.
 
-## 7. Typed Synapse Graph
+## 8. Typed Synapse Graph
 
 `core/knowledge_synapses.py`
 
@@ -30,7 +37,7 @@ Cross-leaf relationships are first-class objects. Each synapse is a directed typ
 
 The combined root hash (`sha256(tree_root + synapse_root)`) is computed at boot, ensuring structural integrity across both the knowledge tree and its relationship graph.
 
-## 8. Belief Traversal Engine
+## 9. Belief Traversal Engine
 
 `core/belief_traversal.py`
 
@@ -90,7 +97,7 @@ Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees
 
 Tiered commit system:
 - Counter-leaves targeting operational branches (`technical`, `lessons`) → auto-committed
-- Counter-leaves targeting constitutional branches (`identity`, `philosophy`) → staged for human review
+- Counter-leaves targeting constitutional branches (`identity`, `philosophy`, `core`) → staged for human review
 - Synapses (cross-branch connections) → always staged
 
 A separate `--gap-scan` mode reads daily memory notes (optional `memory/YYYY-MM-DD.md` files — none exist by default), extracts key facts via LLM, then checks each against the tree via semantic search — anything below similarity 0.6 is flagged as a gap. Output: `gardener-log.md`, `gardener-staging.md`, and a notify flag file. Run on demand, or scheduled as a daily cron job.

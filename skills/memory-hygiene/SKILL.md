@@ -51,7 +51,7 @@ If uncertain about confidence: use `0.7`.
 | `constraints` | Protected standing orders — never auto-pruned |
 | `state` | Current project state, active facts |
 
-The `constraints` branch is constitutional. Leaves here survive gardener pruning. Use it for rules that must hold regardless of what the gardener challenges.
+The constitutional branches — `identity`, `philosophy`, `core` — are gated: the gardener's COUNTER challenges to them are staged for human review, not auto-committed. (Pruning is a separate tool, `knowledge_prune.py`; the gardener itself only appends COUNTERs, it never prunes.)
 
 ---
 
@@ -66,7 +66,7 @@ python3 core/gardener.py --dry-run
 python3 core/gardener.py  # commit if challenges look valid
 
 # Surface pruning candidates
-python3 core/knowledge_prune.py --flag-stale
+python3 core/knowledge_prune.py --stale
 
 # Update root after any changes
 python3 core/verify_memory.py --update
@@ -82,7 +82,7 @@ python3 core/verify_memory.py --update
 ## When the Gardener Runs
 
 - Counter-leaves on operational branches (`lessons`, `technical`) are auto-committed
-- Counter-leaves on constitutional branches (`identity`, `philosophy`, `constraints`) are staged for user review
+- Counter-leaves on constitutional branches (`identity`, `philosophy`, `core`) are staged for user review
 - Review staged challenges: `python3 core/gardener.py --apply-staging`
 
 **COUNTER leaves are healthy.** A tree that can disagree with itself is more honest than one that can't. Do not treat COUNTER leaves as errors — they are epistemic structure.
