@@ -49,27 +49,23 @@ else
   FAILED=1
 fi
 
-# ── 4. External validator check (optional) ────────────────────────────────
-echo "  [3/5] Checking External validator (localhost:7860)..."
+# ── 4. External validator check (optional, bring-your-own) ────────────────
+echo "  [3/5] Checking External validator (optional, localhost:7860)..."
 EXT_STATUS=$(curl -s --max-time 2 http://localhost:7860/health 2>/dev/null)
 if echo "$EXT_STATUS" | grep -q '"status":"ok"'; then
   echo "  ✓  External validator: RUNNING"
 else
-  echo "  ⚠  External validator not running on localhost:7860"
-  echo "     Start it before demo: External Validation tab will fail without it"
+  echo "  ○  External validator not detected — optional. Only the 'External"
+  echo "     Validation' tab needs it: bring your own OpenAI-compatible adapter"
+  echo "     on :7860 (see README). The rest of the demo works without it."
 fi
 
-# ── 5. Run test suite ───────────────────────────────────────────────────────
-echo "  [4/5] Running test suite..."
-TEST_OUTPUT=$($PYTHON -m pytest "$REPO/tests/" -q 2>&1)
-TEST_EXIT=$?
-if [ $TEST_EXIT -eq 0 ]; then
-  PASS_COUNT=$(echo "$TEST_OUTPUT" | grep -o '[0-9]* passed' | head -1)
-  echo "  ✓  Tests: $PASS_COUNT"
+# ── 5. Smoke check (fast — the full suite is 'pytest tests/', not a boot gate) ──
+echo "  [4/5] Smoke check (server imports)..."
+if ( cd "$REPO" && $PYTHON -c "import sys; sys.path.insert(0,'demo'); import server" >/dev/null 2>&1 ); then
+  echo "  ✓  Server imports clean"
 else
-  echo "  ✗  Tests failed — fix before demo"
-  echo "$TEST_OUTPUT" | tail -10
-  FAILED=1
+  echo "  ⚠  Server import smoke failed — it may not boot. Run: $PYTHON -m pytest tests/"
 fi
 
 if [ $FAILED -ne 0 ]; then

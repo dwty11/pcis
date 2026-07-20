@@ -1,11 +1,10 @@
 {
   "name": "pcis",
   "version": "1.4.1",
-  "description": "Provable Cognitive Integrity System — a self-challenging, tamper-evident belief record",
+  "description": "Persistent Cognitive Integrity System — a self-challenging, tamper-evident belief record",
   "entrypoint": "plugin.py",
   "requires": ["pcis>=1.2.0"],
   "config": {
-    "base_dir": {"type": "string", "description": "PCIS data directory", "default": "~/.pcis"},
-    "auto_capture": {"type": "boolean", "description": "Auto-extract knowledge from conversations", "default": true}
+    "base_dir": {"type": "string", "description": "PCIS data directory", "default": "~/.pcis"}
   }
 }

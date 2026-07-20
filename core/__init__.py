@@ -1,5 +1,5 @@
 """
-PCIS core — Provable Cognitive Integrity System.
+PCIS core — Persistent Cognitive Integrity System.
 
 Public API surface:
 

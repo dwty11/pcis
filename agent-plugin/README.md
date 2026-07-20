@@ -25,8 +25,7 @@ Give any compatible agent persistent, cryptographically verifiable long-term mem
    {
      "plugins": {
        "pcis": {
-         "base_dir": "~/.pcis",
-         "auto_capture": true
+         "base_dir": "~/.pcis"
        }
      }
    }
@@ -60,7 +59,6 @@ On session start, the plugin automatically:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `base_dir` | string | `~/.pcis` | PCIS data directory |
-| `auto_capture` | boolean | `true` | Auto-extract knowledge from conversations |
 
 ## Requirements
 

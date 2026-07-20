@@ -10,7 +10,6 @@ Provides three tools for the agent:
 
 Configuration (via plugin.json):
     base_dir      — PCIS data directory (default: ~/.pcis)
-    auto_capture  — auto-extract knowledge from conversations (default: true)
 """
 
 import json

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-pcis — CLI for Provable Cognitive Integrity System.
+pcis — CLI for Persistent Cognitive Integrity System.
 
 Usage:
     pcis init [--dir PATH]
@@ -701,7 +701,7 @@ def cmd_export(args):
 def main():
     parser = argparse.ArgumentParser(
         prog="pcis",
-        description="PCIS — Provable Cognitive Integrity System",
+        description="PCIS — Persistent Cognitive Integrity System",
     )
     parser.add_argument("--dir", help="PCIS base directory (default: cwd or PCIS_BASE_DIR)")
     sub = parser.add_subparsers(dest="command")

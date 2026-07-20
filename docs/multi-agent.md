@@ -28,14 +28,19 @@ authored it. The shared tree file uses the existing file-level locking
 - Each agent loads the tree, acquires the lock, writes, and releases — same as
   single-agent mode.
 
-## Conflict Resolution
+## Concurrency
 
-- **Last-write-wins** at the leaf level — if two agents modify the same leaf
-  concurrently, the last writer's version persists.
-- Every confidence change and content edit is recorded in `belief_history`,
-  providing a full audit trail regardless of which agent made the change.
-- No leaf is ever silently overwritten — the history log always contains both
-  the before and after state.
+- Writes are **append-only**: `add_knowledge_as()` adds new authored leaves. There
+  is no in-place leaf-modification path, so there is no last-write-wins conflict to
+  resolve at the leaf level.
+- Concurrent writers are serialized by the file lock (`tree_lock()`, fcntl), so no
+  write is lost or interleaved.
+- Authorship is recorded (the `author` field), not enforced — see Access Control.
+
+> **Roadmap (not implemented).** A per-leaf `belief_history` recording the before/after
+> state on every confidence or content change would give a full mutation audit trail.
+> The tree is append-only today and does not track leaf edits; this is a future
+> enhancement, not a current guarantee.
 
 ## Access Control
 
