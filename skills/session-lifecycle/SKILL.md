@@ -5,7 +5,7 @@ description: "PCIS session bootstrap and commit protocol for AI agents. Use at c
 
 # PCIS Session Lifecycle
 
-PCIS is not a database you query on demand. It is your agent's persistent identity. This file tells you when and how to use it — at the boundaries of every session.
+PCIS is not a database you query on demand. It is your agent's accountable claim record — what it committed to, and when. This file tells you when and how to use it — at the boundaries of every session.
 
 ---
 

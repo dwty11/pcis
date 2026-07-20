@@ -1,15 +1,17 @@
 # PCIS Architecture
 
-## 1. Persistent Knowledge Tree
+PCIS is built around one idea: an agent's knowledge should be **challenged**, not just stored and signed. The adversarial pass is the wedge; the knowledge tree and its Merkle integrity are the substrate it runs on. The sections lead with the wedge, then the substrate.
+
+## 1. Adversarial Pass via External LLM
+PCIS runs a periodic adversarial pass where an external LLM is given existing knowledge leaves and asked to challenge them. The adversary is not looking for errors — it is looking for contradictions, outdated assumptions, and knowledge that no longer holds given new context. Where challenges succeed, COUNTER leaves are generated and staged for review. The tree is not blindly updated — it is pressure-tested. This is what separates PCIS from a tamper-evident log: the record attacks itself.
+
+## 2. Persistent Knowledge Tree
 PCIS stores agent knowledge as a structured tree of leaves, not a flat log or vector index. Each leaf carries a fact, a branch tag, a confidence score, a source reference, and a timestamp. Knowledge is organized by domain, queryable by semantic search, and human-readable at every level. The tree persists across sessions — the agent wakes up knowing what it knew when it last ran.
 
-## 2. Merkle Integrity Verification
+## 3. Merkle Integrity Verification
 Every state of the knowledge tree is fingerprinted using a cryptographic hash chain. Leaf hashes are combined pairwise into a binary Merkle tree at the branch level, and branch roots are combined the same way into the tree root. When the agent boots, it recomputes the root hash from content up and compares it to the last recorded state. A mismatch means the tree was modified outside normal operation — drift, tampering, or corruption.
 
-Beyond tamper detection, the binary tree structure enables **Merkle inclusion proofs**: `generate_proof(tree, branch, leaf_id)` produces a compact proof path (list of sibling hashes) that a third party can use to verify a specific leaf existed in the tree at a given state — without possessing the full tree. `verify_proof(leaf_hash, proof, expected_root)` is a standalone function with zero dependencies on the tree. This upgrades the compliance story from "tamper-evident" to "cryptographically provable inclusion."
-
-## 3. Adversarial Pass via External LLM
-PCIS runs a periodic adversarial pass where an external LLM is given existing knowledge leaves and asked to challenge them. The adversary is not looking for errors — it is looking for contradictions, outdated assumptions, and knowledge that no longer holds given new context. Where challenges succeed, COUNTER leaves are generated and staged for review. The tree is not blindly updated — it is pressure-tested.
+Beyond tamper detection, the binary tree structure enables **Merkle inclusion proofs**: `generate_proof(tree, branch, leaf_id)` produces a compact proof path (list of sibling hashes) that a third party can use to verify a specific leaf existed in the tree at a given state — without possessing the full tree. `verify_proof(leaf_hash, proof, expected_root)` is a standalone function with zero dependencies on the tree — provable inclusion in the Certificate-Transparency sense. This is substrate for the accountability story, not the pitch of it: the wedge is the adversarial pass above, not the proof format.
 
 ## 4. Gap-Scan (Completeness, Not Just Correctness)
 Most verification systems ask: is what the agent knows correct? Gap-scan asks a different question: what should the agent know that it doesn't? The scanner reads recent session logs and external inputs, extracts significant facts and decisions, and cross-checks them against the knowledge tree. Entries that are missing — never committed, or committed but since pruned — are staged for addition. Correctness and completeness are orthogonal problems. PCIS solves both.

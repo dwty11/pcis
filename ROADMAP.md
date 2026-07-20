@@ -8,7 +8,7 @@ Honest about what v1.0 is and what comes next.
 
 PCIS is one substrate that sells into three distinct audiences via three distinct framings.
 
-- **Position A — Multi-agent coordination.** Lies between AI agents are cryptographically detectable by anyone, with math, without trusting any operator. Demonstrated by Demo 1 (The Liar's Demo, below).
+- **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated by Demo 1 (The Liar's Demo, below). (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
 - **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Future demo.
 - **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not. Future demo (Pianist Swap).
 
@@ -16,7 +16,7 @@ PCIS is one substrate that sells into three distinct audiences via three distinc
 
 ## Why most AI memory architectures fail
 
-Independent analysis of production AI memory systems reveals seven predictable failure modes. Most systems hit them within six months. PCIS was designed around all seven.
+PCIS is designed around seven recurring failure modes of production AI memory systems — the seven in the table below.
 
 | Failure mode | What happens | PCIS response |
 |---|---|---|
@@ -97,21 +97,31 @@ See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
 
 ## Alternatives and differentiation
 
-There are other AI memory projects. Here is an honest comparison.
+Two different fields, two different wedges. Against **AI memory tools**, the wedge is a verifiable, challenged record. Against **tamper-evident audit ledgers**, it's the self-challenge.
 
-| Project | What it does well | What PCIS does differently |
+### vs. AI memory tools — wedge: a verifiable, challenged record
+
+| Project | What it does well | What PCIS adds |
 |---|---|---|
-| **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | No cryptographic proof — audit trail is logs, not a Merkle root. Cloud-coupled deployment by default. PCIS is a JSON file on your own infrastructure with a verifiable Merkle root. |
-| **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Consumer market (personal productivity). No tamper evidence, no adversarial claim challenge, no compliance audit trail. |
-| **Letta / MemGPT** | Mature, multi-agent, OS-memory model | No epistemic hygiene — memories accumulate without contradiction detection. No cryptographic integrity. |
-| **Mem0** | Simple API, easy integration | Retrieval only — no claim revision, no gardener, no proof of what the agent knew and when. |
-| **Traditional RAG** | Fast, scalable, well-understood | Retrieves documents. Does not maintain a challenged claim record, does not detect contradictions, does not prove identity. |
+| **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | A tamper-evident Merkle record plus an adversarial pass; runs as a local JSON file, not cloud-coupled by default. |
+| **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Tamper evidence, adversarial claim-challenge, and a compliance audit trail. |
+| **Letta / MemGPT** | Mature, multi-agent, OS-memory model | Contradiction detection and epistemic hygiene; cryptographic integrity over every state. |
+| **Mem0** | Simple API, easy integration | Claim revision (the gardener) and proof of what the agent knew, and when. |
+| **Traditional RAG** | Fast, scalable, well-understood | A challenged claim record with contradiction detection — retrieval alone maintains none. |
 
-**The core distinction:** most AI memory tools solve *retrieval*. PCIS is an **accountability substrate** — it records what an agent claimed, how those claims have been challenged, and cryptographic proof of the state at any point in time.
+### vs. tamper-evident / audit ledgers — wedge: the self-challenge
 
-For regulated environments (finance, healthcare, compliance) where "the AI said so" is not enough, PCIS pairs a tamper-evident claim record with an adversarial process that challenges the agent's own high-confidence claims — and the self-challenge, not the tamper-evidence, is the wedge. Tamper-evident append-only records are well-established (Certificate Transparency, Sigstore/Rekor, hash-chained logs); a substrate that attacks its own record for contradictions and staleness is the novel part.
+These prove the log wasn't edited. None of them test whether the claim still holds — an intact record and a stale belief coexist just fine. That gap is what PCIS is built for.
 
-> *Memoria remembers. PCIS proves.*
+| Project | What it does well | What PCIS adds |
+|---|---|---|
+| **ChainProof** | Hash-chained, tamper-evident audit log | An adversarial process that attacks the record's own high-confidence claims. |
+| **SignLedger** | Signed, append-only ledger | Contradiction detection and COUNTER entries — proof-of-intact is not proof-of-correct. |
+| **Capsule Protocol** | Cryptographic commitment of records | Self-challenge over the committed claims, not just proof they're unchanged. |
+| **Signatrust** | Signature-based integrity attestation | Epistemic maintenance: the gardener pressure-tests what was attested. |
+| **VCP** | Verifiable claim / credential proofs | Ongoing adversarial re-challenge, not one-time verification. |
+
+**The core distinction:** most AI memory tools solve *retrieval*; audit ledgers solve *tamper-evidence*. PCIS pairs a tamper-evident claim record with an adversarial process that challenges the agent's own high-confidence claims — and **the self-challenge, not the tamper-evidence, is the wedge**. Tamper-evident append-only records are well-established (Certificate Transparency, Sigstore/Rekor, hash-chained logs); a substrate that attacks its own record for contradictions and staleness is the novel part.
 
 ---
 

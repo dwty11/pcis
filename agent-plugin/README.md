@@ -1,6 +1,6 @@
 # PCIS Agent Plugin
 
-Give any compatible agent persistent, cryptographically verifiable long-term memory.
+Give any compatible agent a self-challenging, tamper-evident claim record — persistent memory that gets audited, not just stored.
 
 ## Installation
 

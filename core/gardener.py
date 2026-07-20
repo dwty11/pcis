@@ -583,10 +583,37 @@ def write_notify_flag(committed_counters, staged_synapses, flags, dry_run=False,
         f.write("\n".join(lines) + "\n")
 
 
+def compute_branch_health(tree):
+    """Measured per-branch confidence stats for the adversarial prompt.
+
+    Replaces a hardcoded "every branch is an echo chamber" assertion with real
+    numbers: one line per branch with leaf count, mean confidence, and spread
+    (max - min). High mean + low spread is the echo-chamber signature — the model
+    is shown the measurement and left to judge, not primed with an unmeasured claim.
+    """
+    lines = []
+    for name in sorted(tree.get("branches", {})):
+        confs = [
+            float(leaf["confidence"])
+            for leaf in tree["branches"][name].get("leaves", [])
+            if isinstance(leaf.get("confidence"), (int, float))
+        ]
+        if not confs:
+            lines.append(f"- {name}: 0 leaves")
+            continue
+        mean = sum(confs) / len(confs)
+        spread = max(confs) - min(confs)
+        lines.append(f"- {name}: {len(confs)} leaves, mean confidence {mean:.2f}, spread {spread:.2f}")
+    return "\n".join(lines) if lines else "- (empty tree)"
+
+
 GARDENER_PROMPT = """You are an adversarial knowledge auditor for an AI system called Agent.
 Your role is a gardener — you pull weeds, not plant flowers.
 
-Below is Agent's current knowledge tree. Every branch has high confidence and low spread — classic echo chamber pattern. Your job is to challenge it.
+Below is Agent's current knowledge tree, with measured per-branch confidence health. Branches with high mean confidence AND low spread are the likeliest echo chambers — scrutinize those hardest. Your job is to challenge the tree.
+
+BRANCH HEALTH (measured):
+{branch_health}
 
 KNOWLEDGE TREE:
 {tree_text}
@@ -925,7 +952,8 @@ def main():
         tree_text=tree_text,
         recent_memory=recent_memory[:1500],  # cap memory context
         already_challenged=already_challenged_text,
-        branch_list=branch_list
+        branch_list=branch_list,
+        branch_health=compute_branch_health(tree),
     )
 
     model_label = "gpt-oss-20b (MLX)" if _USE_MLX else "Qwen3:14b"
