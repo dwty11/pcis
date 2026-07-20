@@ -29,7 +29,7 @@ PCIS is a v1.x project — the architecture is solid, the implementation has kno
 
 ## License note
 
-PCIS is under BSL 1.1. Non-commercial contributions are welcome. If you're contributing on behalf of a company using PCIS commercially, make sure you have a license first (idwty@proton.me).
+PCIS is licensed under Apache 2.0. Contributions are welcome — by submitting a contribution you agree to license it under the same terms (see [LICENSE](LICENSE)).
 
 ---
 

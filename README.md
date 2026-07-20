@@ -13,7 +13,7 @@ On every maintenance pass, an adversarial process — **the gardener** — reads
 
 **The full argument:** [Persistent Cognitive Integrity — the case](docs/PCIS.md). This README is the front door; the essay is the *why*.
 
-[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-orange)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](https://github.com/dwty11/pcis/releases)
+[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](https://github.com/dwty11/pcis/releases)
 
 Built by [@dwty_11](https://x.com/dwty_11)
 
@@ -93,7 +93,3 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 ## Requirements
 
 Python 3.10+, Linux or macOS (Windows not yet — `fcntl`). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, both fall back to keyword matching / pre-generated challenges. Demo mode needs nothing.
-
-## License
-
-Business Source License 1.1 — free for non-commercial use, forever. Commercial production deployment requires a license: idwty@proton.me. Converts to Apache 2.0 on 2030-03-20. See [LICENSE](LICENSE).
