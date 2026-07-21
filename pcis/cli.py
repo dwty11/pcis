@@ -44,8 +44,29 @@ def _set_base_dir(args):
         os.environ["PCIS_BASE_DIR"] = os.getcwd()
 
 
+def _is_pcis_source_repo(path):
+    """True if `path` is the PCIS source checkout — its data/ is demo/working space
+    (or, on a maintainer's box, a real substrate), never a place for a new user's tree."""
+    return (os.path.exists(os.path.join(path, "demo", "demo_tree.json")) and
+            os.path.exists(os.path.join(path, "core", "gardener.py")))
+
+
+def _guard_not_source_repo(args):
+    """Refuse to write a user's tree into the PCIS source repo's data/. Skipped when the
+    base is chosen explicitly (--dir or PCIS_BASE_DIR) — that is a deliberate choice."""
+    explicit = bool(getattr(args, "dir", None)) or ("PCIS_BASE_DIR" in os.environ)
+    if not explicit and _is_pcis_source_repo(os.getcwd()):
+        print("⚠️  This is the PCIS source repo — refusing to write a tree into its data/")
+        print("   (that directory is demo/working space, not your knowledge).")
+        print("   Point PCIS at a directory of your own and re-run:")
+        print("     export PCIS_BASE_DIR=~/my-pcis        # then: pcis init")
+        print("     # or one-off:  pcis --dir ~/my-pcis init")
+        sys.exit(1)
+
+
 def cmd_init(args):
     """Initialize a new PCIS knowledge tree."""
+    _guard_not_source_repo(args)
     _set_base_dir(args)
     base = os.environ["PCIS_BASE_DIR"]
     data_dir = os.path.join(base, "data")
@@ -80,6 +101,7 @@ def cmd_init(args):
 
 def cmd_add(args):
     """Add knowledge to the tree."""
+    _guard_not_source_repo(args)
     _set_base_dir(args)
     from knowledge_tree import tree_lock, add_knowledge
 

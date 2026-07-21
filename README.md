@@ -57,12 +57,14 @@ Open `http://localhost:5555` — nine tabs (Adversarial first), the full archite
 After `bash setup.sh`, activate the environment so the `pcis` command and its dependencies are on hand:
 
 ```bash
-source .venv/bin/activate     # Windows (Git Bash): source .venv/Scripts/activate
+source .venv/bin/activate          # macOS / Linux
+# source .venv/Scripts/activate    # Windows (Git Bash)
 ```
 
-Put a claim you suspect is overconfident into a tree of your own, then watch the gardener build its attack on it:
+Point PCIS at a directory of your own — your tree lives there, not in the repo's demo data — then put in a claim you suspect is overconfident and watch the gardener build its attack on it:
 
 ```bash
+export PCIS_BASE_DIR=~/my-pcis     # your knowledge tree lives here
 pcis init
 pcis add technical "Postgres beats MySQL for every workload we run" --confidence 0.9
 pcis add lessons   "Never deploy on Fridays" --confidence 0.8

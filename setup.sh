@@ -37,7 +37,9 @@ else
 fi
 
 echo ""
+# Print the activate path that actually exists on this OS (Unix bin/, Windows Scripts/).
+ACT="$HERE/.venv/bin/activate"; [ -f "$ACT" ] || ACT="$HERE/.venv/Scripts/activate"
 echo "Setup complete."
 echo "To run the Advocate demo:      ./run_demo.sh"
 echo "To run the server demo:        bash start_demo.sh"
-echo "To challenge your own claims:  source .venv/bin/activate, then 'pcis init' (see README)"
+echo "To challenge your own claims:  source ${ACT#$HERE/}, then 'export PCIS_BASE_DIR=~/my-pcis' and 'pcis init' (see README)"
