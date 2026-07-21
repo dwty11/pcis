@@ -94,7 +94,7 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 
 ## Requirements
 
-Python 3.10+, Linux or macOS (Windows not yet — `fcntl`). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, both fall back to keyword matching / pre-generated challenges. Demo mode needs nothing.
+Python 3.10+, Linux, macOS, or Windows (the replay demo runs anywhere with Python; the gardener's write path uses advisory locking that's Unix-only and degrades to atomic single-writer on Windows). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, both fall back to keyword matching / pre-generated challenges. Demo mode needs nothing.
 
 ---
 
