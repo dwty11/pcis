@@ -15,7 +15,11 @@ export PCIS_TREE_FILE="$HERE/fixtures/seed_tree.json"
 
 case "${1:-}" in
   --verify-self) exec "$PY" "$HERE/verify_self.py" ;;
-  --live)        exec "$PY" "$HERE/replay.py" --live ;;
+  --live)
+    # Default --live to the model the recording used (canonical_run.json's `model`),
+    # so replay and live agree out of the box. A user's own PCIS_GARDENER_MODEL wins.
+    export PCIS_GARDENER_MODEL="${PCIS_GARDENER_MODEL:-$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["model"])' "$HERE/fixtures/canonical_run.json")}"
+    exec "$PY" "$HERE/replay.py" --live ;;
   --replay|"")   exec "$PY" "$HERE/replay.py" ;;
   -h|--help)     echo "usage: run_demo.sh [--replay | --live | --verify-self]"; exit 0 ;;
   *) echo "unknown option: $1"; echo "usage: run_demo.sh [--replay | --live | --verify-self]"; exit 2 ;;

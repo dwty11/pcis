@@ -253,8 +253,20 @@ def call_ollama(prompt, model=GARDENER_MODEL):
         with urllib.request.urlopen(req, timeout=180) as resp:
             result = json.loads(resp.read().decode())
             return result.get("response", "").strip()
+    except urllib.error.HTTPError as e:
+        # HTTPError is a subclass of URLError — catch it FIRST. Ollama returns 404
+        # from /api/generate when the model isn't pulled; that is NOT an unreachable
+        # server, and saying so sends people chasing connectivity on a healthy Ollama.
+        if e.code == 404:
+            log.error(
+                "❌ Ollama at %s has no model '%s'. Pull it (`ollama pull %s`) "
+                "or set PCIS_GARDENER_MODEL to an installed model.",
+                OLLAMA_HOST, model, model)
+        else:
+            log.error("❌ Ollama returned HTTP %s at %s: %s", e.code, OLLAMA_URL, e)
+        sys.exit(1)
     except urllib.error.URLError as e:
-        log.error("❌ Ollama unreachable: %s", e)
+        log.error("❌ Ollama unreachable at %s: %s", OLLAMA_HOST, e)
         sys.exit(1)
 
 
