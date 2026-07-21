@@ -231,6 +231,12 @@ def call_ollama(prompt, model=GARDENER_MODEL):
         "model": model,
         "prompt": prompt,
         "stream": False,
+        # Disable reasoning mode: thinking-capable Ollama models (qwen3 family,
+        # incl. the documented default qwen3:14b) otherwise route their answer to
+        # a separate `thinking` field and return an EMPTY `response`, so the
+        # gardener parses 0 results. `think:false` is ignored by non-thinking
+        # models. (Bug-fix, independent of the Advocate Demo.)
+        "think": False,
         "options": {
             "temperature": 0.7,
             "num_predict": 2000,
