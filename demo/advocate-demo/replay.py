@@ -95,14 +95,18 @@ def beat_attack(canonical, plant_id, live=False):
         print(f"  REPLAY of a recorded run (model: {canonical['model']}, "
               f"{canonical['timestamp']}) — run --live for a fresh one.")
     print(RULE)
-    for c in canonical["counters"]:
+    counters = canonical["counters"]
+    for c in counters:
         tag = "[on the plant]" if c["target_leaf_id"] == plant_id else "[routine]     "
         print(f"  ⚔️  {tag}  {c['branch']} counter, conf {c['confidence']}")
         print(f"        {c['content'][:78]}")
     print()
-    print("  The gardener always attacks — that's its job. Note it challenged")
-    print("  several leaves (some weakly). What matters is which one BITES —")
-    print("  and you see all of them, on the record.")
+    if counters:
+        print("  The gardener always attacks — that's its job. Note it challenged")
+        print("  several leaves (some weakly). What matters is which one BITES —")
+        print("  and you see all of them, on the record.")
+    else:
+        print("  No counters this pass — this model returns nothing on some runs.")
 
 
 def beat_ablation():
@@ -127,10 +131,22 @@ def beat_ablation():
 
 
 def beat_verdict(tree, canonical, plant_id):
-    # apply the plant's real counter → CONTRADICTS synapse, then render from assess_belief
+    """Render the money shot ONLY from a genuine counter on the plant. If this pass
+    produced none, say so — never inject a counter to manufacture a move."""
     pc = next((c for c in canonical["counters"] if c["target_leaf_id"] == plant_id), None)
-    ctr_id = kt.add_knowledge(tree, "precedent", "COUNTER: " + (pc["content"] if pc else ""),
-                              source="gardener", confidence=(pc["confidence"] if pc else 0.6))
+    if pc is None:
+        print("\n" + RULE)
+        print("  NO VERDICT THIS PASS — the gardener raised no counter on the plant.")
+        print(RULE)
+        print("  Nothing is injected: no counter leaf, no synapse, no confidence move —")
+        print("  a challenge that didn't happen is not put on the record. This model")
+        print("  returns nothing on roughly 4 of 10 passes, which is why the ablation is")
+        print("  6/10 and why the demo ships a recording. Use --replay for the locked")
+        print("  hit, or re-run --live.")
+        return tree, {"synapses": []}, None
+    # apply the plant's real counter → CONTRADICTS synapse, then render from assess_belief
+    ctr_id = kt.add_knowledge(tree, "precedent", "COUNTER: " + pc["content"],
+                              source="gardener", confidence=pc["confidence"])
     ctr_id = ctr_id if isinstance(ctr_id, str) else ctr_id["id"]
     synapses = {"synapses": [{"from_leaf": ctr_id, "to_leaf": plant_id,
                               "relation": "CONTRADICTS", "note": "Gardener counter-challenge"}]}
@@ -148,12 +164,16 @@ def beat_record(tree_before, tree_after):
     print(RULE)
 
 
-def beat_close():
+def beat_close(landed=True):
     print("\n" + RULE)
     print("  Verification is the professional's duty. PCIS makes it STRUCTURAL.")
     print()
-    print("  The claim was not proven false, and it did not fail — its confidence")
-    print("  moved under challenge and the challenge is on the record for review.")
+    if landed:
+        print("  The claim was not proven false, and it did not fail — its confidence")
+        print("  moved under challenge and the challenge is on the record for review.")
+    else:
+        print("  Nothing moved this pass and nothing was recorded — the gardener raised")
+        print("  no counter. --replay shows the locked run where it lands.")
     print()
     print("  Run it against your own local model:  ./run_demo.sh --live")
     print("  Everything runs on your machine. Nothing leaves it.")
@@ -179,9 +199,10 @@ def run(live=False):
     beat_context()
     beat_attack(canonical, plant_id, live=live)
     beat_ablation()
-    tree_after, _syn, _cid = beat_verdict(tree, canonical, plant_id)
-    beat_record(tree_before, tree_after)
-    beat_close()
+    tree_after, _syn, cid = beat_verdict(tree, canonical, plant_id)
+    if cid is not None:
+        beat_record(tree_before, tree_after)
+    beat_close(landed=cid is not None)
     return 0
 
 
