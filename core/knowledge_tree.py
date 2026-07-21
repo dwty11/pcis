@@ -31,9 +31,19 @@ Examples:
     python3 knowledge_tree.py --diff /path/to/other/knowledge_tree.json
 
 No external dependencies. Python 3.8+.
+
+Platform note: `fcntl` provides advisory inter-process write locks and is Unix-only.
+On Windows it is absent, so locking is skipped there; writes still go through
+`os.replace`, which is atomic, so single-writer integrity (the demo and single-user
+agent case) is preserved. What is lost on Windows is cross-process write
+serialization: concurrent writers degrade to last-writer-wins. See `save_tree` /
+`tree_lock`.
 """
 
-import fcntl
+try:
+    import fcntl
+except ImportError:  # Windows: no fcntl -> advisory locking degrades (see module docstring)
+    fcntl = None
 import hashlib
 import json
 import logging
@@ -360,12 +370,19 @@ def load_tree(path=None):
 
 def save_tree(tree, path=None):
     """Save tree atomically with file locking.
-    For multi-process safety, prefer tree_lock() context manager."""
+
+    For multi-process safety, prefer the tree_lock() context manager.
+
+    On Windows (`fcntl` absent) the advisory lock is skipped: the write itself
+    stays atomic via os.replace, so single-writer integrity holds, but concurrent
+    writers are not serialized (last-writer-wins). Full cross-process safety
+    requires a Unix host."""
     path = path or TREE_FILE
     lock_path = path + ".lock"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(lock_path, 'w') as lock_f:
-        fcntl.flock(lock_f, fcntl.LOCK_EX)
+        if fcntl is not None:
+            fcntl.flock(lock_f, fcntl.LOCK_EX)
         _write_tree(tree, path)
 
 
@@ -395,12 +412,17 @@ def _write_tree(tree, path):
 
 @contextmanager
 def tree_lock(path=None):
-    """Acquire exclusive lock on tree file. Yields loaded tree, saves on exit."""
+    """Acquire exclusive lock on tree file. Yields loaded tree, saves on exit.
+
+    On Windows (`fcntl` absent) the exclusive lock is skipped, so this ceases to
+    guard against a concurrent writer between the load and the save; the save
+    remains atomic (os.replace). Cross-process serialization requires a Unix host."""
     path = path or TREE_FILE
     lock_path = path + ".lock"
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(lock_path, 'w') as lf:
-        fcntl.flock(lf, fcntl.LOCK_EX)
+        if fcntl is not None:
+            fcntl.flock(lf, fcntl.LOCK_EX)
         tree = load_tree(path)
         yield tree
         _write_tree(tree, path)

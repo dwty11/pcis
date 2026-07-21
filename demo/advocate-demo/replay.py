@@ -23,6 +23,13 @@ FIX = os.path.join(HERE, "fixtures")
 sys.path.insert(0, os.path.join(REPO, "core"))
 sys.path.insert(0, HERE)
 
+# Windows (and piped) stdout can default to a non-UTF-8 codec that cannot encode this
+# demo's box-drawing / non-ASCII. Force UTF-8 so it renders everywhere (no-op if already).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 import knowledge_tree as kt
 import verdict as V
 
@@ -30,11 +37,13 @@ RULE = "─" * 64
 
 
 def _load(name):
-    return json.load(open(os.path.join(FIX, name)))
+    with open(os.path.join(FIX, name), encoding="utf-8") as f:
+        return json.load(f)
 
 
 def _plant_id():
-    return open(os.path.join(FIX, "PLANT_ID.txt")).read().strip()
+    with open(os.path.join(FIX, "PLANT_ID.txt"), encoding="utf-8") as f:
+        return f.read().strip()
 
 
 def _find(tree, lid):
@@ -69,7 +78,8 @@ def beat_tree(tree, plant_id):
 
 
 def beat_context():
-    note = open(os.path.join(FIX, "base", "memory", "2026-07-17.md")).read()
+    with open(os.path.join(FIX, "base", "memory", "2026-07-17.md"), encoding="utf-8") as f:
+        note = f.read()
     print("\n" + RULE)
     print("  RECENT SESSION MEMORY (last 5 days) — the context the gardener reads:")
     print(RULE)

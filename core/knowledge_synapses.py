@@ -6,9 +6,18 @@ Turns the Merkle Knowledge Tree from a filing cabinet into a belief network.
 Each synapse is a directed edge with a relation type, tamper-evident via SHA-256.
 
 No external dependencies. Python 3.8+.
+
+Platform note: `fcntl` provides advisory file locks and is Unix-only. On Windows it
+is absent, so `load_synapses`/`save_synapses` skip locking; the save still uses an
+atomic os.replace and the load reads the whole file in one json.load, so a reader
+never sees a torn file. What is lost on Windows is cross-process write serialization
+(concurrent writers degrade to last-writer-wins).
 """
 
-import fcntl
+try:
+    import fcntl
+except ImportError:  # Windows: no fcntl -> advisory locking degrades (see module docstring)
+    fcntl = None
 import hashlib
 import json
 import os
@@ -45,8 +54,9 @@ def compute_synapses_root(synapses):
 def load_synapses(path=None):
     path = path or SYNAPSES_FILE
     if os.path.exists(path):
-        with open(path, "r") as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
+        with open(path, "r", encoding="utf-8") as f:
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_SH)
             try:
                 data = json.load(f)
             except json.JSONDecodeError as e:
@@ -54,7 +64,8 @@ def load_synapses(path=None):
                 print(f"       Fix or remove {path} manually.")
                 sys.exit(1)
             finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+                if fcntl is not None:
+                    fcntl.flock(f, fcntl.LOCK_UN)
             return data
     return {
         "version": 1,
@@ -71,12 +82,14 @@ def save_synapses(synapses, path=None):
     synapses["root_hash"] = compute_synapses_root(synapses)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
+    with open(tmp, "w", encoding="utf-8") as f:
+        if fcntl is not None:
+            fcntl.flock(f, fcntl.LOCK_EX)
         try:
             json.dump(synapses, f, indent=2)
         finally:
-            fcntl.flock(f, fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_UN)
     os.replace(tmp, path)
 
 
