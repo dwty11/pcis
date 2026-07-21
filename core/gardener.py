@@ -2,7 +2,7 @@
 """
 gardener.py — PCIS Knowledge Tree Gardener
 
-Runs on a local LLM (Qwen3:14b) to tend the knowledge tree:
+Runs on a local LLM (qwen3.5:9b) to tend the knowledge tree:
   - Finds echo chambers (high confidence, no counter-leaves)
   - Generates adversarial counter-arguments to the highest-confidence leaves
   - Identifies cross-branch synapses not yet documented
@@ -18,7 +18,7 @@ Usage:
     python3 gardener.py --gap-scan          # Extract today's results, find knowledge gaps
 
 Schedule: not automatic — run on demand, or add your own cron (e.g. daily 02:00 UTC) — adversarial pass + gap-scan
-Model: qwen3:14b (free, local)
+Model: qwen3.5:9b (free, local)
 """
 
 import json
@@ -64,7 +64,7 @@ OLLAMA_URL = f"{OLLAMA_HOST}/api/generate"
 MLX_HOST = os.environ.get("PCIS_MLX_HOST", "http://localhost:8080")
 MLX_MODEL = "mlx-community/gpt-oss-20b-MXFP4-Q8"
 _USE_MLX = os.environ.get("PCIS_GARDENER_MODEL", "").startswith("mlx") or os.environ.get("PCIS_USE_MLX", "").lower() == "true"
-GARDENER_MODEL = os.environ.get("PCIS_GARDENER_MODEL", "qwen3:14b")
+GARDENER_MODEL = os.environ.get("PCIS_GARDENER_MODEL", "qwen3.5:9b")
 TZ_UTC = timezone(timedelta(hours=0))
 
 
@@ -245,7 +245,7 @@ def call_ollama(prompt, model=GARDENER_MODEL):
         "prompt": prompt,
         "stream": False,
         # Disable reasoning mode: thinking-capable Ollama models (qwen3 family,
-        # incl. the documented default qwen3:14b) otherwise route their answer to
+        # incl. the default qwen3.5:9b) otherwise route their answer to
         # a separate `thinking` field and return an EMPTY `response`, so the
         # gardener parses 0 results. `think:false` is ignored by non-thinking
         # models. (Bug-fix, independent of the Advocate Demo.)

@@ -37,3 +37,22 @@ def test_dry_run_shows_attack_and_exits_clean_without_a_usable_model(tmp_path):
     assert "ollama" in out.lower(), "must guide the user toward a local model"
     assert "not the result" in out.lower() or "attack" in out.lower(), \
         "must distinguish the attack shown from the (ungenerated) result"
+
+
+def test_gardener_default_model_matches_the_ablation(tmp_path):
+    """The gardener's DEFAULT must be qwen3.5:9b — the model the Advocate demo and the
+    6/10 ablation were measured on, and what run_demo.sh --live resolves to. Otherwise a
+    stranger pulls a different model than the one number they can check applies to."""
+    base = str(tmp_path)
+    env = {k: v for k, v in os.environ.items() if k != "PCIS_GARDENER_MODEL"}
+    env["OLLAMA_HOST"] = "http://127.0.0.1:1"  # unreachable -> the no-model hint always fires
+    subprocess.run([sys.executable, "-m", "pcis.cli", "--dir", base, "init"],
+                   capture_output=True, text=True, cwd=REPO, env=env, timeout=30)
+    subprocess.run([sys.executable, "-m", "pcis.cli", "--dir", base, "add", "technical",
+                    "some overconfident claim", "--confidence", "0.9"],
+                   capture_output=True, text=True, cwd=REPO, env=env, timeout=30)
+    r = subprocess.run([sys.executable, "-m", "pcis.cli", "--dir", base, "gardener", "--dry-run"],
+                       capture_output=True, text=True, cwd=REPO, env=env, timeout=30)
+    out = r.stdout + r.stderr
+    assert "qwen3.5:9b" in out, "the gardener default must be qwen3.5:9b (the ablation model)"
+    assert "qwen3:14b" not in out, "no stray qwen3:14b in the default gardener path"

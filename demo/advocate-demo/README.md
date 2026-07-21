@@ -95,5 +95,6 @@ only — there is no cloud path in `core/gardener.py` — and replay needs no mo
 ## Requirements
 
 - **Replay:** Python 3.8+. Nothing else.
-- **Live:** a local Ollama with one pulled model. Tested on `qwen3.5:9b`; the gardener's
-  documented default is `qwen3:14b`. First run is dominated by model load (~1–3 min).
+- **Live:** a local Ollama with one pulled model. Recorded on `qwen3.5:9b`, which is also
+  the gardener's default — pull that one and everything here lines up. First run is
+  dominated by model load (~1–3 min).
