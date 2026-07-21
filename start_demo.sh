@@ -21,11 +21,17 @@ if [ ! -f "$REPO/demo/server.py" ]; then
   exit 1
 fi
 
-# ── 2. Check dependencies ─────────────────────────────────────────────────
+# ── 2. Check dependencies (auto-bootstrap via setup.sh if missing) ─────────
 echo "  [1/5] Checking Python dependencies..."
-if ! $PYTHON -c "import flask" 2>/dev/null; then
-  echo "  ✗  Flask not found. Run: pip install flask"
-  exit 1
+if ! "$PYTHON" -c "import flask" 2>/dev/null; then
+  echo "  ○  Flask not found — bootstrapping with 'bash setup.sh'..."
+  bash "$REPO/setup.sh" || true
+  # setup.sh creates the venv; re-resolve so we pick it up.
+  PYTHON="$(REPO="$REPO" bash "$REPO/scripts/resolve_python.sh")"
+  if ! "$PYTHON" -c "import flask" 2>/dev/null; then
+    echo "  ✗  Flask still missing after setup. Run 'bash setup.sh' and check its output."
+    exit 1
+  fi
 fi
 echo "  ✓  Flask OK"
 

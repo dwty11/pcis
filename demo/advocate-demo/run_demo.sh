@@ -8,7 +8,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
-PY="${PYTHON:-python3}"
+PY="$(REPO="$REPO" bash "$REPO/scripts/resolve_python.sh")"
 export PYTHONPATH="$REPO/core:$REPO:${PYTHONPATH:-}"
 export PCIS_BASE_DIR="$HERE/fixtures/base"
 export PCIS_TREE_FILE="$HERE/fixtures/seed_tree.json"

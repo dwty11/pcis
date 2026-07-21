@@ -3,14 +3,24 @@ set -e
 
 echo "Setting up PCIS..."
 
-# Create and activate a virtual environment if not already inside one
-if [ -z "$VIRTUAL_ENV" ]; then
-    python3 -m venv .venv
-    source .venv/bin/activate
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# Resolve a working Python — stub-aware, so the Windows Store `python3` no-op stub
+# never gets picked. No venv exists yet, so this returns a system interpreter.
+PY="$(REPO="$HERE" bash "$HERE/scripts/resolve_python.sh")"
+
+# Create the virtualenv if we're not already inside one.
+if [ -z "${VIRTUAL_ENV:-}" ]; then
+    "$PY" -m venv .venv
     echo "Virtual environment created at .venv"
 fi
 
-pip install -r requirements.txt
+# Use the venv interpreter directly (Unix bin/ or Windows Scripts/) — no
+# `source .venv/bin/activate`, which differs by OS and breaks under Git Bash.
+VENV_PY="$HERE/.venv/bin/python"
+[ -x "$VENV_PY" ] || VENV_PY="$HERE/.venv/Scripts/python.exe"
+[ -x "$VENV_PY" ] || VENV_PY="$PY"   # already inside a venv, or venv creation skipped
+
+"$VENV_PY" -m pip install -r requirements.txt
 mkdir -p data
 cp demo/demo_tree.json data/tree.json
 echo '[]' > data/belief-history.json
@@ -26,5 +36,5 @@ fi
 
 echo ""
 echo "Setup complete."
-echo "To activate: source .venv/bin/activate"
-echo "To run:      python demo/server.py"
+echo "To run the server demo:   bash start_demo.sh"
+echo "To run the Advocate demo: ./run_demo.sh"

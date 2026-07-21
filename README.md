@@ -45,7 +45,7 @@ python3 core/knowledge_tree.py --add technical "Postgres beats MySQL for our wor
 PCIS_BASE_DIR=. python3 core/gardener.py --dry-run
 ```
 
-The gardener finds overconfident leaves and generates counter-arguments; `--dry-run` shows the attack without writing anything. It runs on a local Ollama or MLX model — nothing leaves your machine, nothing runs on a schedule unless you set one. It refuses to run without an explicit `PCIS_BASE_DIR` (see **Operational Safety**).
+The gardener finds overconfident leaves and generates counter-arguments; `--dry-run` shows the attack without writing anything. It runs on a local Ollama or MLX model — nothing leaves your machine, nothing runs on a schedule unless you set one. It refuses to run without an explicit `PCIS_BASE_DIR` (see **Operational Safety**). *(On Windows, invoke with `py -3` in place of `python3` — the bundled `python3` there is a non-functional Store stub.)*
 
 ## The Advocate Demo
 
@@ -54,11 +54,12 @@ A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims —
 The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for human review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, the record grew, and the verification the court calls a professional duty is made structural.
 
 ```bash
-cd demo/advocate-demo
 ./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ./run_demo.sh --live          # run the gardener fresh on your own local model
 ./run_demo.sh --verify-self   # SHA-256 every script + fixture against the canonical fingerprint
 ```
+
+Runs from the repo root straight after `git clone` — `--replay` (the default) needs only Python, nothing to install.
 
 The gardener always attacks — the demo shows every counter it raised, weak ones included, and which one bit. Everything runs on your machine; the gardener is Ollama/MLX only, and replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 

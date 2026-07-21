@@ -16,6 +16,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE="${PCIS_BASE_DIR:-$HERE}"
 TREE="$BASE/data/tree.json"
+PY="$(REPO="$HERE" bash "$HERE/scripts/resolve_python.sh")"
 
 if [ ! -f "$TREE" ]; then
   echo "No tree at $TREE — run 'bash setup.sh' first to initialize one." >&2
@@ -23,9 +24,9 @@ if [ ! -f "$TREE" ]; then
 fi
 
 # Full content-integrity check (re-derives per-leaf hashes; exit 0 = CLEAN, 1 = TAMPERED).
-out="$(python3 -m pcis.cli --dir "$BASE" verify 2>&1)"; rc=$?
-root="$(python3 -m pcis.cli --dir "$BASE" root 2>/dev/null)"
-leaves="$(python3 - "$TREE" <<'PY'
+out="$("$PY" -m pcis.cli --dir "$BASE" verify 2>&1)"; rc=$?
+root="$("$PY" -m pcis.cli --dir "$BASE" root 2>/dev/null)"
+leaves="$("$PY" - "$TREE" <<'PY'
 import json, sys
 tree = json.load(open(sys.argv[1]))
 print(sum(len(b.get("leaves", [])) for b in tree.get("branches", {}).values()))
