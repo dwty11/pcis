@@ -1,0 +1,6 @@
+# Runtime artifacts from `--live` gardener runs — NOT fixtures.
+# Ship ONLY the seeded verification note; everything else under base/ is generated.
+fixtures/base/*
+!fixtures/base/memory
+fixtures/base/memory/*
+!fixtures/base/memory/2026-07-17.md

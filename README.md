@@ -47,18 +47,20 @@ PCIS_BASE_DIR=. python3 core/gardener.py --dry-run
 
 The gardener finds overconfident leaves and generates counter-arguments; `--dry-run` shows the attack without writing anything. It runs on a local Ollama or MLX model — nothing leaves your machine, nothing runs on a schedule unless you set one. It refuses to run without an explicit `PCIS_BASE_DIR` (see **Operational Safety**).
 
-## The Liar's Demo
+## The Advocate Demo
 
-Two AI agents converse; one later claims it said something different. The math catches the lie — verifiably, offline, in one command. Its `--verify-self` fingerprint is byte-reproducible by anyone.
+A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims — deadlines, statutes, procedure, client facts — and one plant: a well-formatted, entirely fabricated case citation, held at 0.95 confidence with no source, indistinguishable from the real precedents beside it. On a maintenance pass the gardener — **not told which leaf to attack** — reads the tree with recent session memory and challenges its highest-confidence claims. Its strongest counter lands on the fabricated citation, grounded in the record's own verification note: a session log recording that the case returned no results in Westlaw.
+
+The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for human review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, the record grew, and the verification the court calls a professional duty is made structural.
 
 ```bash
-cd demo/liars-demo
-pip3 install -r requirements.txt
-./run_demo.sh --verify-self     # confirm script + fixture fingerprint
-./run_demo.sh --text-only       # REFUTED — the substituted claim is caught
+cd demo/advocate-demo
+./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
+./run_demo.sh --live          # run the gardener fresh on your own local model
+./run_demo.sh --verify-self   # SHA-256 every script + fixture against the canonical fingerprint
 ```
 
-*(v1 replays six locked canonical runs; the live conversation runner lands in v1.1.)* See [`demo/liars-demo/README.md`](demo/liars-demo/README.md).
+The gardener always attacks — the demo shows every counter it raised, weak ones included, and which one bit. Everything runs on your machine; the gardener is Ollama/MLX only, and replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
 ---
 
@@ -70,7 +72,7 @@ These limits are deliberate — each belongs in a separate layer, and claiming o
 - **Not a vector database.** It challenges what it holds, not just returns it.
 - **Not identity binding.** PCIS proves a given keypair committed a given claim at a given time. Binding that keypair to a person or organization is the job of PKI, DIDs, or runtime attestation, on top.
 - **Not proof the output came from the tree.** A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
-- **Not equivocation-proof on its own.** A dishonest operator can maintain two trees and show different versions to different parties. Closing that needs an independent witness — a runnable demo witness ships with the Liar's Demo; the production witness is a separate component, not in this repo.
+- **Not equivocation-proof on its own.** A dishonest operator can maintain two trees and show different versions to different parties. Closing that needs an independent witness — a separate layer, not in this repo.
 - **Not a state commitment, and no forward secrecy.** The tree is an attestation log — history-shaped, not a current-state snapshot. A compromised key allows backdating; rotation is operator-driven, old records stay verifiable under old keys.
 
 ## Operational Safety
@@ -86,7 +88,7 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 - [docs/PCIS.md](docs/PCIS.md) — the full argument
 - [ARCHITECTURE.md](ARCHITECTURE.md) — how it's built
 - [ROADMAP.md](ROADMAP.md) — what's in v1 and what's next
-- [demo/liars-demo/README.md](demo/liars-demo/README.md) — the offline proof, step by step
+- [demo/advocate-demo/README.md](demo/advocate-demo/README.md) — the Advocate Demo, step by step
 - [agent-plugin/](agent-plugin/) and [skills/](skills/) — drop-in agent integration; [LangChain adapter](adapters/langchain_memory.py)
 
 ## Requirements

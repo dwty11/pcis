@@ -8,7 +8,7 @@ Honest about what v1.0 is and what comes next.
 
 PCIS is one substrate that sells into three distinct audiences via three distinct framings.
 
-- **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated by Demo 1 (The Liar's Demo, below). (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
+- **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated in a prior release; a multi-agent demo returns after the witness-layer redesign. (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
 - **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Future demo.
 - **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not. Future demo (Pianist Swap).
 
@@ -48,21 +48,18 @@ PCIS is designed around seven recurring failure modes of production AI memory sy
 
 ---
 
-## Demo 1 — The Liar's Demo
+## Demo 1 — The Advocate Demo
 
-A CLI proof-of-concept demonstrating tamper-evident agent memory (Position A — multi-agent coordination). Two agents have a conversation; one later claims to have said something different. The math catches it in under 90 seconds.
+A CLI proof-of-concept for single-agent compliance and self-challenge (Position B). A legal-assistant agent holds a fabricated case citation at 0.95 confidence; the gardener — not told which leaf to attack — challenges it against the record's own verification note. Its confidence moves under challenge and the counter is surfaced for review, permanently on the record. Runs in under 60 seconds.
 
 ```bash
-cd demo/liars-demo
-./run_demo.sh --honest                     # CLEAN
-./run_demo.sh --text-only                  # REFUTED — text substitution
-./run_demo.sh --memory-only                # REFUTED — memory substitution
-./run_demo.sh --replay forged-signature    # REFUTED — bad signature
+cd demo/advocate-demo
+./run_demo.sh                 # replay a locked, recorded real gardener run
+./run_demo.sh --live          # run the gardener fresh on your own local model
+./run_demo.sh --verify-self   # SHA-256 every script + fixture vs the canonical fingerprint
 ```
 
-Verify all script and fixture hashes: `./run_demo.sh --verify-self`
-
-See: [`demo/liars-demo/README.md`](demo/liars-demo/README.md)
+See: [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md)
 
 ---
 

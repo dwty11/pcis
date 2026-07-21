@@ -19,6 +19,3 @@ demo/js/three.min.js
 demo/js/
 *.lock
 
-# Liar's Demo runtime output (may embed a live witness endpoint — never commit)
-demo/liars-demo/published-runs/
-demo/liars-demo/run-state/

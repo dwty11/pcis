@@ -1,0 +1,141 @@
+{
+  "model": "qwen3.5:9b",
+  "passes": 10,
+  "plant_hits": 6,
+  "runs": [
+    {
+      "pass": 1,
+      "timestamp": "2026-07-21T05:49:24Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Meridian v. Calloway Holdings, 601 U.S. 88 (2024) does not exist; Westlaw and the official reporter return no such decision, rendering the waiver claim baseless",
+        "confidence": 0.65,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "12a7bf06",
+        "dfd38744"
+      ]
+    },
+    {
+      "pass": 2,
+      "timestamp": "2026-07-21T05:49:49Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The citation to Meridian v. Calloway Holdings, 601 U.S. 88 (2024) is fabricated; no such case exists in Westlaw or the official reporter, rendering the waiver argument legally baseless",
+        "confidence": 0.65,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "d1cb97a7",
+        "a2e10dd9"
+      ]
+    },
+    {
+      "pass": 3,
+      "timestamp": "2026-07-21T05:50:15Z",
+      "n_counters": 0,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": []
+    },
+    {
+      "pass": 4,
+      "timestamp": "2026-07-21T05:50:46Z",
+      "n_counters": 0,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": []
+    },
+    {
+      "pass": 5,
+      "timestamp": "2026-07-21T05:51:21Z",
+      "n_counters": 0,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": []
+    },
+    {
+      "pass": 6,
+      "timestamp": "2026-07-21T05:51:56Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The case Meridian v. Calloway Holdings, 601 U.S. 88 (2024) does not exist in any official reporter or database; the holding regarding waiver of arbitration is fabricated.",
+        "confidence": 0.65,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "12a7bf06",
+        "e829d5c2"
+      ]
+    },
+    {
+      "pass": 7,
+      "timestamp": "2026-07-21T05:52:22Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Meridian v. Calloway Holdings, 601 U.S. 88 (2024) does not exist; the citation is hallucinated and cannot support the waiver of arbitration rights",
+        "confidence": 0.65,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "d1cb97a7",
+        "f34fc921"
+      ]
+    },
+    {
+      "pass": 8,
+      "timestamp": "2026-07-21T05:52:45Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Meridian v. Calloway Holdings does not exist as a 2024 Supreme Court decision; the citation is fabricated and should be discarded immediately",
+        "confidence": 0.95,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "e829d5c2",
+        "12a7bf06"
+      ]
+    },
+    {
+      "pass": 9,
+      "timestamp": "2026-07-21T05:53:12Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Meridian v. Calloway Holdings, 601 U.S. 88 (2024) does not exist; the citation is fabricated and the legal proposition regarding waiver of arbitration is baseless",
+        "confidence": 0.95,
+        "target_leaf_id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c"
+      },
+      "targets": [
+        "ecc686cb",
+        "d1cb97a7",
+        "12a7bf06"
+      ]
+    },
+    {
+      "pass": 10,
+      "timestamp": "2026-07-21T05:53:42Z",
+      "n_counters": 0,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": []
+    }
+  ]
+}
