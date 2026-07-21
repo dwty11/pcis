@@ -38,7 +38,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
-DEMO_TREE_FILE = os.path.join(DEMO_DIR, "demo_tree.json")
+# The tree the demo server reads/writes. Defaults to the shipped demo_tree.json;
+# PCIS_DEMO_TREE_FILE overrides it so tests (and any caller) can point the server at
+# a private copy and never mutate the shipped file. Backward-compatible: unset = default.
+DEMO_TREE_FILE = os.environ.get("PCIS_DEMO_TREE_FILE") or os.path.join(DEMO_DIR, "demo_tree.json")
 
 # Override knowledge_search paths to use the demo tree and its own index.
 knowledge_search.TREE_FILE = DEMO_TREE_FILE

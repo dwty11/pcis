@@ -26,15 +26,18 @@ sys.path.insert(0, str(REPO_ROOT / "core"))
 from knowledge_tree import hash_leaf
 
 
-# ── Session-scoped backup: restores demo_tree.json no matter what ─────────
+# ── Per-test copy of the demo tree ───────────────────────────────────────
+# Every e2e test operates on its OWN copy in tmp_path, and the server is pointed at
+# that copy via PCIS_DEMO_TREE_FILE. The shipped demo/demo_tree.json is never mutated,
+# so the suite is safe even when a runner shares ONE workspace across the parallel
+# matrix jobs (the GitVerse case). No shared-file backup/restore is needed.
 
-@pytest.fixture(scope="session", autouse=True)
-def _protect_demo_tree(tmp_path_factory):
-    src = REPO_ROOT / "demo" / "demo_tree.json"
-    backup = tmp_path_factory.mktemp("backup") / "demo_tree.json"
-    shutil.copy2(src, backup)
-    yield
-    shutil.copy2(backup, src)
+@pytest.fixture()
+def served_tree(tmp_path):
+    dst = tmp_path / "demo_tree.json"
+    shutil.copy2(REPO_ROOT / "demo" / "demo_tree.json", dst)
+    os.chmod(dst, 0o644)  # copy2 preserves source mode; the copy must be writable to tamper
+    return dst
 
 
 # ── Server fixture (function-scoped) ─────────────────────────────────────
@@ -46,7 +49,7 @@ def _free_port():
 
 
 @pytest.fixture()
-def base_url(tmp_path):
+def base_url(served_tree, tmp_path):
     port = _free_port()
     stderr_log = tmp_path / "server_stderr.log"
 
@@ -61,6 +64,7 @@ def base_url(tmp_path):
             stdout=subprocess.DEVNULL,
             stderr=err_f,
             cwd=str(REPO_ROOT),
+            env={**os.environ, "PCIS_DEMO_TREE_FILE": str(served_tree)},
         )
 
     url = f"http://127.0.0.1:{port}"
@@ -198,8 +202,8 @@ def test_api_status(base_url):
 
 # ── Tamper detection ─────────────────────────────────────────────────────
 
-def test_tamper_detection(base_url):
-    tree_path = REPO_ROOT / "demo" / "demo_tree.json"
+def test_tamper_detection(base_url, served_tree):
+    tree_path = served_tree  # a per-test copy — never the shipped demo/demo_tree.json
     original_bytes = tree_path.read_bytes()
     original_checksum = hashlib.sha256(original_bytes).hexdigest()
 
