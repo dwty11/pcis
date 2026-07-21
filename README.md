@@ -52,14 +52,36 @@ bash start_demo.sh
 
 Open `http://localhost:5555` — nine tabs (Adversarial first), the full architecture live on synthetic data, zero external calls.
 
-## Challenge what your agent believes
+## Challenge what your agent believes — on your own claims
+
+After `bash setup.sh`, activate the environment so the `pcis` command and its dependencies are on hand:
 
 ```bash
-python3 core/knowledge_tree.py --add technical "Postgres beats MySQL for our workload" --confidence 0.7
-PCIS_BASE_DIR=. python3 core/gardener.py --dry-run
+source .venv/bin/activate     # Windows (Git Bash): source .venv/Scripts/activate
 ```
 
-The gardener finds overconfident leaves and generates counter-arguments; `--dry-run` shows the attack without writing anything. It runs on a local Ollama or MLX model — nothing leaves your machine, nothing runs on a schedule unless you set one. It refuses to run without an explicit `PCIS_BASE_DIR` (see **Operational Safety**). *(On Windows, invoke with `py -3` in place of `python3` — the bundled `python3` there is a non-functional Store stub.)*
+Put a claim you suspect is overconfident into a tree of your own, then watch the gardener build its attack on it:
+
+```bash
+pcis init
+pcis add technical "Postgres beats MySQL for every workload we run" --confidence 0.9
+pcis add lessons   "Never deploy on Fridays" --confidence 0.8
+pcis gardener --dry-run
+```
+
+`--dry-run` prints **the attack** — the exact adversarial prompt, with your own claims as the targets. This is the prompt the gardener runs, *not* the challenges themselves: it needs no model, and nothing leaves your machine. You see *what* will be interrogated before any model runs.
+
+To see the gardener actually challenge your claims, give it a local model:
+
+```bash
+# one-time: install Ollama — https://ollama.com — then:
+ollama pull qwen3.5:9b
+export PCIS_GARDENER_MODEL=qwen3.5:9b   # or any model you've already pulled
+pcis gardener         # the real pass — commits challenges to the record
+pcis show technical   # the counter now sits next to your claim (verify stays CLEAN)
+```
+
+The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes (~4 in 10 for a 9B); if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — same thing.)*
 
 ---
 

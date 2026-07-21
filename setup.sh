@@ -21,6 +21,8 @@ VENV_PY="$HERE/.venv/bin/python"
 [ -x "$VENV_PY" ] || VENV_PY="$PY"   # already inside a venv, or venv creation skipped
 
 "$VENV_PY" -m pip install -r requirements.txt
+# Install the package so the `pcis` command exists (console script in .venv/bin).
+"$VENV_PY" -m pip install -e . --quiet
 mkdir -p data
 cp demo/demo_tree.json data/tree.json
 echo '[]' > data/belief-history.json
@@ -36,5 +38,6 @@ fi
 
 echo ""
 echo "Setup complete."
-echo "To run the server demo:   bash start_demo.sh"
-echo "To run the Advocate demo: ./run_demo.sh"
+echo "To run the Advocate demo:      ./run_demo.sh"
+echo "To run the server demo:        bash start_demo.sh"
+echo "To challenge your own claims:  source .venv/bin/activate, then 'pcis init' (see README)"

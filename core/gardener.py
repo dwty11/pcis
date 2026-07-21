@@ -134,6 +134,19 @@ def ensure_ollama_warm(timeout=60, poll_interval=2):
     warm_model(model)
 
 
+def _ollama_has_model(model):
+    """True iff Ollama is reachable AND `model` is pulled. No side effects, no exit —
+    used by --dry-run to decide whether a real pass is even possible."""
+    try:
+        with urllib.request.urlopen(f"{OLLAMA_HOST}/api/tags", timeout=3) as resp:
+            names = {m.get("name", "") for m in
+                     json.loads(resp.read().decode()).get("models", [])}
+    except Exception:
+        return False
+    base = model.split(":")[0]
+    return any(n == model or n.split(":")[0] == base for n in names)
+
+
 def now_local():
     return datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -943,8 +956,6 @@ def main():
         except Exception as e:
             log.warning("⚠️  action_log.emit_action skipped (non-fatal): %s", e)
 
-    ensure_ollama_warm()
-
     tree = load_tree()
     tree_text = format_tree_for_prompt(tree, focus_branch=args.branch)
     recent_memory = load_recent_memory(days=5)
@@ -974,7 +985,32 @@ def main():
         branch_health=compute_branch_health(tree),
     )
 
-    model_label = "gpt-oss-20b (MLX)" if _USE_MLX else "Qwen3:14b"
+    # --dry-run shows the ATTACK — the exact prompt, with the user's own claims as
+    # targets — and needs NO model. Only if a local model is actually present does it
+    # go on to run the real pass. This keeps the no-install quickstart path working.
+    if args.dry_run:
+        print("\n" + "=" * 70)
+        print("  THE ATTACK — this exact prompt is what the gardener sends to a local")
+        print("  model for adversarial review. Your own claims are the targets in it:")
+        print("=" * 70)
+        print(prompt)
+        print("=" * 70)
+        if not _ollama_has_model(GARDENER_MODEL):
+            print()
+            print(f"  ↑ That is the ATTACK, not the result. No local model ({GARDENER_MODEL})")
+            print("  was reachable, so NO challenges were generated. To see the gardener")
+            print("  actually challenge your claims, install Ollama (https://ollama.com),")
+            print(f"  run `ollama pull {GARDENER_MODEL}`, then run `pcis gardener`.")
+            print("  (A small local model returns nothing on ~4 of 10 passes — if a real")
+            print("  pass comes back empty, just run it again.)")
+            log.info("✅ Dry run complete — attack shown, no model called (%s)", now_local())
+            return
+        print()
+        print(f"  ↑ That is the attack. A local model ({GARDENER_MODEL}) IS present —")
+        print("  running it now so you can see the actual challenges:")
+
+    ensure_ollama_warm()
+    model_label = "gpt-oss-20b (MLX)" if _USE_MLX else GARDENER_MODEL
     log.info("🧠 Calling %s for adversarial review...", model_label)
     response = call_llm(prompt)
 
