@@ -32,6 +32,7 @@ FILES = [
     "fixtures/base/memory/2026-07-17.md",
     "fixtures/canonical_run.json",
     "fixtures/hit_rate.json",
+    "fixtures/no_note_hit_rate.json",
 ]
 
 
