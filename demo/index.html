@@ -698,12 +698,12 @@ body {
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-tab="boot">Boot</div>
+  <div class="tab active" data-tab="adversarial">Adversarial</div>
+  <div class="tab" data-tab="boot">Boot</div>
   <div class="tab" data-tab="search">Search</div>
   <div class="tab" data-tab="tree">Knowledge Tree</div>
   <div class="tab" data-tab="query">Query</div>
   <div class="tab" data-tab="belief">Belief</div>
-  <div class="tab" data-tab="adversarial">Adversarial</div>
   <div class="tab" data-tab="history">History</div>
   <div class="tab" data-tab="ingest">Ingest</div>
   <div class="tab" data-tab="external">External Validation</div>
@@ -712,7 +712,7 @@ body {
 <div class="content">
 
   <!-- ══════ BOOT SCREEN ══════ -->
-  <div class="screen active" id="screen-boot">
+  <div class="screen" id="screen-boot">
     <div class="btn-center">
       <button class="btn" id="bootBtn" onclick="runBoot()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v6M4.5 3.5L8 7l3.5-3.5M2 9a6 6 0 1012 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -808,7 +808,7 @@ body {
   </div>
 
   <!-- ══════ ADVERSARIAL SCREEN ══════ -->
-  <div class="screen" id="screen-adversarial">
+  <div class="screen active" id="screen-adversarial">
     <div class="stats-row" id="advStats"></div>
     <div class="section-title">Recent Adversarial Challenges</div>
     <div id="advList">
@@ -1860,6 +1860,10 @@ function escapeHtml(text) {
     document.getElementById('headerRoot').textContent = 'root: ' + data.tree_stats.root_hash + '...';
   } catch (e) {}
 })();
+
+// Adversarial is the default (leftmost) tab — the click handler only fires on click,
+// so populate its screen on load. Boot stays one click away as the supporting proof.
+if (!advLoaded) loadAdversarial();
 </script>
 
 </body>

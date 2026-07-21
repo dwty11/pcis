@@ -10,7 +10,7 @@ and that the challenge is surfaced for review.
 
 The honesty line is load-bearing (ruled 2026-07-20): the claim MOVED under challenge
 and was SURFACED for review. It did not fail, it did not flip, it is not CONTESTED —
-a single counter moves a 0.95 claim to net 0.86 (CONTRADICTION_WEIGHT 0.15) and it
+a single counter moves a 0.95 claim to net 0.85 (CONTRADICTION_WEIGHT 0.15) and it
 stays CONFIDENT. The demo prints what the code computes.
 """
 import os

@@ -64,11 +64,14 @@ only — there is no cloud path in `core/gardener.py` — and replay needs no mo
   different number, run `--live` and count your own.
 - **The catch is grounded in the record, not invented — the ablation shows it.** Remove the
   verification note from memory and rerun: the gardener hit the plant in **0 of 5**
-  (`fixtures/no_note_hit_rate.json`). An offline model has no way to know a well-formatted
-  citation is fabricated; PCIS surfaces the challenge *only* because the evidence is in the
-  record. This is **one model (`qwen3.5:9b`), one tree, one plant** — not a claim that "the
-  gardener finds fabricated citations." It is the mechanism working as designed: challenge the
-  record with the record. (With the note: 6 of 10. Without it: 0 of 5.)
+  (`fixtures/no_note_hit_rate.json`) — and, applying the same counter-producing lens as above,
+  0 of the 2 passes that produced any counters resolved to the plant (the other 3 were empty).
+  An offline model has no way to know a well-formatted citation is fabricated; PCIS surfaces
+  the challenge *only* because the evidence is in the record. This is **one model
+  (`qwen3.5:9b`), one tree, one plant** — not a claim that "the gardener finds fabricated
+  citations," and the without-note side is a small control (2 counter-producing passes). It is
+  the mechanism working as designed: challenge the record with the record. (With the note:
+  6 of 10, and 6 of 6 counter-producing passes. Without it: 0 of 5, and 0 of 2.)
 - **Replay is provenance-locked.** `fixtures/canonical_run.json` records the model, the
   verbatim prompt, the timestamp, and the raw response. `--verify-self` hashes every script
   and fixture against `CANONICAL_FINGERPRINT.txt`, and a CI test

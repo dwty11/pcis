@@ -105,6 +105,27 @@ def beat_attack(canonical, plant_id, live=False):
     print("  and you see all of them, on the record.")
 
 
+def beat_ablation():
+    """The moat: one recorded hit could be luck. The RATE — and its dependence on
+    the verification note — is what proves the untold gardener FOUND the plant."""
+    with open(os.path.join(FIX, "hit_rate.json"), encoding="utf-8") as f:
+        withn = json.load(f)
+    with open(os.path.join(FIX, "no_note_hit_rate.json"), encoding="utf-8") as f:
+        without = json.load(f)
+    print("\n" + RULE)
+    print("  WAS THAT LUCK? — the untold gardener, measured across repeated passes")
+    print(RULE)
+    print(f"    WITH the verification note in memory        "
+          f"{withn['plant_hits']}/{withn['passes']} passes landed a counter on the plant")
+    print(f"    WITHOUT the note (same tree, same plant)    "
+          f"{without['plant_hits']}/{without['passes']} passes")
+    print()
+    print("  The note is load-bearing: the gardener finds the fabrication when the")
+    print("  record carries the evidence, and misses it when the memory is blank.")
+    print("  Not a scripted highlight — a measured rate. Bounded: one model")
+    print(f"  ({withn['model']}), one tree, one plant — an illustration, not a benchmark.")
+
+
 def beat_verdict(tree, canonical, plant_id):
     # apply the plant's real counter → CONTRADICTS synapse, then render from assess_belief
     pc = next((c for c in canonical["counters"] if c["target_leaf_id"] == plant_id), None)
@@ -157,6 +178,7 @@ def run(live=False):
     beat_tree(tree, plant_id)
     beat_context()
     beat_attack(canonical, plant_id, live=live)
+    beat_ablation()
     tree_after, _syn, _cid = beat_verdict(tree, canonical, plant_id)
     beat_record(tree_before, tree_after)
     beat_close()

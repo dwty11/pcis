@@ -21,22 +21,36 @@ Built by [@dwty_11](https://x.com/dwty_11)
 
 ## Try it in 60 seconds
 
+A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims — deadlines, statutes, procedure, client facts — and one plant: a well-formatted, entirely fabricated case citation, held at 0.95 confidence with no source, indistinguishable from the real precedents beside it. On a maintenance pass the gardener — **not told which leaf to attack** — reads the tree with recent session memory and challenges its highest-confidence claims. Its strongest counter lands on the fabricated citation, grounded in the record's own verification note: a session log recording that the case returned no results in Westlaw.
+
 ```bash
 git clone https://github.com/dwty11/pcis.git
 cd pcis
-bash setup.sh
-bash start_demo.sh
+./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ```
 
-Open `http://localhost:5555` — nine tabs, the full architecture live on synthetic data, zero external calls.
+The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, and the verification the court calls a professional duty is made structural. And it isn't luck: run the untold gardener repeatedly and it lands on the plant **6/10 with the verification note in memory, 0/5 without it** — the note is load-bearing (one model, one tree, one plant; an illustration, not a benchmark).
+
+`./run_demo.sh --live` runs the gardener fresh on your own local model; `--verify-self` SHA-256s every script and fixture against the canonical fingerprint. Everything runs on your machine — replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
 ## Break it on purpose
+
+The record the gardener built is also tamper-evident — the commodity half (see the opening), and PCIS ships it too:
 
 ```bash
 ./verify.sh        # re-derives every leaf hash from content, recomputes the Merkle root
 ```
 
-Open `data/tree.json`, change one character in any leaf, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash *from content*, so a silently changed byte has nowhere to hide.
+Open `data/tree.json`, change one character in any leaf, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash *from content*, so a silently changed byte has nowhere to hide. This proves the *log* wasn't touched; the gardener challenging its own beliefs — above — is the part that isn't a commodity.
+
+## Explore the full system
+
+```bash
+bash setup.sh
+bash start_demo.sh
+```
+
+Open `http://localhost:5555` — nine tabs (Adversarial first), the full architecture live on synthetic data, zero external calls.
 
 ## Challenge what your agent believes
 
@@ -46,22 +60,6 @@ PCIS_BASE_DIR=. python3 core/gardener.py --dry-run
 ```
 
 The gardener finds overconfident leaves and generates counter-arguments; `--dry-run` shows the attack without writing anything. It runs on a local Ollama or MLX model — nothing leaves your machine, nothing runs on a schedule unless you set one. It refuses to run without an explicit `PCIS_BASE_DIR` (see **Operational Safety**). *(On Windows, invoke with `py -3` in place of `python3` — the bundled `python3` there is a non-functional Store stub.)*
-
-## The Advocate Demo
-
-A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims — deadlines, statutes, procedure, client facts — and one plant: a well-formatted, entirely fabricated case citation, held at 0.95 confidence with no source, indistinguishable from the real precedents beside it. On a maintenance pass the gardener — **not told which leaf to attack** — reads the tree with recent session memory and challenges its highest-confidence claims. Its strongest counter lands on the fabricated citation, grounded in the record's own verification note: a session log recording that the case returned no results in Westlaw.
-
-The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for human review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, the record grew, and the verification the court calls a professional duty is made structural.
-
-```bash
-./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
-./run_demo.sh --live          # run the gardener fresh on your own local model
-./run_demo.sh --verify-self   # SHA-256 every script + fixture against the canonical fingerprint
-```
-
-Runs from the repo root straight after `git clone` — `--replay` (the default) needs only Python, nothing to install.
-
-The gardener always attacks — the demo shows every counter it raised, weak ones included, and which one bit. Everything runs on your machine; the gardener is Ollama/MLX only, and replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
 ---
 
