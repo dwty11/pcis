@@ -139,6 +139,46 @@ class TestCounterParsing(unittest.TestCase):
         self.assertEqual(len(counters), 1)
         self.assertIsNone(counters[0]["original_leaf_id"])
 
+    def test_numbered_list_prefix_parses(self):
+        """A markdown numbered-list prefix must not drop a real counter (the GigaChat-2 shape)."""
+        line = "1. COUNTER|technical|This claim is overstated|0.65|abc123def456"
+        counters, _, _ = gd.parse_gardener_output(line)
+        self.assertEqual(len(counters), 1)
+        self.assertEqual(counters[0]["original_leaf_id"], "abc123def456")
+
+    def test_bullet_and_ordinal_prefixes_parse(self):
+        """Dash, star, unicode-bullet, and `N)` / `N.` ordinals must all parse."""
+        for prefix in ("- ", "* ", "• ", "2) ", "10. "):
+            line = f"{prefix}COUNTER|lessons|A challenge|0.6|leaf987"
+            counters, _, _ = gd.parse_gardener_output(line)
+            self.assertEqual(len(counters), 1, f"prefix {prefix!r} dropped the counter")
+            self.assertEqual(counters[0]["original_leaf_id"], "leaf987")
+
+    def test_prefixed_synapse_and_flag_parse(self):
+        """The same tolerance applies to SYNAPSE| and FLAG| lines."""
+        raw = "1. SYNAPSE|A connection between two leaves|0.7\n- FLAG|abc123|stale claim"
+        _c, synapses, flags = gd.parse_gardener_output(raw)
+        self.assertEqual(len(synapses), 1)
+        self.assertEqual(len(flags), 1)
+
+    def test_bare_form_still_parses(self):
+        """Bare (unprefixed) lines must still parse exactly as before."""
+        line = "COUNTER|technical|Bare line|0.65|abc123def456"
+        counters, _, _ = gd.parse_gardener_output(line)
+        self.assertEqual(len(counters), 1)
+        self.assertEqual(counters[0]["original_leaf_id"], "abc123def456")
+
+    def test_malformed_lines_still_dropped(self):
+        """The marker strip must NOT resurrect genuinely malformed lines."""
+        raw = ("1. This is just prose, no token\n"
+               "- Another bullet with no counter token\n"
+               "COUNTER without a pipe at all\n"
+               "The word COUNTER| appears mid-sentence, not at the line start")
+        counters, synapses, flags = gd.parse_gardener_output(raw)
+        self.assertEqual(len(counters), 0, f"unexpected counters: {counters}")
+        self.assertEqual(len(synapses), 0)
+        self.assertEqual(len(flags), 0)
+
 
 class TestDemoTreeIntegrity(unittest.TestCase):
     """demo_tree.json is well-formed and internally consistent."""

@@ -362,6 +362,14 @@ def clean_leaf_id(raw):
     return re.sub(r'[\[\]\s]', '', raw)
 
 
+def strip_list_marker(line):
+    """Remove a single leading markdown list marker (``1.`` / ``2)`` / ``-`` / ``*`` / ``•``)
+    so a correctly-formatted COUNTER|/SYNAPSE|/FLAG| line survives when a chat-tuned model
+    wraps its output in a numbered or bulleted list. A trailing space is required, so
+    ordinary content that merely begins with a digit or dash is left untouched."""
+    return re.sub(r'^\s*(?:\d+[.)]|[-*•])\s+', '', line)
+
+
 def parse_gardener_output(response_text):
     """
     Parse the gardener LLM output. Handles both strict pipe-separated format
@@ -379,7 +387,7 @@ def parse_gardener_output(response_text):
     flags = []
 
     for line in response_text.splitlines():
-        line = line.strip()
+        line = strip_list_marker(line.strip())
         if not line:
             continue
 
