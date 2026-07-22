@@ -48,8 +48,12 @@ def _free_port():
         return s.getsockname()[1]
 
 
+# NOTE: named e2e_base_url, NOT base_url — the pytest-base-url plugin (which can
+# land in the env as an unpinned transitive dep) ships a session-scoped `base_url`
+# fixture. A same-named function-scoped fixture here collides with it (ScopeMismatch,
+# errors every e2e test). We don't own that name; keep ours prefixed. Do not rename back.
 @pytest.fixture()
-def base_url(served_tree, tmp_path):
+def e2e_base_url(served_tree, tmp_path):
     port = _free_port()
     stderr_log = tmp_path / "server_stderr.log"
 
@@ -101,7 +105,7 @@ def base_url(served_tree, tmp_path):
 
 # ── Route tests ──────────────────────────────────────────────────────────
 
-def test_front_door_serves_html_without_hub(base_url):
+def test_front_door_serves_html_without_hub(e2e_base_url):
     # A fresh clone / CI has NO hub.html — it's gitignored (deployment-specific).
     # Reproduce that condition by hiding hub.html, then require the front door
     # (/, /hub, /demo) to serve HTML and never 500. Regression guard for the
@@ -113,7 +117,7 @@ def test_front_door_serves_html_without_hub(base_url):
         hub.rename(hidden)
     try:
         for route in ("/", "/hub", "/demo"):
-            r = requests.get(f"{base_url}{route}")
+            r = requests.get(f"{e2e_base_url}{route}")
             assert r.status_code == 200, f"{route} returned {r.status_code} (front door broken on a clone)"
             assert "text/html" in r.headers.get("Content-Type", ""), \
                 f"{route} content-type: {r.headers.get('Content-Type')}"
@@ -122,47 +126,47 @@ def test_front_door_serves_html_without_hub(base_url):
             hidden.rename(hub)
 
 
-def test_api_health(base_url):
-    r = requests.get(f"{base_url}/api/health")
+def test_api_health(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/health")
     assert r.status_code == 200
     data = r.json()
     assert "status" in data
 
 
-def test_api_boot(base_url):
-    r = requests.get(f"{base_url}/api/boot")
+def test_api_boot(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/boot")
     assert r.status_code == 200
     data = r.json()
     assert data["status"] in ("CLEAN", "MODIFIED")
     assert "merkle_root" in data
 
 
-def test_api_tree(base_url):
-    r = requests.get(f"{base_url}/api/tree")
+def test_api_tree(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/tree")
     assert r.status_code == 200
     data = r.json()
     assert "branches" in data
 
 
-def test_api_query(base_url):
-    r = requests.post(f"{base_url}/api/query", json={"query": "test"})
+def test_api_query(e2e_base_url):
+    r = requests.post(f"{e2e_base_url}/api/query", json={"query": "test"})
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data.get("results"), list)
 
 
-def test_api_adversarial(base_url):
-    r = requests.get(f"{base_url}/api/adversarial")
+def test_api_adversarial(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/adversarial")
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data.get("counters"), list)
     assert isinstance(data.get("total_counters"), int)
 
 
-def test_api_adversarial_lights_up(base_url):
+def test_api_adversarial_lights_up(e2e_base_url):
     # After the demo tree is reseeded, the Adversarial tab has real content:
     # >=3 COUNTERs and each resolves its challenged 'original' leaf.
-    r = requests.get(f"{base_url}/api/adversarial")
+    r = requests.get(f"{e2e_base_url}/api/adversarial")
     assert r.status_code == 200
     data = r.json()
     assert data["total_counters"] >= 3, data
@@ -170,39 +174,39 @@ def test_api_adversarial_lights_up(base_url):
     assert data["counters"][0]["original"] is not None
 
 
-def test_api_status_last_gardener_run_non_null(base_url):
+def test_api_status_last_gardener_run_non_null(e2e_base_url):
     # status must surface a real last_gardener_run (from the shipped
     # external_validation_run.json), not a hardcoded null.
-    r = requests.get(f"{base_url}/api/status")
+    r = requests.get(f"{e2e_base_url}/api/status")
     assert r.status_code == 200
     assert r.json()["last_gardener_run"] is not None
 
 
-def test_api_belief(base_url):
-    r = requests.post(f"{base_url}/api/belief", json={"query": "test"})
+def test_api_belief(e2e_base_url):
+    r = requests.post(f"{e2e_base_url}/api/belief", json={"query": "test"})
     assert r.status_code == 200
 
 
-def test_api_history(base_url):
-    r = requests.get(f"{base_url}/api/history")
+def test_api_history(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/history")
     assert r.status_code == 200
 
 
-def test_api_search(base_url):
-    r = requests.post(f"{base_url}/api/search", json={"query": "test"})
+def test_api_search(e2e_base_url):
+    r = requests.post(f"{e2e_base_url}/api/search", json={"query": "test"})
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data.get("results"), list)
 
 
-def test_api_status(base_url):
-    r = requests.get(f"{base_url}/api/status")
+def test_api_status(e2e_base_url):
+    r = requests.get(f"{e2e_base_url}/api/status")
     assert r.status_code == 200
 
 
 # ── Tamper detection ─────────────────────────────────────────────────────
 
-def test_tamper_detection(base_url, served_tree):
+def test_tamper_detection(e2e_base_url, served_tree):
     tree_path = served_tree  # a per-test copy — never the shipped demo/demo_tree.json
     original_bytes = tree_path.read_bytes()
     original_checksum = hashlib.sha256(original_bytes).hexdigest()
@@ -222,12 +226,12 @@ def test_tamper_detection(base_url, served_tree):
         leaf["content"] = new_content
         tree_path.write_text(json.dumps(tree, ensure_ascii=False, indent=2))
 
-        r = requests.get(f"{base_url}/api/boot")
+        r = requests.get(f"{e2e_base_url}/api/boot")
         assert r.status_code == 200
         assert r.json()["status"] == "MODIFIED"
     finally:
         tree_path.write_bytes(original_bytes)
         restored_checksum = hashlib.sha256(tree_path.read_bytes()).hexdigest()
         assert restored_checksum == original_checksum, "demo_tree.json restore failed"
-        r = requests.get(f"{base_url}/api/boot")
+        r = requests.get(f"{e2e_base_url}/api/boot")
         assert r.json()["status"] == "CLEAN"

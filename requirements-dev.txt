@@ -1,0 +1,13 @@
+# Pinned test toolchain — keeps the CI matrix (Python 3.10 / 3.11 / 3.12) hermetic.
+#
+# Exact pins so pip resolves an IDENTICAL set on every interpreter. This closes the
+# class of failure where an unpinned transitive dependency (e.g. pytest-base-url,
+# which ships a session-scoped `base_url` fixture) resolves onto one runner and not
+# the others, diverging the matrix. Runtime deps stay loose in requirements.txt;
+# this file is dev/CI only.
+#
+# All four have universal wheels and support 3.10–3.12.
+pytest==8.3.4
+requests==2.32.3
+flask==3.1.0
+PyNaCl==1.5.0

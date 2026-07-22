@@ -24,7 +24,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest
+          # Pinned dev/test set — hermetic across the matrix (see requirements-dev.txt).
+          # --no-cache-dir so a runner's plugin cache can't leak in an unpinned fixture provider.
+          pip install --no-cache-dir -r requirements-dev.txt
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
