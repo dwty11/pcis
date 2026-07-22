@@ -74,12 +74,14 @@ See: [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md)
 
 Three buckets, so a reader can tell which gaps are on the path and which are architectural boundaries that belong to other layers.
 
+**The floor these gaps sit on — shipped and proven today:** the record is tamper-evident end to end (a SHA-256 Merkle root re-derived from leaf content on every verify, so any edit shows), the gardener adversarially challenges the highest-confidence claims, and the root is signed by an **off-machine** key a compromised host cannot forge. Everything below is what is *not* yet done; none of it subtracts from that floor.
+
 ### Next — named, shaped, intended
 
 - **Output grounding.** Nothing proves an answer came from the tree; the agent volunteers what it used. The record shows what was committed, not what a given response actually drew on.
-  - *Verified retrieval trace (concrete sub-step).* Log which leaves were injected into the prompt, with content hashes, and re-verify each against the tree at read time — `resolves` / `drifted` / `gone`. This proves **retrieval provenance, not answer provenance**: that certain leaves were fed in and still match the tree, not that the answer used them. The injection↔usage gap is architectural, not an implementation shortfall.
+  - *Verified retrieval trace (concrete sub-step).* Log which leaves were injected into the prompt, with content hashes, and re-verify each against the tree at read time — `resolves` / `drifted` / `gone`. This proves **retrieval provenance, not answer provenance**: that certain leaves were fed in and still match the tree, not that the answer used them. Answer provenance — proving a generation actually *used* an injected leaf rather than merely being shown it — is **not closable from PCIS's layer at all**: whether a model's output drew on a given input lives in model internals (interpretability and attribution), not in a memory substrate. No roadmap item below closes it, and none should be waited for — it belongs with the **Not ours** boundaries. The retrieval trace closes retrieval provenance, which is the part this layer *can* prove.
 - **Ingestion.** Claims enter through `pcis add` / the CLI; nothing reads an agent's output stream and commits what it asserted.
-- **Third-party agent integration.** The plugin and skills interfaces work, but only one agent has used them — and that agent was built alongside PCIS.
+- **Third-party agent integration.** The plugin and skills interfaces are built and working — an agent runs on them today. What's missing is not code but *independent* evidence: no agent built by a third party has integrated against them yet. The interfaces are done; outside validation is the gap.
 
 ### Later — real, but further out
 
