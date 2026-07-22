@@ -41,7 +41,7 @@ def test_dry_run_shows_attack_and_exits_clean_without_a_usable_model(tmp_path):
 
 def test_gardener_default_model_matches_the_ablation(tmp_path):
     """The gardener's DEFAULT must be qwen3.5:9b — the model the Advocate demo and the
-    6/10 ablation were measured on, and what run_demo.sh --live resolves to. Otherwise a
+    7/10 ablation were measured on, and what run_demo.sh --live resolves to. Otherwise a
     stranger pulls a different model than the one number they can check applies to."""
     base = str(tmp_path)
     env = {k: v for k, v in os.environ.items() if k != "PCIS_GARDENER_MODEL"}

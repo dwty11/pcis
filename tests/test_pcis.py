@@ -140,7 +140,7 @@ class TestCounterParsing(unittest.TestCase):
         self.assertIsNone(counters[0]["original_leaf_id"])
 
     def test_numbered_list_prefix_parses(self):
-        """A markdown numbered-list prefix must not drop a real counter (the GigaChat-2 shape)."""
+        """A markdown numbered-list prefix must not drop a real counter (a cloud chat model that formats output as a numbered list)."""
         line = "1. COUNTER|technical|This claim is overstated|0.65|abc123def456"
         counters, _, _ = gd.parse_gardener_output(line)
         self.assertEqual(len(counters), 1)

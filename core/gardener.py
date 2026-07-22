@@ -1009,7 +1009,7 @@ def main():
             print("  was reachable, so NO challenges were generated. To see the gardener")
             print("  actually challenge your claims, install Ollama (https://ollama.com),")
             print(f"  run `ollama pull {GARDENER_MODEL}`, then run `pcis gardener`.")
-            print("  (A small local model returns nothing on ~4 of 10 passes — if a real")
+            print("  (A small local model sometimes returns nothing — if a real")
             print("  pass comes back empty, just run it again.)")
             log.info("✅ Dry run complete — attack shown, no model called (%s)", now_local())
             return

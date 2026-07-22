@@ -18,7 +18,7 @@ A perfectly signed, un-tampered log can still be quietly wrong — full of overc
 
 Tamper-evidence is a solved, commodity property. Certificate Transparency, Sigstore/Rekor, and a field of audit ledgers — ChainProof, SignLedger, Capsule Protocol, Signatrust, VCP — all ship append-only, hash-linked, signed records, and say so plainly. PCIS uses the same machinery: a Merkle-rooted tree, append-only, every state fingerprinted from content up. That part is mundane and necessary. It is the floor.
 
-What none of them do is test whether the claim still holds. That is the part PCIS is built around.
+What most of them don't do is test whether the claim still holds. That is the part PCIS is built around.
 
 ## The mechanism: a record that attacks itself
 

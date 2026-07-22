@@ -1,7 +1,7 @@
 """The demo must never fabricate a challenge that didn't happen.
 
 On a live pass where the gardener returns no counter on the plant (this model comes
-back empty ~40% of the time), beat_verdict must inject NO counter leaf, create NO
+back empty on some passes), beat_verdict must inject NO counter leaf, create NO
 synapse, and render NO confidence move — and say so plainly. The bug this guards:
 --replay always carries the recorded counter, so the fabrication was invisible until
 --live was executed for the first time (2026-07-21) and hit an empty pass, where the

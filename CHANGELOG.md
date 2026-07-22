@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Demo replaced.** Removed the Liar's Demo (`demo/liars-demo/`) with its roomcomm/witness dependency; superseded by the **Advocate Demo** (`demo/advocate-demo/`), which demonstrates the wedge — single-agent self-challenge — rather than the tamper-evidence commodity. A legal-assistant agent holds a fabricated case citation at 0.95 confidence; the gardener, untold which leaf to attack, challenges it against the record's own verification note. The claim's confidence moves under challenge and the challenge is surfaced for review — it is not proven false and does not "fail"; the record grows.
+- **Demo replaced.** Removed the Liar's Demo (`demo/liars-demo/`) with its external chat-service dependency; superseded by the **Advocate Demo** (`demo/advocate-demo/`), which demonstrates the wedge — single-agent self-challenge — rather than the tamper-evidence commodity. A legal-assistant agent holds a fabricated case citation at 0.95 confidence; the gardener, untold which leaf to attack, challenges it against the record's own verification note. The claim's confidence moves under challenge and the challenge is surfaced for review — it is not proven false and does not "fail"; the record grows.
 - **Fix (gardener):** `core/gardener.py` now passes `think:false` to Ollama. Thinking-capable models (the qwen3 family, including the documented default `qwen3:14b`) previously routed their answer to a separate `thinking` field and returned an empty `response`, so the gardener parsed **0** counter-arguments — it had not worked on its own default model. Ignored by non-thinking models.
 
 ## v1.4.1 (2026-04-20)

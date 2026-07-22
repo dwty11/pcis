@@ -9,7 +9,7 @@ Honest about what v1.0 is and what comes next.
 PCIS is one substrate that sells into three distinct audiences via three distinct framings.
 
 - **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated in a prior release; a multi-agent demo returns after the witness-layer redesign. (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
-- **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Future demo.
+- **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Shown in the Advocate Demo (Demo 1, below).
 - **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not. Future demo (Pianist Swap).
 
 ---
@@ -20,7 +20,7 @@ PCIS is designed around seven recurring failure modes of production AI memory sy
 
 | Failure mode | What happens | PCIS response |
 |---|---|---|
-| **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener prunes stale leaves, gap-scan deduplicates on commit |
+| **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener prunes stale leaves; near-duplicate counters are rejected at commit by a semantic dedup gate |
 | **No claim revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves and a CONTRADICTS synapse from the adversarial pass; belief traversal then reports a lower net-under-challenge confidence at read time and surfaces the contradiction for review — the stored value is left intact, not silently overwritten |
 | **Summarization collapse** | Recursive compression destroys detail; memory becomes "various topics discussed" | Architecture avoids recursive summarization — one compression layer only |
 | **Retrieval bias** | Vector search reinforces popular/recent claims regardless of truth | Adversarial pass specifically targets high-confidence echo chambers |
@@ -113,7 +113,7 @@ PCIS competes on two fronts, and the differentiator is different on each:
 
 ### vs. tamper-evident / audit ledgers — wedge: the self-challenge
 
-These prove the log wasn't edited. None of them test whether the claim still holds — an intact record and a stale belief coexist just fine. That gap is what PCIS is built for.
+These prove the log wasn't edited. Most of them don't test whether the claim still holds — an intact record and a stale belief coexist just fine. That gap is what PCIS is built for.
 
 | Project | What it does well | What PCIS adds |
 |---|---|---|

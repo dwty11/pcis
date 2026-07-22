@@ -1,7 +1,7 @@
 """The Advocate Demo must render the ablation RATE on screen — the moat.
 
 A single counter landing on the plant reads as a scripted nudge. The
-6/10-with-note vs 0/5-without-note contrast is what proves the gardener FOUND
+7/10-with-note vs 0/5-without-note contrast is what proves the gardener FOUND
 the plant (and that the verification note is load-bearing), not that it was
 pointed at it. These assert the rate reaches the viewer, sourced from the
 recorded fixtures, and stated with its bound so the demo can't overclaim.
@@ -42,7 +42,7 @@ def test_ablation_fixtures_are_the_recorded_numbers():
 def test_replay_renders_the_ablation_rate_on_screen():
     withn, without = _fixture_rates()
     out = _replay_output()
-    with_rate = f"{withn['plant_hits']}/{withn['passes']}"        # 6/10
+    with_rate = f"{withn['plant_hits']}/{withn['passes']}"        # 7/10
     without_rate = f"{without['plant_hits']}/{without['passes']}"  # 0/5
     assert with_rate in out, f"with-note rate {with_rate} is not on screen"
     assert without_rate in out, f"without-note rate {without_rate} is not on screen"
