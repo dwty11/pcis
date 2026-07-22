@@ -33,16 +33,6 @@ The claim's confidence **moves under challenge** (its net drops from 0.95 into t
 
 `./run_demo.sh --live` runs the gardener fresh on your own local model; `--verify-self` SHA-256s every script and fixture against the canonical fingerprint. Everything runs on your machine — replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
-## Break it on purpose
-
-The record the gardener built is also tamper-evident — the commodity half (see the opening), and PCIS ships it too:
-
-```bash
-./verify.sh        # re-derives every leaf hash from content, recomputes the Merkle root
-```
-
-Open `data/tree.json`, change one character in any leaf, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash *from content*, so a silently changed byte has nowhere to hide. This proves the *log* wasn't touched; the gardener challenging its own beliefs — above — is the part that isn't a commodity.
-
 ## Explore the full system
 
 ```bash
@@ -50,7 +40,17 @@ bash setup.sh
 bash start_demo.sh
 ```
 
-Open `http://localhost:5555` — nine tabs (Adversarial first), the full architecture live on synthetic data, zero external calls.
+Open `http://localhost:5555` — nine tabs (Adversarial first), the full architecture live on synthetic data, zero external calls. (`setup.sh` needs Python 3.10+; if yours is older it stops and tells you how to point it at a newer one — see *Interpreters and trees* below.)
+
+## Break it on purpose
+
+`bash setup.sh` (above) writes the seeded record to `data/tree.json`. That record is also tamper-evident — the commodity half (see the opening), and PCIS ships it too:
+
+```bash
+./verify.sh        # re-derives every leaf hash from content, recomputes the Merkle root
+```
+
+Open `data/tree.json`, change one character in any leaf, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash *from content*, so a silently changed byte has nowhere to hide. This proves the *log* wasn't touched; the gardener challenging its own beliefs — above — is the part that isn't a commodity.
 
 ## Challenge what your agent believes — on your own claims
 
@@ -80,10 +80,12 @@ To see the gardener actually challenge your claims, give it a local model:
 ollama pull qwen3.5:9b
 export PCIS_GARDENER_MODEL=qwen3.5:9b   # or any model you've already pulled
 pcis gardener         # the real pass — commits challenges to the record
-pcis show technical   # the counter now sits next to your claim (verify stays CLEAN)
+pcis show technical   # the counter sits next to your claim; `pcis verify` on your tree stays CLEAN
 ```
 
 The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes; if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — on Windows use `python -m pcis.cli …` or `py -3 -m pcis.cli …`, since `python3` there is a non-functional Store stub — same thing.)*
+
+**Interpreters and trees.** `setup.sh` needs Python 3.10+ and checks up front: if the interpreter it finds is older (macOS ships 3.9 as `/usr/bin/python3`), it stops *before building anything* and tells you to re-run as `PYTHON=python3.11 ./setup.sh`. Three separate trees coexist — knowing which is which resolves the ambiguity above: the **replay fixture** in `demo/advocate-demo/fixtures/` (what `run_demo.sh` shows, no setup needed); **`./data/tree.json`** (what `setup.sh` creates, and what `./verify.sh` and the dashboard read); and **`$PCIS_BASE_DIR`** (your own tree, where the `pcis` CLI writes). They don't share state — so `./verify.sh` checks `./data/tree.json` while `pcis verify` checks `$PCIS_BASE_DIR`. "Stays CLEAN" in the quickstart means `pcis verify` on *your* tree.
 
 ---
 

@@ -4,20 +4,39 @@ set -e
 echo "Setting up PCIS..."
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-# Resolve a working Python — stub-aware, so the Windows Store `python3` no-op stub
-# never gets picked. No venv exists yet, so this returns a system interpreter.
-PY="$(REPO="$HERE" bash "$HERE/scripts/resolve_python.sh")"
+# Resolve a Python that meets the 3.10+ floor the editable install needs (a modern pip,
+# to install a pyproject-only package). PCIS_MIN_PY makes the stub-aware resolver
+# version-aware too: on macOS /usr/bin/python3 is 3.9, and building a venv on it installs
+# requirements and then dies at `pip install -e .` — leaving a half-built venv and no
+# data/. On failure the resolver prints exactly how to fix it (a PYTHON= override);
+# surface that and stop — never build a venv we can't finish.
+if ! PY="$(PCIS_MIN_PY=3.10 REPO="$HERE" bash "$HERE/scripts/resolve_python.sh")"; then
+    exit 1
+fi
 
-# Create the virtualenv if we're not already inside one.
+VENV="$HERE/.venv"
+# Create the venv, or recreate it if an existing one is a DIFFERENT Python — a half-built
+# 3.9 venv from a prior run is sticky (the resolver prefers a populated venv), so `--clear`
+# guarantees a clean one on the interpreter we just vetted.
 if [ -z "${VIRTUAL_ENV:-}" ]; then
-    "$PY" -m venv .venv
-    echo "Virtual environment created at .venv"
+    WANT="$("$PY" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+    EXIST_PY="$VENV/bin/python"; [ -x "$EXIST_PY" ] || EXIST_PY="$VENV/Scripts/python.exe"
+    if [ -x "$EXIST_PY" ]; then
+        HAVE="$("$EXIST_PY" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "")"
+        if [ "$HAVE" != "$WANT" ]; then
+            echo "Existing .venv is Python ${HAVE:-unusable} — need $WANT; recreating (--clear)."
+            "$PY" -m venv --clear "$VENV"
+        fi
+    else
+        "$PY" -m venv "$VENV"
+    fi
+    echo "Virtual environment ready at .venv (Python $WANT)"
 fi
 
 # Use the venv interpreter directly (Unix bin/ or Windows Scripts/) — no
 # `source .venv/bin/activate`, which differs by OS and breaks under Git Bash.
-VENV_PY="$HERE/.venv/bin/python"
-[ -x "$VENV_PY" ] || VENV_PY="$HERE/.venv/Scripts/python.exe"
+VENV_PY="$VENV/bin/python"
+[ -x "$VENV_PY" ] || VENV_PY="$VENV/Scripts/python.exe"
 [ -x "$VENV_PY" ] || VENV_PY="$PY"   # already inside a venv, or venv creation skipped
 
 "$VENV_PY" -m pip install -r requirements.txt
@@ -38,7 +57,7 @@ fi
 
 echo ""
 # Print the activate path that actually exists on this OS (Unix bin/, Windows Scripts/).
-ACT="$HERE/.venv/bin/activate"; [ -f "$ACT" ] || ACT="$HERE/.venv/Scripts/activate"
+ACT="$VENV/bin/activate"; [ -f "$ACT" ] || ACT="$VENV/Scripts/activate"
 echo "Setup complete."
 echo "To run the Advocate demo:      ./run_demo.sh"
 echo "To run the server demo:        bash start_demo.sh"

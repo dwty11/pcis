@@ -95,3 +95,62 @@ def test_venv_without_flask_falls_through_to_a_working_system_python(tmp_path):
 
 def test_honors_explicit_python_override(tmp_path):
     assert _resolve(tmp_path, env_extra={"PYTHON": "/custom/python"}) == "/custom/python"
+
+
+# ── Version floor (PCIS_MIN_PY) ──────────────────────────────────────────────
+# setup.sh needs 3.10+ (the editable install requires a modern pip; macOS ships 3.9
+# as /usr/bin/python3 — the same class of trap as the Windows stub, one version older).
+# When PCIS_MIN_PY is set the resolver must fail LOUD instead of returning an interpreter
+# the caller can't finish with. run_demo.sh's zero-dep replay leaves it unset.
+
+def _versioned(path, meets_min=True, flask=False):
+    """A stand-in interpreter that reports whether it meets the floor: the resolver's
+    _meets_min probe (its code contains 'version_info') exits 0 (meets) or 1 (too old)."""
+    return _script(path, (
+        'if [ "$1" = "-c" ]; then case "$2" in\n'
+        '  *"print(1)"*) echo 1;;\n'
+        f'  *"version_info"*) exit {0 if meets_min else 1};;\n'
+        f'  *"import flask"*) exit {0 if flask else 1};;\n'
+        '  *"sys.executable"*) echo "$0";;\n'
+        'esac; fi\n'
+    ))
+
+
+def _resolve_raw(repo, path=None, env_extra=None):
+    """Like _resolve, but returns the CompletedProcess (may be a non-zero failure)."""
+    env = dict(os.environ, REPO=str(repo)); env.pop("PYTHON", None)
+    if path:
+        env["PATH"] = path
+    if env_extra:
+        env.update(env_extra)
+    return subprocess.run(["bash", str(RESOLVER)], capture_output=True, text=True, env=env)
+
+
+def test_min_version_gate_fails_loud_and_names_the_override(tmp_path):
+    # Nothing can meet an impossible floor -> fail (non-zero) and name the PYTHON= escape
+    # hatch; never silently hand back an interpreter setup.sh can't finish with.
+    r = _resolve_raw(tmp_path, env_extra={"PCIS_MIN_PY": "3.99"})
+    assert r.returncode != 0, f"expected a loud failure, got stdout={r.stdout!r}"
+    assert "PYTHON=" in r.stderr, f"error must name the PYTHON= override: {r.stderr!r}"
+
+
+def test_min_version_gate_picks_a_new_enough_interpreter(tmp_path):
+    d = tmp_path / "bin"; d.mkdir()
+    _versioned(d / "python", meets_min=False)          # too old, tried first
+    new = _versioned(d / "python3", meets_min=True)     # meets the floor
+    r = _resolve_raw(tmp_path, path=f"{d}:{_BASE_PATH}", env_extra={"PCIS_MIN_PY": "3.10"})
+    assert r.returncode == 0 and r.stdout.strip() == str(new), (r.returncode, r.stdout, r.stderr)
+
+
+def test_no_floor_still_resolves_an_older_interpreter(tmp_path):
+    # The zero-dep replay path (run_demo.sh, no PCIS_MIN_PY) must keep working on 3.9.
+    d = tmp_path / "bin"; d.mkdir()
+    old = _versioned(d / "python", meets_min=False)
+    r = _resolve_raw(tmp_path, path=f"{d}:{_BASE_PATH}")   # no PCIS_MIN_PY set
+    assert r.returncode == 0 and r.stdout.strip() == str(old), (r.returncode, r.stdout, r.stderr)
+
+
+def test_too_old_explicit_override_is_rejected(tmp_path):
+    old = _versioned(tmp_path / "oldpy", meets_min=False)
+    r = _resolve_raw(tmp_path, env_extra={"PYTHON": str(old), "PCIS_MIN_PY": "3.10"})
+    assert r.returncode != 0, f"a too-old PYTHON= override must be rejected: {r.stdout!r}"
