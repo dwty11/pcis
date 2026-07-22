@@ -21,7 +21,7 @@ PCIS is designed around seven recurring failure modes of production AI memory sy
 | Failure mode | What happens | PCIS response |
 |---|---|---|
 | **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener prunes stale leaves, gap-scan deduplicates on commit |
-| **No claim revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves, adversarial pass, confidence updates on challenge |
+| **No claim revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves and a CONTRADICTS synapse from the adversarial pass; belief traversal then reports a lower net-under-challenge confidence at read time and surfaces the contradiction for review — the stored value is left intact, not silently overwritten |
 | **Summarization collapse** | Recursive compression destroys detail; memory becomes "various topics discussed" | Architecture avoids recursive summarization — one compression layer only |
 | **Retrieval bias** | Vector search reinforces popular/recent claims regardless of truth | Adversarial pass specifically targets high-confidence echo chambers |
 | **Identity fragmentation** | Memory clusters become disconnected; agent contradicts itself across sessions | Cross-branch synapses, single Merkle-verified root |
@@ -125,6 +125,7 @@ These prove the log wasn't edited. None of them test whether the claim still hol
 ## Known limitations
 
 - Confidence values are heuristic, not Bayesian — formal updating is a v2.0 target.
+- **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten only by two internal paths, neither on the CLI: passing `tree=` to `add_synapse` (a direct Python API call) and the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint). Both currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a v2.0 target, tied to Bayesian belief updating above.
 - Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback.
 - Adversarial validator supports Anthropic, OpenAI, Ollama, and any OpenAI-compatible local adapter. Additional cloud providers can be added by extending the validator config.
 - No authentication on the demo server — demo is intended for local use only.

@@ -83,7 +83,7 @@ pcis gardener         # the real pass — commits challenges to the record
 pcis show technical   # the counter now sits next to your claim (verify stays CLEAN)
 ```
 
-The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes (~4 in 10 for a 9B); if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — same thing.)*
+The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes (~4 in 10 for a 9B); if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — on Windows use `python -m pcis.cli …` or `py -3 -m pcis.cli …`, since `python3` there is a non-functional Store stub — same thing.)*
 
 ---
 

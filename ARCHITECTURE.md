@@ -3,7 +3,7 @@
 PCIS is built around one idea: an agent's knowledge should be **challenged**, not just stored and signed. The adversarial pass — the gardener — is what makes PCIS more than a tamper-evident log; the knowledge tree and its Merkle integrity are the substrate it runs on.
 
 ## 1. Adversarial Pass (the gardener)
-PCIS runs a periodic adversarial pass where a local LLM — the gardener, on Ollama or MLX — is given the knowledge tree and told to attack its highest-confidence claims: the branches with high mean confidence and low spread, using the last five days of session memory as context. Where a challenge holds, a COUNTER leaf is generated. The commit is tiered: routine counters on operational branches (`technical`, `lessons`) auto-commit, while challenges to constitutional beliefs (`identity`, `philosophy`, `core`) and new synapses are staged for human review. The tree is not blindly updated — it is pressure-tested. This is what separates PCIS from a tamper-evident log: the record attacks itself.
+PCIS runs a periodic adversarial pass where a local LLM — the gardener, on Ollama or MLX — is given the knowledge tree and told to attack its highest-confidence claims: the branches with high mean confidence and low spread, using the last five days of session memory as context. Where a challenge holds, a COUNTER leaf is generated. Where a pass raises no counter for a claim — a routine outcome with a small local model — nothing is written for it: no counter leaf, no synapse, no confidence change. A challenge that did not happen is never put on the record as one. The commit is tiered: routine counters on operational branches (`technical`, `lessons`) auto-commit, while challenges to constitutional beliefs (`identity`, `philosophy`, `core`) and new synapses are staged for human review. The tree is not blindly updated — it is pressure-tested. This is what separates PCIS from a tamper-evident log: the record attacks itself.
 
 ## 2. Persistent Knowledge Tree
 PCIS stores agent knowledge as a structured tree of leaves, not a flat log or vector index. Each leaf carries a fact, a branch tag, a confidence score, a source reference, and a timestamp. Knowledge is organized by domain, queryable by semantic search, and human-readable at every level. The tree persists across sessions — the agent wakes up knowing what it knew when it last ran.
@@ -93,7 +93,7 @@ Also provides `add_knowledge` (with input validation), `prune_leaf`, `diff_trees
 
 ---
 
-**`core/gardener.py`** — The adversarial maintenance agent. Loads the knowledge tree, formats it as readable text, and sends it to a local LLM (qwen3.5:9b via Ollama) asking it to find echo chambers, generate counter-arguments, identify cross-branch connections, and flag stale leaves. The LLM responds in pipe-delimited format (`COUNTER|branch|content|confidence`, `SYNAPSE|content|confidence`, `FLAG|leaf_id|reason`); staged items are written as JSONL for reliable parsing. If parsing yields zero results, it retries once.
+**`core/gardener.py`** — The adversarial maintenance agent. Loads the knowledge tree, formats it as readable text, and sends it to a local LLM (qwen3.5:9b via Ollama) asking it to find echo chambers, generate counter-arguments, identify cross-branch connections, and flag stale leaves. The LLM responds in pipe-delimited format (`COUNTER|branch|content|confidence`, `SYNAPSE|content|confidence`, `FLAG|leaf_id|reason`); staged items are written as JSONL for reliable parsing. If parsing yields zero results, it retries once. That retry fires whenever a whole pass yields zero directives — whether the output was garbled or the model genuinely returned nothing (a small local model comes back empty on roughly 4 in 10 passes). It is distinct from the per-claim case in §1: when a pass raises counters but none target a given claim, that claim simply gets nothing — no counter leaf, no synapse, no confidence change — and no retry. The gardener only ever commits counters it actually parsed; it never injects a synthetic counter to fill an empty result.
 
 Tiered commit system:
 - Counter-leaves targeting operational branches (`technical`, `lessons`) → auto-committed
@@ -134,7 +134,7 @@ All prune actions logged to `data/prune-log.json`.
 
 ### Tests (`tests/test_pcis.py`)
 
-43 tests across 14 classes:
+Organized into 14 test classes:
 
 | Class | What it verifies |
 |-------|-----------------|
