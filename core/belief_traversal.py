@@ -13,7 +13,7 @@ import sys
 
 WORKSPACE = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-# Tunable constants — v2.0 will replace with proper Bayesian posteriors.
+# Tunable constants — a Later roadmap item replaces these with proper Bayesian posteriors.
 SUPPORT_WEIGHT = 0.1
 CONTRADICTION_WEIGHT = 0.15
 DEPTH_DECAY = 0.5  # applied per hop beyond depth 1

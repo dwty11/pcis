@@ -70,25 +70,30 @@ See: [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md)
 - [x] Belief decay — exponential decay (half-life 180 days), constraints/state branches exempt, CLI `--decay [--dry-run]`
 - [x] Ed25519 root signing — signs the Merkle root with an operator-controlled key (`pcis sign init/root/verify/pubkey`)
 
-## v2.0 — what's next
+## Roadmap and boundaries
 
-- [ ] **External root anchoring** — optionally post signed root hashes to a Sigstore-compatible transparency log on a schedule. Closes the gap between tamper-detection (current) and tamper-evidence against a privileged attacker.
-- [ ] **Bayesian belief updating** — `P(H|E) = P(E|H)P(H)/P(E)`. Confidence updates by formula based on evidence weight, not heuristic judgment.
-- [ ] **Typed causal edges** — edges carry semantic type (`causes`, `implies`, `depends_on`, `correlates`), enabling forward inference rather than retrieval only.
-- [ ] **Contradiction resolution engine** — conflicting claims trigger investigation; probability redistribution is automatic and auditable.
-- [ ] **Structural reorganization** — periodic graph reclustering as knowledge domains shift; dead branches collapsed, emergent domains surfaced.
-- [ ] Full end-to-end test suite — demo boots and passes all tabs without manual intervention.
-- [ ] Config validation — helpful errors when config.json is missing or malformed.
-- [ ] LangChain adapter — PCIS as a memory provider for LangChain agents.
-- [ ] OpenAI function calling integration — agent reads/writes tree via structured API.
-- [ ] Webhook support — gardener posts summary after nightly run.
-- [ ] Multi-agent shared tree — multiple agents reading from one verified knowledge source.
-- [ ] Source credibility weights — evidence from peer-reviewed sources weighted differently from LLM-generated claims.
-- [ ] Role-based access to tree branches (read/write/admin).
-- [ ] Distributed Merkle tree — multiple nodes, consensus on root hash.
-- [ ] Compliance export — audit-ready reports from tree history.
-- [ ] Dashboard — web UI for tree health, adversarial history, pruning log.
-- [ ] Hosted option — managed PCIS for teams that don't want to self-host.
+Three buckets, so a reader can tell which gaps are on the path and which are architectural boundaries that belong to other layers.
+
+### Next — named, shaped, intended
+
+- **Output grounding.** Nothing proves an answer came from the tree; the agent volunteers what it used. The record shows what was committed, not what a given response actually drew on.
+  - *Verified retrieval trace (concrete sub-step).* Log which leaves were injected into the prompt, with content hashes, and re-verify each against the tree at read time — `resolves` / `drifted` / `gone`. This proves **retrieval provenance, not answer provenance**: that certain leaves were fed in and still match the tree, not that the answer used them. The injection↔usage gap is architectural, not an implementation shortfall.
+- **Ingestion.** Claims enter through `pcis add` / the CLI; nothing reads an agent's output stream and commits what it asserted.
+- **Third-party agent integration.** The plugin and skills interfaces work, but only one agent has used them — and that agent was built alongside PCIS.
+
+### Later — real, but further out
+
+- **External witness layer.** Closes *equivocation* — a dishonest operator maintaining two trees and showing different versions to different parties, each verifying under the same key. The off-machine signing key already covers a compromised host; an independent witness is the separate layer that catches a two-faced operator.
+- **Multi-agent enforcement.** The documentation describes cross-agent checks the code stages but does not enforce.
+- **Bayesian confidence.** Confidence updated by formula from evidence weight, in place of today's heuristic values.
+
+### Not ours — architectural boundaries belonging to other layers
+
+Named so the scope stays honest, not claimed:
+
+- **Identity binding** — tying the record to a real-world or hardware identity is the domain of PKI, DIDs, and runtime attestation (TPM / TEE).
+- **State commitment** — committing to current external state, rather than the history-shaped attestation log PCIS is, belongs to consensus and ledger systems (blockchains, state channels, timestamping authorities).
+- **Forward secrecy** — protecting past records against a future key compromise is a key-agreement / transport property (ephemeral-key protocols like TLS 1.3 or the Signal ratchet), not something a signed at-rest log provides.
 
 ---
 
@@ -124,8 +129,8 @@ These prove the log wasn't edited. None of them test whether the claim still hol
 
 ## Known limitations
 
-- Confidence values are heuristic, not Bayesian — formal updating is a v2.0 target.
-- **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten only by two internal paths, neither on the CLI: passing `tree=` to `add_synapse` (a direct Python API call) and the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint). Both currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a v2.0 target, tied to Bayesian belief updating above.
+- Confidence values are heuristic, not Bayesian — formal updating is a Later item (Bayesian confidence, above).
+- **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten only by two internal paths, neither on the CLI: passing `tree=` to `add_synapse` (a direct Python API call) and the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint). Both currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a Later item, tied to Bayesian confidence above.
 - Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback.
 - Adversarial validator supports Anthropic, OpenAI, Ollama, and any OpenAI-compatible local adapter. Additional cloud providers can be added by extending the validator config.
 - No authentication on the demo server — demo is intended for local use only.

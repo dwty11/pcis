@@ -45,7 +45,7 @@ The combined root hash (`sha256(tree_root + synapse_root)`) is computed at boot,
 
 `query_belief(text)` accepts a natural-language query, runs semantic search to find the most relevant leaf, then calls `assess_belief` on it. The agent can now answer not just *what a claim says* but *what confidence it carries, and why*.
 
-This is the first step toward the Bayesian belief updating planned in v2.0 — the architecture is in place, the update rule is currently heuristic rather than formally Bayesian.
+This is the first step toward Bayesian confidence (a Later roadmap item) — the architecture is in place, the update rule is currently heuristic rather than formally Bayesian.
 
 ## PCIS and External Memory Continual Learning
 
