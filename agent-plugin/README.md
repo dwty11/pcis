@@ -8,6 +8,8 @@ Give any compatible agent a self-challenging, tamper-evident claim record — pe
 
    ```bash
    git clone https://github.com/dwty11/pcis.git
+   # or, from Russian networks:
+   git clone https://gitverse.ru/dwty/pcis.git
    cd pcis
    pip install -e .
    ```

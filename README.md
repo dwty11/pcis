@@ -13,7 +13,7 @@ On every maintenance pass, an adversarial process — **the gardener** — reads
 
 **The full argument:** [Persistent Cognitive Integrity — the case](docs/PCIS.md). This README is the front door; the essay is the *why*.
 
-[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue)](https://github.com/dwty11/pcis/blob/main/LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](https://github.com/dwty11/pcis/releases)
+[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](CHANGELOG.md)
 
 Built by [@dwty_11](https://x.com/dwty_11)
 
@@ -25,6 +25,8 @@ A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims —
 
 ```bash
 git clone https://github.com/dwty11/pcis.git
+# or, from Russian networks:
+git clone https://gitverse.ru/dwty/pcis.git
 cd pcis
 ./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ```
