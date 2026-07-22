@@ -139,10 +139,10 @@ def beat_verdict(tree, canonical, plant_id):
         print("  NO VERDICT THIS PASS — the gardener raised no counter on the plant.")
         print(RULE)
         print("  Nothing is injected: no counter leaf, no synapse, no confidence move —")
-        print("  a challenge that didn't happen is not put on the record. This model")
-        print("  returns nothing on roughly 4 of 10 passes, which is why the ablation is")
-        print("  6/10 and why the demo ships a recording. Use --replay for the locked")
-        print("  hit, or re-run --live.")
+        print("  a challenge that didn't happen is not put on the record. The gardener")
+        print("  challenges the record every pass but does not always target this leaf;")
+        print("  see the ablation above for the measured rate. Use --replay for the")
+        print("  locked hit, or re-run --live.")
         return tree, {"synapses": []}, None
     # apply the plant's real counter → CONTRADICTS synapse, then render from assess_belief
     ctr_id = kt.add_knowledge(tree, "precedent", "COUNTER: " + pc["content"],

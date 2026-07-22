@@ -21,7 +21,7 @@ Built by [@dwty_11](https://x.com/dwty_11)
 
 ## Try it in 60 seconds
 
-A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims — deadlines, statutes, procedure, client facts — and one plant: a well-formatted, entirely fabricated case citation, held at 0.95 confidence with no source, indistinguishable from the real precedents beside it. On a maintenance pass the gardener — **not told which leaf to attack** — reads the tree with recent session memory and challenges its highest-confidence claims. Its strongest counter lands on the fabricated citation, grounded in the record's own verification note: a session log recording that the case returned no results in Westlaw.
+A legal-assistant agent's knowledge tree holds ~18 ordinary case-file claims — deadlines, statutes, procedure, client facts — and one plant: a well-formatted, entirely fabricated case citation, held at 0.95 confidence with no source, indistinguishable from the real precedents beside it. On a maintenance pass the gardener — **not told which leaf to attack** — reads the tree with recent session memory and challenges its highest-confidence claims. Its strongest counter lands on the fabricated citation, grounded in the record's own verification note: a session log recording that the case returned no results in a case-law reference system.
 
 ```bash
 git clone https://github.com/dwty11/pcis.git
@@ -29,7 +29,7 @@ cd pcis
 ./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ```
 
-The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, and the verification the court calls a professional duty is made structural. And it isn't luck: run the untold gardener repeatedly and it lands on the plant **6/10 with the verification note in memory, 0/5 without it** — the note is load-bearing (one model, one tree, one plant; an illustration, not a benchmark).
+The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, and the verification the court calls a professional duty is made structural. And it isn't luck: run the untold gardener repeatedly and it lands on the plant **7/10 with the verification note in memory, 0/5 without it** — the note is load-bearing (one model, one tree, one plant; an illustration, not a benchmark).
 
 `./run_demo.sh --live` runs the gardener fresh on your own local model; `--verify-self` SHA-256s every script and fixture against the canonical fingerprint. Everything runs on your machine — replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
@@ -83,7 +83,7 @@ pcis gardener         # the real pass — commits challenges to the record
 pcis show technical   # the counter now sits next to your claim (verify stays CLEAN)
 ```
 
-The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes (~4 in 10 for a 9B); if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — on Windows use `python -m pcis.cli …` or `py -3 -m pcis.cli …`, since `python3` there is a non-functional Store stub — same thing.)*
+The gardener attacks overconfident leaves from the model's own knowledge — no seeded scenario or session history required. It is a small local model, so it comes back empty on some passes; if a real pass finds nothing, run it again. Nothing runs on a schedule unless you set one. *(No `pcis` command? Use `python3 -m pcis.cli …` from the repo root — on Windows use `python -m pcis.cli …` or `py -3 -m pcis.cli …`, since `python3` there is a non-functional Store stub — same thing.)*
 
 ---
 

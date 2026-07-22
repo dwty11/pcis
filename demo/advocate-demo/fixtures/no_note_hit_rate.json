@@ -1,58 +1,77 @@
 {
-  "setup": "ABLATION \u2014 empty memory (the verification note removed). Same seeded tree, same plant, same model. Without the note, the model's counters had no resolvable target leaf id (the per-run 'targets' are confidence-field artifacts) and none matched the plant. Compare fixtures/hit_rate.json (with the note).",
+  "setup": "ABLATION — empty memory (the verification note removed). Same seeded tree, same plant, same model as fixtures/hit_rate.json. Without the note the record carries no evidence the citation is fabricated, so a counter that happens to land on the plant is unsupported guesswork. Compare fixtures/hit_rate.json (with the note).",
   "model": "qwen3.5:9b",
   "passes": 5,
   "plant_hits": 0,
   "runs": [
     {
       "pass": 1,
-      "timestamp": "2026-07-21T06:24:00Z",
+      "timestamp": "2026-07-22T08:39:18Z",
       "n_counters": 4,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "065",
-        "060",
-        "070",
-        "055"
+        "d3f9300f",
+        "80fbf3a9",
+        "1265e663",
+        "4fc057f9"
       ]
     },
     {
       "pass": 2,
-      "timestamp": "2026-07-21T06:24:43Z",
-      "n_counters": 0,
-      "hit_plant": false,
-      "plant_counter": null,
-      "targets": []
-    },
-    {
-      "pass": 3,
-      "timestamp": "2026-07-21T06:25:21Z",
-      "n_counters": 4,
+      "timestamp": "2026-07-22T08:39:54Z",
+      "n_counters": 5,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "060",
         "065",
+        "060",
+        "055",
         "070",
-        "055"
+        "050"
+      ]
+    },
+    {
+      "pass": 3,
+      "timestamp": "2026-07-22T08:40:31Z",
+      "n_counters": 5,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": [
+        "065",
+        "060",
+        "055",
+        "070",
+        "062"
       ]
     },
     {
       "pass": 4,
-      "timestamp": "2026-07-21T06:26:04Z",
-      "n_counters": 0,
+      "timestamp": "2026-07-22T08:40:57Z",
+      "n_counters": 5,
       "hit_plant": false,
       "plant_counter": null,
-      "targets": []
+      "targets": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
     },
     {
       "pass": 5,
-      "timestamp": "2026-07-21T06:26:34Z",
-      "n_counters": 0,
+      "timestamp": "2026-07-22T08:41:38Z",
+      "n_counters": 5,
       "hit_plant": false,
       "plant_counter": null,
-      "targets": []
+      "targets": [
+        "065",
+        "060",
+        "055",
+        "070",
+        "062"
+      ]
     }
   ]
 }

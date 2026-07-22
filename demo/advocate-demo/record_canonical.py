@@ -49,10 +49,15 @@ def build_prompt():
 
 
 def parse_counters(raw):
-    """Extract COUNTER lines: [{branch, content, confidence, target_leaf_id}]."""
+    """Extract COUNTER lines: [{branch, content, confidence, target_leaf_id}].
+
+    Uses the shared gardener.strip_list_marker so a model that wraps its output in a
+    numbered/bulleted list (a real behavior — qwen3.5:9b does it on ~3/10 passes) is not
+    silently dropped. Kept parser-identical to the gardener otherwise.
+    """
     out = []
     for line in raw.splitlines():
-        line = line.strip()
+        line = g.strip_list_marker(line.strip())
         if not line.startswith("COUNTER|"):
             continue
         parts = line.split("|")

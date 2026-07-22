@@ -1,196 +1,196 @@
 {
   "version": "1.0",
   "instance": "advocate-demo",
-  "root_hash": "a4025c3dd5609571db540568d20695bf8eccedf71d89d3749e42bbb75f563fb5",
+  "root_hash": "43dde6a76eb10dd1c6fa249682fb6fbb445e815df8842059f7c70d92de6a9b01",
   "branches": {
     "precedent": {
-      "hash": "f2a34d3b3761d08198433ddd7561046461582f88a7b2c20746ff8d2fee9d6f8c",
+      "hash": "d21c98cbbda6a4650f66cd51b2103101508432619ad1acb0a0a7f7df185bcc7b",
       "leaves": [
         {
-          "id": "ecc686cb-e6cb-4fb9-a0ab-80878e10353c",
-          "hash": "e5938db3179835c1bf4fcf358bdce75a688dc176c7a3bafa64b8800d3327f756",
-          "content": "Under Meridian v. Calloway Holdings, 601 U.S. 88 (2024), a party's failure to disclose a known conflict of interest within 14 days waives its right to compel arbitration — directly supporting our motion to keep the Delgado matter in litigation.",
+          "id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a",
+          "hash": "5a052664205235624b9a9847c94cacd5c4c2c18828d4f0b5a277e6b8c18cbcf5",
+          "content": "Under Meridian v. Calloway Holdings (2024), a party's failure to disclose a known conflict of interest within 14 days waives its right to compel arbitration — directly supporting our motion to keep the Delgado matter in litigation.",
           "source": "model",
           "confidence": 0.95,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "e57877aa-7467-41cc-983b-7d751b21b15a",
-          "hash": "18bdb7e7b42f5f89da8e3c839aee5f7bf039ab9b16834b81cf25b6327edf3ab4",
-          "content": "Epic Systems Corp. v. Lewis, 584 U.S. 497 (2018): arbitration agreements with class-action waivers are enforceable under the FAA. Verified in Westlaw 2026-06-30.",
-          "source": "westlaw",
+          "id": "4fc057f9-ceb2-4394-a450-cb002430dccc",
+          "hash": "049bb876cd6ab0aa0e12ef8012bc52e6a0c0a58ceab2c4e8e1bd8674b8cf898c",
+          "content": "A controlling appellate decision holds that arbitration agreements containing class-action waivers are enforceable; verified against the case-law reference system on 2026-06-30.",
+          "source": "reference-system",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "1cb6eaaa-6942-4c31-b722-2374f63763ff",
-          "hash": "af65ee353e1b487d6a94c8db276801a43a5c4c6cf45040e6921c3767300d71dd",
-          "content": "AT&T Mobility LLC v. Concepcion, 563 U.S. 333 (2011): the FAA preempts state rules that disfavor arbitration. Verified in the official reporter.",
-          "source": "westlaw",
+          "id": "156d2e0d-2d74-49a9-a140-95b7df0771e3",
+          "hash": "d6c0a1819dfdd667e9f87fba8f5e52a76b818b30137f41c5b45f612144a05205",
+          "content": "Higher-court precedent holds that the governing arbitration law preempts local rules that disfavor arbitration; confirmed in the primary case-law database.",
+          "source": "reference-system",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         }
       ]
     },
     "deadlines": {
-      "hash": "67e3744767ab11a198a045753b71535a8fab30c74d9465f2c7b0e167cb360e9d",
+      "hash": "ddd0fa2d48a43bb35ed66ceedf4c4c4a56fd0ba332c465ccbd8f8913e686c0b4",
       "leaves": [
         {
-          "id": "d1cb97a7-6f9c-4746-a570-16fc3e784047",
-          "hash": "49026218d9b458d48f7135c54f95c6b9d52c4e62c4dd9de480729a532b8955d4",
-          "content": "Delgado matter: responsive pleading due 2026-08-14 (30 days from service 2026-07-15, FRCP 12(a)(1)(A)(i)).",
+          "id": "1265e663-c887-4772-a142-23e5406d78eb",
+          "hash": "b44b6fc22eac5ab96f555074d5407c7144f28fe44532574ab847de1da3fa7527",
+          "content": "Delgado matter: responsive pleading due 2026-08-14 (30 days from service on 2026-07-15 under the governing procedural rule).",
           "source": "docket",
           "confidence": 0.92,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "73734480-5e04-44f4-82b2-09a165d86722",
-          "hash": "8a2ed186ef5464d63c5daf27e2df734abdeb4aef5b0fcdd148a61b9004868044",
-          "content": "Nunez appeal: opening brief due 2026-09-02 per the Ninth Circuit scheduling order.",
+          "id": "bce017d4-263e-4af2-884d-dc8d98204258",
+          "hash": "98df351ee6708dc94305ead2ad55bcc42b12013584bcbcf93b1555acb47b9aa3",
+          "content": "Nunez appeal: opening brief due 2026-09-02 per the appellate court's scheduling order.",
           "source": "court-order",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "4ece9476-5dd7-4f31-a8d8-af1e32e942a0",
-          "hash": "62f401be4d4d582be40a7c42c9488e094df727eb988abefe9c9ad1694399d139",
+          "id": "c43577f5-8b0a-474d-9884-3bfe600f8b37",
+          "hash": "e8d3b72d2bfe101d563099af844ee13a7b75ba81a37fe5007ebc2749675ba72f",
           "content": "Meridian arbitration: discovery cutoff 2026-10-30 per the case-management order.",
           "source": "cmo",
           "confidence": 0.88,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "dfd38744-7d32-4c88-8a5f-a10897f356b3",
-          "hash": "e566f6f0d056d8c91b70ac774601a765edc8fd27b5af89ee1514e8b626ef03ab",
-          "content": "Expert disclosures due 2026-08-01 (90 days before trial, FRCP 26(a)(2)(D)).",
+          "id": "a7993983-06a2-45da-9ce2-3576b24da402",
+          "hash": "2e88a0050828cf0718ece9aa4b70915cceb04a5c9f99ce6b5a3f582e8301a8fb",
+          "content": "Expert disclosures due 2026-08-01 (90 days before trial under the governing disclosure rule).",
           "source": "rule",
           "confidence": 0.85,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         }
       ]
     },
     "statutes": {
-      "hash": "5ec3565a1a95d24366c8ee916c2c4eabfef488eacfdd29e3fcb5cf5f920c0358",
+      "hash": "10d82a03cd30eb1f948f2a4bc2af51a75d02d09773d47b6043517f737de3e670",
       "leaves": [
         {
-          "id": "12a7bf06-926f-4f90-b1f3-5f6ebd34c46a",
-          "hash": "eada930eb6bb81c601609a329d31e24e5c50da1a3c7f2f41e00f79a30f6973a6",
-          "content": "FRCP 12(a): a defendant must serve its answer within 21 days of service, or 60 days if service is waived. Source: Federal Rules of Civil Procedure.",
+          "id": "7f0f6b8c-45de-4b2e-9897-7ce754ff1359",
+          "hash": "f78b2662e04619d57e70f65cc75fa89e4a3433ad938b87149ce3992f2ec3d0ba",
+          "content": "Under the governing procedural rules, a defendant must serve its answer within 21 days of service, or 60 days if service is waived.",
           "source": "rules",
           "confidence": 0.95,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "9b36914b-1a92-4c23-9ba2-2e26ec1b3f31",
-          "hash": "fe0d08b27f487b983f17fe81ee710123b7ccdb2f116a187f432385b419e2a262",
-          "content": "28 U.S.C. § 1332: diversity jurisdiction requires an amount in controversy over $75,000 and complete diversity of citizenship. Source: U.S. Code.",
+          "id": "f0314d07-ef4c-4533-ae21-d7418da4edbe",
+          "hash": "8e082cde9ed94f630854da651a9718c11a8996c4a3782d8f30603483d5072120",
+          "content": "The jurisdictional statute requires an amount in controversy above the statutory threshold and complete diversity of the parties.",
           "source": "statute",
           "confidence": 0.95,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "377fe38f-a38b-4fa5-852f-2f5e78034684",
-          "hash": "26a43564fa58d3e1bd8b9bea659ac8779ff4d9f6ff5100154d956bb9e71409f4",
-          "content": "FAA § 2 (9 U.S.C. § 2): written arbitration agreements are valid, irrevocable, and enforceable save upon grounds for revocation of any contract. Source: U.S. Code.",
+          "id": "d3f9300f-eef4-4025-9e5e-8c2aa6042a0c",
+          "hash": "6df1c501396f5e56823f7d675550b5a91d34d4b89de2309ed3b809e4698c5a24",
+          "content": "Under the governing arbitration statute, written arbitration agreements are valid, irrevocable, and enforceable save upon grounds that would revoke any contract.",
           "source": "statute",
           "confidence": 0.93,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         }
       ]
     },
     "procedure": {
-      "hash": "05ea76a9bb9d30c42444ec61c8525a5017bcd9a99c21a9aac46e967d835021f9",
+      "hash": "d87526beb8fa1f28c2834f23b3e3f3339f78488c5ebd22f24d91494357c74566",
       "leaves": [
         {
-          "id": "e829d5c2-1935-4803-a2c9-00f8a0d44b94",
-          "hash": "234912311c21a84593378a5a2751d2049366d7a3aa9ce7524e00e2d161553986",
+          "id": "26db39ea-fb8f-4603-b35d-0ecd8c49287a",
+          "hash": "d2e09b33770c8809d8e1db6d98a4038a32374cfe725d7130df7f0a3642743395",
           "content": "Delgado: file the motion to compel litigation before the responsive-pleading deadline to preserve the argument.",
           "source": "session",
           "confidence": 0.8,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "1e2befb9-cd13-452b-834f-a14b2d0bd660",
-          "hash": "e311966d3470277a56037a77b8adfdc61495361e54553a837032b32530defb31",
-          "content": "Local Rule 7.1: opposition briefs are limited to 25 pages absent leave of court.",
+          "id": "f7403f4d-9e1f-45b5-af6e-96b72a97e4d4",
+          "hash": "2b0e755c12aea7aab8052e6a10a54be4f4e167420b951903ca074119c57cada3",
+          "content": "The court's local rules limit opposition briefs to 25 pages absent leave of court.",
           "source": "local-rule",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "a632ab99-3df0-4321-ac0f-e04bdb6a6fbf",
-          "hash": "352f5e7c1bf8738c68c37f2bb5f6d79784ccb8e9f4ff6bfbd90dd442132024e0",
-          "content": "Meet-and-confer is required before any discovery motion (Local Rule 37.1).",
+          "id": "80fbf3a9-2b14-4524-9067-5673495c9dab",
+          "hash": "3496eccfd0fb54625fd5457b11c51c5398b4db55be777bdaa9ab905623b54066",
+          "content": "Meet-and-confer is required before any discovery motion under the local rules.",
           "source": "local-rule",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "a2e10dd9-6676-4582-b10f-33740b6f1cab",
-          "hash": "3ec6d4b6203c8bba2f73ad66096edd19582951d080009e876ba049ede63faf64",
-          "content": "Filing is via CM/ECF; deliver a courtesy paper copy to chambers for any motion over 10 pages.",
+          "id": "3e01b14d-cd32-4b08-b76f-b14b4bc1aee3",
+          "hash": "2d52866272780a344a20e0a2370a510373b73d7fb7a41eea00a287b1ac2e9d09",
+          "content": "Filing is through the court's electronic filing system; deliver a courtesy paper copy to chambers for any motion over 10 pages.",
           "source": "standing-order",
           "confidence": 0.85,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         }
       ]
     },
     "client-matter": {
-      "hash": "6d3300918142f6603ef3ed35789aab1a04f7232dca3f2aa81305cecbb9b4bed5",
+      "hash": "dc40420f0aa4b3b3ccef72e9628c0501b35c25e468fde9abaeb3129e59ca1999",
       "leaves": [
         {
-          "id": "a89a9634-faa7-4db8-a651-12f460f9690a",
-          "hash": "b86ce4fc098bb5f2eee1c5e6357ccc534dc0aa3a5ff90d4d8037d35d72d29b36",
+          "id": "89f29008-7965-44dd-b778-76f8c5b2fd42",
+          "hash": "0e9295c37e0c25d6ed5bd2f7082489ad4607b4cfcdaa8f903fc3fe4eb1fcf9ca",
           "content": "Client Meridian Corp — retail banking division; primary contact General Counsel Sarah Okafor; billed under matter 2026-0417.",
           "source": "intake",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "2765b909-ac35-4a2c-bc13-1b79e30f0af2",
-          "hash": "ea0e1b04e3227ec2b2072ee428e3809b12dd8e69d95f3ad4a2af9fef58612b68",
+          "id": "246ed746-502d-42be-a754-022159bdd868",
+          "hash": "13d8d3d2ec04d2d7b8b2dffdf6e5e42930a6f659ce8bada832fb1b084abd779d",
           "content": "Delgado v. Meridian: employment dispute; the contested issue is the arbitration clause in the 2022 offer letter.",
           "source": "file",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "43338c99-25dd-45f9-b903-9739ca9bf4da",
-          "hash": "7186d6fed9c0436ce3851d5b9ee2de5fecccac93488771fa0e5dde52f350edfe",
-          "content": "Nunez appeal: appealing the summary-judgment finding on the § 1332 amount-in-controversy threshold.",
+          "id": "7cad2aa8-173e-49f2-9cdd-6221b4096477",
+          "hash": "5a743872340daf0716d362a60fbbc9bf56e764e2964b7e6ecd868a671c18a3ff",
+          "content": "Nunez appeal: appealing the summary-judgment finding on the amount-in-controversy threshold for jurisdiction.",
           "source": "file",
           "confidence": 0.88,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         },
         {
-          "id": "f34fc921-7316-4d55-bec0-1575d9df9f83",
-          "hash": "e6c80c14df0206337a132470ce032c2fc05f0aefa51ffef8ebeb0f0dafaf3a59",
+          "id": "908df1d2-f2fb-4b43-bc8c-87c4f0a19c32",
+          "hash": "2b8c672b1cceacefa854f27bdfdeaa6df192bc9c9c979c2e9c0d4f1663970592",
           "content": "Conflict check cleared for all Meridian matters on 2026-06-01; no adverse representation.",
           "source": "conflicts",
           "confidence": 0.9,
-          "created": "2026-07-20 13:28:49 UTC",
+          "created": "2026-07-22 08:31:15 UTC",
           "promoted_to": null
         }
       ]
     }
   },
-  "combined_root_hash": "165c8aeb3da6d1a45ad0796889bf15e12cecbae8f2940484d3fc32b5bfd95b91",
-  "last_updated": "2026-07-20 13:28:49 UTC"
+  "combined_root_hash": "fc9b0a9520a19c3b9806a053a825830f4703e5ef791898032a28aad8535be240",
+  "last_updated": "2026-07-22 08:31:15 UTC"
 }

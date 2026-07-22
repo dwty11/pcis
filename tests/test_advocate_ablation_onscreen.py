@@ -33,9 +33,9 @@ def _replay_output():
 
 
 def test_ablation_fixtures_are_the_recorded_numbers():
-    """Guards the bound: exactly the numbers J ruled — 6/10 with note, 0/5 without."""
+    """Guards the bound: exactly the numbers J ruled — 7/10 with note, 0/5 without."""
     withn, without = _fixture_rates()
-    assert (withn["plant_hits"], withn["passes"]) == (6, 10)
+    assert (withn["plant_hits"], withn["passes"]) == (7, 10)
     assert (without["plant_hits"], without["passes"]) == (0, 5)
 
 

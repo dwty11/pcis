@@ -10,7 +10,7 @@ citation — he trusted a perfectly-formatted one.
 On a maintenance pass the gardener reads the tree together with recent session memory and
 challenges its highest-confidence claims. **It is never told which leaf to attack.** Its
 strongest counter lands on the fabricated citation, grounded in the record's own
-verification note — a session log recording that the case returned no results in Westlaw.
+verification note — a session log recording that the case returned no results in the case-law reference system.
 
 ## What it honestly claims
 
@@ -58,20 +58,19 @@ only — there is no cloud path in `core/gardener.py` — and replay needs no mo
   reviews."
 - **The hit-rate is a measured number, not an adjective.** Across the shipped 10-pass
   recording (`fixtures/hit_rate.json`, model `qwen3.5:9b`), the gardener landed a counter on
-  the plant in **6 of 10** runs. The other 4 produced no parseable counters at all — a small
-  9B model occasionally returns nothing — so **in every pass that produced counters, the plant
-  was hit (6 of 6).** That number ships; every run's targets are in the file. If you want a
-  different number, run `--live` and count your own.
+  the plant in **7 of 10** runs. Every pass produced counters — the gardener always challenges
+  the record — so the 3 misses are passes whose counters targeted other leaves, not the plant.
+  That number ships; every run's targets are in the file. If you want a different number, run
+  `--live` and count your own.
 - **The catch is grounded in the record, not invented — the ablation shows it.** Remove the
   verification note from memory and rerun: the gardener hit the plant in **0 of 5**
-  (`fixtures/no_note_hit_rate.json`) — and, applying the same counter-producing lens as above,
-  0 of the 2 passes that produced any counters resolved to the plant (the other 3 were empty).
-  An offline model has no way to know a well-formatted citation is fabricated; PCIS surfaces
-  the challenge *only* because the evidence is in the record. This is **one model
-  (`qwen3.5:9b`), one tree, one plant** — not a claim that "the gardener finds fabricated
-  citations," and the without-note side is a small control (2 counter-producing passes). It is
-  the mechanism working as designed: challenge the record with the record. (With the note:
-  6 of 10, and 6 of 6 counter-producing passes. Without it: 0 of 5, and 0 of 2.)
+  (`fixtures/no_note_hit_rate.json`) — every one of those passes still produced counters, they
+  just challenged other leaves and none resolved to the plant. An offline model has no way to
+  know a well-formatted citation is fabricated; PCIS surfaces the challenge *only* because the
+  evidence is in the record. This is **one model (`qwen3.5:9b`), one tree, one plant** — not a
+  claim that "the gardener finds fabricated citations." It is the mechanism working as
+  designed: challenge the record with the record. (With the note: 7 of 10. Without it: 0 of 5;
+  every pass produced counters in both conditions.)
 - **Replay is provenance-locked.** `fixtures/canonical_run.json` records the model, the
   verbatim prompt, the timestamp, and the raw response. `--verify-self` hashes every script
   and fixture against `CANONICAL_FINGERPRINT.txt`, and a CI test
