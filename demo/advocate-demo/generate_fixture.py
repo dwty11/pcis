@@ -149,13 +149,13 @@ def main():
     kt.save_tree(tree, tree_path)
 
     note_path = os.path.join(base_mem, f"{args.memory_date}.md")
-    with open(note_path, "w") as f:
+    with open(note_path, "w", encoding="utf-8") as f:
         f.write(SESSION_NOTE)
 
     # Record which leaf is the plant so the recorder/replay can reference it by id
     # WITHOUT the gardener ever being told (this file is demo bookkeeping, not a
     # gardener input — run_demo.sh greps prove no leaf id reaches the gardener).
-    with open(os.path.join(args.out, "PLANT_ID.txt"), "w") as f:
+    with open(os.path.join(args.out, "PLANT_ID.txt"), "w", encoding="utf-8") as f:
         f.write(plant_id + "\n")
 
     n = sum(len(b["leaves"]) for b in tree["branches"].values())

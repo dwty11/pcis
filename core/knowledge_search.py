@@ -41,6 +41,12 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone, timedelta
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # --- Configuration -------------------------------------------------------
 
 BASE_DIR = os.environ.get("PCIS_BASE_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -131,7 +137,7 @@ def cosine_similarity(vec_a, vec_b):
 def load_index():
     """Load the search index from disk."""
     if os.path.exists(INDEX_FILE):
-        with open(INDEX_FILE, "r") as f:
+        with open(INDEX_FILE, "r", encoding="utf-8") as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError as e:
@@ -169,7 +175,7 @@ def load_tree():
         print("Knowledge tree not found. Run knowledge_tree.py first.")
         sys.exit(1)
 
-    with open(TREE_FILE, "r") as f:
+    with open(TREE_FILE, "r", encoding="utf-8") as f:
         try:
             return json.load(f)
         except json.JSONDecodeError as e:

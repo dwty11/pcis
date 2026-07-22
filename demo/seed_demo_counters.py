@@ -149,7 +149,7 @@ def main(argv=None) -> None:
                         help="Exit 1 if the demo tree has fewer than the seeded counters.")
     args = parser.parse_args(argv)
 
-    tree = json.loads(DEMO_TREE.read_text())
+    tree = json.loads(DEMO_TREE.read_text(encoding="utf-8"))
 
     if args.check:
         n = sum(1 for b in tree["branches"].values() for l in b["leaves"]
@@ -158,7 +158,7 @@ def main(argv=None) -> None:
         sys.exit(0 if n >= len(SYNTHETIC_COUNTERS) else 1)
 
     added = reseed(tree)
-    DEMO_TREE.write_text(json.dumps(tree, ensure_ascii=False, indent=2) + "\n")
+    DEMO_TREE.write_text(json.dumps(tree, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Reseeded {DEMO_TREE.name}: +{added} synthetic COUNTER leaf(ves); "
           f"root -> {tree['root_hash'][:16]}...")
 

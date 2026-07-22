@@ -45,7 +45,7 @@ def _load_update_log(log_file=None):
     log_file = log_file or UPDATE_LOG_FILE
     if os.path.exists(log_file):
         try:
-            with open(log_file, "r") as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return []

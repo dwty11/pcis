@@ -33,6 +33,12 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -226,7 +232,7 @@ def write_drift_flag(model, results, score):
         lines.append(f"    response: {f['response'][:150]}")
 
     os.makedirs(os.path.dirname(DRIFT_FLAG), exist_ok=True)
-    with open(DRIFT_FLAG, "w") as fh:
+    with open(DRIFT_FLAG, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
 
 
@@ -243,7 +249,7 @@ def append_drift_log(model, results, score):
             lines.append(f"  hint: {r['fail_hint']}")
             lines.append(f"  response: {r['response'][:200]}")
 
-    with open(DRIFT_LOG, "a") as fh:
+    with open(DRIFT_LOG, "a", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
 
 

@@ -22,6 +22,12 @@ import urllib.request
 import warnings
 from datetime import datetime, timezone, timedelta
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import compute_root_hash, compute_branch_hash, hash_leaf
 
@@ -102,7 +108,7 @@ def load_config():
     """Load config.json if it exists, return dict."""
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, "r") as f:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError) as e:
             log.warning("Failed to read config.json: %s — using defaults", e)
@@ -298,7 +304,7 @@ def main():
     print()
 
     # Load tree
-    with open(TREE_FILE, "r") as f:
+    with open(TREE_FILE, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
     merkle_before = compute_root_hash(tree)
@@ -404,7 +410,7 @@ def main():
         "merkle_root_after": merkle_after,
         "counters": counters,
     }
-    with open(OUTPUT_FILE, "w") as f:
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(run_data, f, ensure_ascii=False, indent=2)
     print(f"  Saved {OUTPUT_FILE}")
 

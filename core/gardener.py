@@ -31,6 +31,12 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -159,7 +165,7 @@ def load_tree():
     if not os.path.exists(TREE_FILE):
         log.error("❌ Knowledge tree not found: %s", TREE_FILE)
         sys.exit(1)
-    with open(TREE_FILE) as f:
+    with open(TREE_FILE, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -212,7 +218,7 @@ def load_recent_memory(days=5):
         dt = datetime.now(TZ_UTC) - timedelta(days=i)
         fname = os.path.join(memory_dir, f"{dt.strftime('%Y-%m-%d')}.md")
         if os.path.exists(fname):
-            with open(fname) as f:
+            with open(fname, encoding="utf-8") as f:
                 content = f.read()
                 # Cap at 500 chars per file to avoid token explosion
                 combined.append(f"=== {dt.strftime('%Y-%m-%d')} ===\n{content[:500]}")
@@ -463,7 +469,7 @@ def write_garden_log(counters, synapses, flags, dry_run):
     for fl in flags:
         lines.append(f"- [{fl['leaf_id']}] {fl['reason']}")
 
-    with open(GARDEN_LOG, "a") as f:
+    with open(GARDEN_LOG, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
 
@@ -483,7 +489,7 @@ def write_staging_file(synapses, flags, staged_counters=None):
     for fl in flags:
         records.append({"type": "flag", "leaf_id": fl["leaf_id"], "reason": fl["reason"]})
 
-    with open(GARDEN_STAGING, "w") as f:
+    with open(GARDEN_STAGING, "w", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec) + "\n")
 
@@ -498,7 +504,7 @@ def apply_staging(dry_run=False):
         log.info("No staging file found.")
         return 0
 
-    with open(GARDEN_STAGING) as f:
+    with open(GARDEN_STAGING, encoding="utf-8") as f:
         raw_lines = f.read().strip().splitlines()
 
     records = []
@@ -618,7 +624,7 @@ def write_notify_flag(committed_counters, staged_synapses, flags, dry_run=False,
         for fl in flags:
             lines.append(f"  - [{fl['leaf_id']}] {fl['reason']}")
 
-    with open(GARDEN_NOTIFY_FLAG, "w") as f:
+    with open(GARDEN_NOTIFY_FLAG, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
 
@@ -709,7 +715,7 @@ def gap_scan():
         log.error("❌ No daily note found for %s", date_str)
         return
 
-    with open(daily_note) as f:
+    with open(daily_note, encoding="utf-8") as f:
         note_content = f.read()
 
     if not note_content.strip():
@@ -749,7 +755,7 @@ def gap_scan():
 
     if results is None:
         debug_path = "/tmp/gap_scan_debug.txt"
-        with open(debug_path, "w") as df:
+        with open(debug_path, "w", encoding="utf-8") as df:
             df.write(response)
         log.warning("⚠️  Could not parse JSON list from LLM response.")
         log.warning("Raw response dumped to %s", debug_path)
@@ -806,7 +812,7 @@ def gap_scan():
 
     # Preserve existing staging content if present
     if os.path.exists(GARDEN_STAGING):
-        with open(GARDEN_STAGING) as f:
+        with open(GARDEN_STAGING, encoding="utf-8") as f:
             existing_lines = [l for l in f.read().strip().splitlines() if l.strip()]
 
     new_records = []
@@ -815,7 +821,7 @@ def gap_scan():
                                        "confidence": 0.80, "source": source,
                                        "content": gap}))
 
-    with open(GARDEN_STAGING, "w") as f:
+    with open(GARDEN_STAGING, "w", encoding="utf-8") as f:
         for line in existing_lines:
             f.write(line + "\n")
         for rec in new_records:
@@ -825,7 +831,7 @@ def gap_scan():
 
     # Write notify flag
     summary = f"gap-scan found {len(gaps)} missing result(s) — staged for review"
-    with open(GARDEN_NOTIFY_FLAG, "w") as f:
+    with open(GARDEN_NOTIFY_FLAG, "w", encoding="utf-8") as f:
         f.write(summary + "\n")
 
     log.info("🔔 Notify flag written -> %s", GARDEN_NOTIFY_FLAG)
@@ -876,7 +882,7 @@ def run_demo(seed_path=None, out_path=None, counters=None):
     if counters is None:
         counters = _DEMO_CANNED_COUNTERS
 
-    with open(seed_path) as f:
+    with open(seed_path, encoding="utf-8") as f:
         tree = json.load(f)
 
     root_before = compute_root_hash(tree)
@@ -897,7 +903,7 @@ def run_demo(seed_path=None, out_path=None, counters=None):
         for branch in tree["branches"].values():
             branch["hash"] = compute_branch_hash(branch["leaves"])
         tree["root_hash"] = compute_root_hash(tree)
-        with open(out_path, "w") as f:
+        with open(out_path, "w", encoding="utf-8") as f:
             json.dump(tree, f, ensure_ascii=False, indent=2)
         print(f"  wrote          : {out_path}")
 

@@ -22,6 +22,12 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import core.knowledge_search as knowledge_search
@@ -52,7 +58,7 @@ TZ_UTC = timezone.utc
 def _load_demo_mode():
     config_path = os.path.join(DEMO_DIR, "config.json")
     try:
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             return json.load(f).get("demo_mode", True)
     except (FileNotFoundError, json.JSONDecodeError):
         return True
@@ -68,7 +74,7 @@ DEMO_TRACKED_FILES = [
 
 
 def load_tree():
-    with open(DEMO_TREE_FILE, "r") as f:
+    with open(DEMO_TREE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -113,7 +119,7 @@ def _last_gardener_run():
         p = os.path.join(DEMO_DIR, name)
         if os.path.exists(p):
             try:
-                with open(p) as f:
+                with open(p, encoding="utf-8") as f:
                     d = json.load(f)
                 return d.get("run_date") or d.get("timestamp")
             except (json.JSONDecodeError, KeyError):
@@ -376,7 +382,7 @@ def api_external_validation():
         validation_file = os.path.join(DEMO_DIR, "adversarial_validation_run.json")
     if not os.path.exists(validation_file):
         return jsonify({"status": "not_run", "message": "Run adversarial_validator.py first"})
-    with open(validation_file, "r") as f:
+    with open(validation_file, "r", encoding="utf-8") as f:
         data = json.load(f)
     tree = load_tree()
     for counter in data.get("counters", []):

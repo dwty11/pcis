@@ -16,6 +16,12 @@ import hashlib
 import os
 import sys
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CANON = os.path.join(HERE, "CANONICAL_FINGERPRINT.txt")
 
@@ -51,7 +57,7 @@ def fingerprint():
 def main():
     fp = fingerprint()
     if "--write" in sys.argv:
-        with open(CANON, "w") as f:
+        with open(CANON, "w", encoding="utf-8") as f:
             f.write(fp + "\n")
         print(f"wrote {CANON}")
         return 0
@@ -60,7 +66,7 @@ def main():
         print("\nNo CANONICAL_FINGERPRINT.txt to compare against "
               "(run with --write to create it).", file=sys.stderr)
         return 1
-    canon = open(CANON).read().strip()
+    canon = open(CANON, encoding="utf-8").read().strip()
     if fp.strip() == canon:
         print("\n✓ verify-self: every script + fixture matches "
               "CANONICAL_FINGERPRINT.txt")

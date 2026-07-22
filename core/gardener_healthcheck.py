@@ -48,7 +48,7 @@ def probe():
     if age_hours > 24:
         return "STALE", f"gardener-last.log last modified {age_hours:.1f}h ago (expected <24h)"
 
-    with open(LOG_FILE) as f:
+    with open(LOG_FILE, encoding="utf-8") as f:
         raw = f.read()
     # Split on run boundary — take only the last run
     runs = raw.split("Gardener starting")
@@ -83,7 +83,7 @@ def check():
         log.info("Gardener health: OK -- %s", detail)
     else:
         os.makedirs(os.path.dirname(FLAG_FILE), exist_ok=True)
-        with open(FLAG_FILE, "w") as f:
+        with open(FLAG_FILE, "w", encoding="utf-8") as f:
             f.write(f"GARDENER HEALTH: {status}\n")
             f.write(f"Checked: {timestamp}\n")
             f.write(f"Detail: {detail}\n")

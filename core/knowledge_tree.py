@@ -55,6 +55,12 @@ from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 logger = logging.getLogger(__name__)
 
 # --- Input Sanitization -----------------------------------------------
@@ -344,7 +350,7 @@ def verify_tree_integrity(tree):
 def load_tree(path=None):
     path = path or TREE_FILE
     if os.path.exists(path):
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError as e:
@@ -762,7 +768,7 @@ def cmd_diff(args):
         sys.exit(1)
     tree_a = load_tree()
     try:
-        with open(args[0], "r") as f:
+        with open(args[0], "r", encoding="utf-8") as f:
             tree_b = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Error loading {args[0]}: {e}")
@@ -964,7 +970,7 @@ if __name__ == "__main__":
         # Output JSON for external verification
         out_path = args[2] if len(args) > 2 else None
         if out_path:
-            with open(out_path, 'w') as f:
+            with open(out_path, 'w', encoding='utf-8') as f:
                 json.dump(proof, f, indent=2)
             print(f"   Saved:  {out_path}")
         else:
@@ -974,7 +980,7 @@ if __name__ == "__main__":
             print("Usage: --verify-proof <proof.json>")
             sys.exit(1)
         try:
-            with open(args[1]) as f:
+            with open(args[1], encoding="utf-8") as f:
                 proof = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading proof: {e}")

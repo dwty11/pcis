@@ -29,6 +29,12 @@ import json
 import os
 import sys
 
+try:  # keep emoji / box-drawing output alive on a non-UTF-8 console (e.g. RU-Windows cp1251)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # Ensure core/ is importable regardless of install mode
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
@@ -91,7 +97,7 @@ def cmd_init(args):
 
     tree["root_hash"] = compute_root_hash(tree)
 
-    with open(tree_file, "w") as f:
+    with open(tree_file, "w", encoding="utf-8") as f:
         json.dump(tree, f, indent=2, ensure_ascii=False)
 
     print(f"✅ Initialized PCIS tree at {tree_file}")
@@ -484,9 +490,9 @@ def cmd_sign_verify(args):
         print(f"INVALID — pinned public key absent: {pub_path} (refusing embedded-key trust)")
         sys.exit(1)
 
-    with open(cert_path) as f:
+    with open(cert_path, encoding="utf-8") as f:
         cert = json.load(f)
-    with open(pub_path) as f:
+    with open(pub_path, encoding="utf-8") as f:
         pin_fpr = hashlib.sha256(f.read().strip().encode()).hexdigest()
 
     ok, detail = verify_claim(cert, pin_fpr, tree_path if os.path.exists(tree_path) else None)

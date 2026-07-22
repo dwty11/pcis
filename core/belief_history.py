@@ -39,7 +39,7 @@ def _load_history(history_file=None):
     history_file = history_file or HISTORY_FILE
     if os.path.exists(history_file):
         try:
-            with open(history_file, "r") as f:
+            with open(history_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return []

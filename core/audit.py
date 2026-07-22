@@ -342,7 +342,7 @@ def verify_bundle(bundle_path, public_key_path=None):
                         "detail": f"pinned public key absent: {pin_path} — refusing embedded-key fallback.",
                     }
                 else:
-                    with open(pin_path, "r") as pf:
+                    with open(pin_path, "r", encoding="utf-8") as pf:
                         pinned_pub = pf.read().strip()
                     if not pinned_pub:
                         layers["signature"] = {

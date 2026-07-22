@@ -79,7 +79,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "fixtures"))
     args = ap.parse_args()
 
-    plant = open(os.path.join(HERE, "fixtures", "PLANT_ID.txt")).read().strip()
+    plant = open(os.path.join(HERE, "fixtures", "PLANT_ID.txt"), encoding="utf-8").read().strip()
     prompt = build_prompt()
     model = g.GARDENER_MODEL
 
@@ -110,9 +110,9 @@ def main():
     hits = sum(1 for r in runs if r["hit_plant"])
     os.makedirs(args.out, exist_ok=True)
     if canonical is not None:
-        with open(os.path.join(args.out, "canonical_run.json"), "w") as f:
+        with open(os.path.join(args.out, "canonical_run.json"), "w", encoding="utf-8") as f:
             json.dump(canonical, f, indent=2, ensure_ascii=False)
-    with open(os.path.join(args.out, "hit_rate.json"), "w") as f:
+    with open(os.path.join(args.out, "hit_rate.json"), "w", encoding="utf-8") as f:
         json.dump({"model": model, "passes": args.passes, "plant_hits": hits,
                    "runs": runs}, f, indent=2, ensure_ascii=False)
     print(f"\nHIT-RATE: {hits}/{args.passes} passes landed a counter on the plant "

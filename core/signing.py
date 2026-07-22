@@ -88,13 +88,13 @@ def generate_keypair(key_dir=None):
     signing_key = nacl.signing.SigningKey.generate()
 
     # Write private key (hex-encoded seed)
-    with open(priv_path, "w") as f:
+    with open(priv_path, "w", encoding="utf-8") as f:
         f.write(signing_key.encode(encoder=nacl.encoding.HexEncoder).decode())
     os.chmod(priv_path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
     # Write public key (hex-encoded)
     verify_key = signing_key.verify_key
-    with open(pub_path, "w") as f:
+    with open(pub_path, "w", encoding="utf-8") as f:
         f.write(verify_key.encode(encoder=nacl.encoding.HexEncoder).decode())
 
     return priv_path, pub_path
@@ -134,7 +134,7 @@ def sign_root(tree=None, private_key_path=None):
             "Run 'pcis sign init' first."
         )
 
-    with open(private_key_path, "r") as f:
+    with open(private_key_path, "r", encoding="utf-8") as f:
         key_hex = f.read().strip()
     signing_key = nacl.signing.SigningKey(key_hex, encoder=nacl.encoding.HexEncoder)
 
@@ -153,7 +153,7 @@ def sign_root(tree=None, private_key_path=None):
 
     sig_path = _default_key_path(SIGNATURE_FILE)
     os.makedirs(os.path.dirname(sig_path), exist_ok=True)
-    with open(sig_path, "w") as f:
+    with open(sig_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
 
     return result
@@ -188,7 +188,7 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
             "detail": f"Signature file not found: {signature_path}",
         }
 
-    with open(signature_path, "r") as f:
+    with open(signature_path, "r", encoding="utf-8") as f:
         sig_data = json.load(f)
 
     # Load public key from the on-disk .pub ONLY. NO fallback to the signature's own
@@ -201,7 +201,7 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
             "signed_at": sig_data.get("signed_at", ""),
             "detail": f"Public key file absent: {public_key_path} — refusing embedded-key fallback.",
         }
-    with open(public_key_path, "r") as f:
+    with open(public_key_path, "r", encoding="utf-8") as f:
         public_key_hex = f.read().strip()
 
     if not public_key_hex:
@@ -338,5 +338,5 @@ def export_public_key(public_key_path=None):
             "Run 'pcis sign init' first."
         )
 
-    with open(public_key_path, "r") as f:
+    with open(public_key_path, "r", encoding="utf-8") as f:
         return f.read().strip()

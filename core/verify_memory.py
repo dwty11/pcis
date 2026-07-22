@@ -62,7 +62,7 @@ def hash_file(filepath: str) -> Optional[str]:
 def load_manifest() -> dict:
     """Load existing manifest from JSON sidecar."""
     if os.path.exists(MANIFEST_JSON):
-        with open(MANIFEST_JSON, "r") as f:
+        with open(MANIFEST_JSON, "r", encoding="utf-8") as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError as e:
@@ -73,7 +73,7 @@ def load_manifest() -> dict:
 
 def save_manifest(manifest: dict):
     """Save manifest to JSON sidecar."""
-    with open(MANIFEST_JSON, "w") as f:
+    with open(MANIFEST_JSON, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
 
@@ -352,7 +352,7 @@ def update_manifest_md(manifest: dict, current_hashes: dict):
         "_This file is never trimmed. It is the chain of custody for the system's memory._",
     ])
 
-    with open(MANIFEST_MD, "w") as f:
+    with open(MANIFEST_MD, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
 
