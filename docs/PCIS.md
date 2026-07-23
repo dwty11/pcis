@@ -28,15 +28,15 @@ Where a challenge holds, it becomes a permanent **COUNTER** entry: a recorded ob
 
 This is the line between PCIS and a ledger. A ledger immortalizes what it's given and never questions it. PCIS spends its compute attacking its own high-confidence beliefs — so a claim that survives has survived not just tampering, but challenge.
 
-## The honesty boundary: the producer cannot certify itself
+## The honesty boundary: separating the producer from the ratifier
 
 There's one more thing a self-challenging record needs, and it's the thing the audit ledgers don't have.
 
 The Merkle root proves the record is internally consistent. A signature over that root proves *who* attested it, and when. In almost every tamper-evident system, the key that makes that signature lives on the same machine as the log — so a compromised host is a compromised ledger: it can rewrite history and re-sign it in a single move.
 
-PCIS refuses that. **The producer cannot certify itself.** The signing key lives off the machine that runs the substrate. The gardener, the tree, the whole runtime can compute the current root and hand off a claim to be signed — but they hold no key, and nothing on the substrate can approve its own record. The agent prepares a claim; it does not approve it. The ratifying party is outside the process that would have to be compromised.
+PCIS is built so the producer need not certify itself. Signing is a separate step: the gardener, the tree, the whole runtime can compute the current root and hand off a claim to be signed — but the gardener holds no key and never signs. It prepares a claim; it does not approve it. Make the ratifier truly *external* — hold the signing key off the machine that runs the substrate — and a compromised host cannot approve its own record: the ratifying party is then outside the process that would have to be compromised. Today that is a deployment choice, arranged through the API, not the default — by default the key sits in `data/` beside the tree, and nothing yet enforces the separation.
 
-In *Memento*, the missing piece was never a better notebook — it was a second person who couldn't be tattooed. Not because people are more reliable, but because they're *elsewhere*, outside the process a forger would have to own. The off-machine key is that second person. It is not plumbing; it is the one line an attacker who owns the box still cannot cross.
+In *Memento*, the missing piece was never a better notebook — it was a second person who couldn't be tattooed. Not because people are more reliable, but because they're *elsewhere*, outside the process a forger would have to own. A signing key held off the box is that second person: not plumbing, but the one line an attacker who owns the box cannot cross. The cryptography that makes that line *mean* something is shipped; putting the key where the box can't reach it is the operator's move to make ([how-to](SIGNING.md)).
 
 ## Why "persistent," and why "cognitive"
 

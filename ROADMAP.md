@@ -74,7 +74,7 @@ See: [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md)
 
 Three buckets, so a reader can tell which gaps are on the path and which are architectural boundaries that belong to other layers.
 
-**The floor these gaps sit on — shipped and proven today:** the record is tamper-evident end to end (a SHA-256 Merkle root re-derived from leaf content on every verify, so any edit shows), the gardener adversarially challenges the highest-confidence claims, and the root is signed by an **off-machine** key a compromised host cannot forge. Everything below is what is *not* yet done; none of it subtracts from that floor.
+**The floor these gaps sit on — shipped and proven today:** the record is tamper-evident end to end (a SHA-256 Merkle root re-derived from leaf content on every verify, so any edit shows), the gardener adversarially challenges the highest-confidence claims, and the Merkle root is signed with an Ed25519 key whose signature is verified against a **pinned** public-key fingerprint (no embedded-key trust). Holding that key off the machine — so a compromised host cannot forge the root — is a supported deployment pattern via the API, **not the default** ([Signing](docs/SIGNING.md)). Everything below is what is *not* yet done; none of it subtracts from that floor.
 
 ### Next — named, shaped, intended
 
@@ -85,7 +85,7 @@ Three buckets, so a reader can tell which gaps are on the path and which are arc
 
 ### Later — real, but further out
 
-- **External witness layer.** Closes *equivocation* — a dishonest operator maintaining two trees and showing different versions to different parties, each verifying under the same key. The off-machine signing key already covers a compromised host; an independent witness is the separate layer that catches a two-faced operator.
+- **External witness layer.** Closes *equivocation* — a dishonest operator maintaining two trees and showing different versions to different parties, each verifying under the same key. A signing key held off the machine (a supported deployment pattern) covers a *compromised host*; an independent witness is the separate layer that catches a *two-faced operator*.
 - **Multi-agent enforcement.** The documentation describes cross-agent checks the code stages but does not enforce.
 - **Bayesian confidence.** Confidence updated by formula from evidence weight, in place of today's heuristic values.
 
