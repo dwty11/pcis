@@ -432,7 +432,7 @@ def cmd_sign_init(args):
     from signing import generate_keypair
 
     try:
-        priv_path, pub_path = generate_keypair()
+        priv_path, pub_path = generate_keypair(key_dir=args.key_dir)
         print(f"Keypair generated:")
         print(f"  Private key: {priv_path}")
         print(f"  Public key:  {pub_path}")
@@ -449,7 +449,7 @@ def cmd_sign_root(args):
     from signing import sign_root
 
     try:
-        result = sign_root()
+        result = sign_root(private_key_path=args.key_path)
         print(f"Root signed:")
         print(f"  Root hash:  {result['root_hash'][:24]}...")
         print(f"  Signature:  {result['signature'][:24]}...")
@@ -478,7 +478,10 @@ def cmd_sign_verify(args):
     )
 
     cert_path = _default_key_path(APPROVED_CERT_FILE)
-    pub_path = _default_key_path(PUBLIC_KEY_FILE)
+    if args.key_path:
+        pub_path = os.path.abspath(args.key_path)
+    else:
+        pub_path = _default_key_path(PUBLIC_KEY_FILE)
     # Snapshot binds tree-consistency to the same bytes the approved root was signed over.
     # Configurable via PCIS_TREE_FILE (default: <base>/data/tree.json).
     tree_path = _tree_file()
@@ -820,9 +823,12 @@ def main():
     # sign (subcommand group)
     sign_parser = sub.add_parser("sign", help="Ed25519 root signing")
     sign_sub = sign_parser.add_subparsers(dest="sign_command")
-    sign_sub.add_parser("init", help="Generate ed25519 keypair")
-    sign_sub.add_parser("root", help="Sign current Merkle root")
-    sign_sub.add_parser("verify", help="Verify signature against current tree")
+    p = sign_sub.add_parser("init", help="Generate ed25519 keypair")
+    p.add_argument("--key-dir", help="Directory to write keypair into (default: <BASE>/data/)")
+    p = sign_sub.add_parser("root", help="Sign current Merkle root")
+    p.add_argument("--key-path", help="Path to private key (default: <BASE>/data/pcis_signing.key)")
+    p = sign_sub.add_parser("verify", help="Verify signature against current tree")
+    p.add_argument("--key-path", help="Path to public key for verification (default: <BASE>/data/pcis_signing.pub)")
     sign_sub.add_parser("pubkey", help="Print public key hex")
 
     # events (subcommand group) — ESCALATION event journal
