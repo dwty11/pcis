@@ -28,7 +28,7 @@ out="$("$PY" -m pcis.cli --dir "$BASE" verify 2>&1)"; rc=$?
 root="$("$PY" -m pcis.cli --dir "$BASE" root 2>/dev/null)"
 leaves="$("$PY" - "$TREE" <<'PY'
 import json, sys
-tree = json.load(open(sys.argv[1]))
+tree = json.load(open(sys.argv[1], encoding="utf-8"))
 print(sum(len(b.get("leaves", [])) for b in tree.get("branches", {}).values()))
 PY
 )"

@@ -42,7 +42,7 @@ import sys, json
 sys.path.insert(0, '$REPO/core')
 sys.path.insert(0, '$REPO')
 from core.knowledge_tree import verify_tree_integrity
-with open('$REPO/demo/demo_tree.json') as f:
+with open('$REPO/demo/demo_tree.json', encoding='utf-8') as f:
     tree = json.load(f)
 ok, errors = verify_tree_integrity(tree)
 print('OK' if ok else 'FAIL')
