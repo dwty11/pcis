@@ -87,3 +87,34 @@ def test_start_demo_step2_reports_clean_under_cp1251(tmp_path):
         f"demo tree is mis-decoded because step 2 reads it with a bare open():\n{out}"
     )
     assert "demo_tree.json: CLEAN" in out, f"step 2 did not report CLEAN:\n{out}"
+
+
+def test_start_demo_step2_survives_windows_crlf_stdout(tmp_path):
+    """Native-Windows Python writes CRLF on text-mode stdout, so step 2's inline ``print('OK')``
+    emits ``OK\\r\\n``. start_demo.sh captures it and compares to the literal ``OK``; bash ``$()``
+    strips the trailing ``\\n`` but not the ``\\r``, so ``OK\\r`` != ``OK`` and it FALSELY reports
+    integrity FAILED — even though the check itself is CLEAN (diagnosed on a real RU-Windows box:
+    §3/§4 pass standalone, the script fails). Reproduced on a Unix host by reconfiguring stdout to
+    ``newline="\\r\\n"`` via sitecustomize — the exact CRLF a Windows Python emits."""
+    pytest.importorskip("flask", reason="start_demo.sh needs flask; skip to avoid a setup.sh bootstrap")
+
+    (tmp_path / "sitecustomize.py").write_text(
+        'import sys\n'
+        'try:\n'
+        '    sys.stdout.reconfigure(newline="\\r\\n")   # simulate native-Windows text-mode stdout\n'
+        'except Exception:\n'
+        '    pass\n',
+        encoding="utf-8",
+    )
+
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(tmp_path) + os.pathsep + env.get("PYTHONPATH", "")
+
+    out = _run_start_demo_to_step2(env)
+
+    assert "[2/5] Verifying demo tree integrity" in out, f"step 2 never ran:\n{out}"
+    assert "integrity FAILED" not in out, (
+        "start_demo.sh reported integrity FAILED because native-Windows Python's CRLF stdout made "
+        f"the captured 'OK\\r' != 'OK' — the check is CLEAN, the comparison is what broke:\n{out}"
+    )
+    assert "demo_tree.json: CLEAN" in out, f"step 2 did not report CLEAN:\n{out}"

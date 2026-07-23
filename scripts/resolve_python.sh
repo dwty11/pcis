@@ -23,7 +23,9 @@ REPO="${REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 # Valid only if `-c "print(1)"` prints exactly 1 (the stub prints "Python" and fails
 # this; exit code alone is unreliable — some stubs exit 0).
-_works() { [ "$("$@" -c 'print(1)' 2>/dev/null)" = "1" ]; }
+# `tr -d '\r'`: native-Windows Python writes CRLF on stdout, so $(...) yields "1\r" and a
+# byte-exact compare to "1" would reject every working interpreter. Strip CR before comparing.
+_works() { [ "$("$@" -c 'print(1)' 2>/dev/null | tr -d '\r')" = "1" ]; }
 
 # When PCIS_MIN_PY is set, the candidate must be at least that (major, minor). Unset =
 # no floor (the replay path). Never a lexical compare — 3.9 vs 3.10 is a numeric tuple.
@@ -36,7 +38,7 @@ _meets_min() {
 # absolute path is quoting-safe (no multi-word `py -3` trap) and OS-agnostic.
 _emit() {
     local p
-    p="$("$@" -c 'import sys; print(sys.executable)' 2>/dev/null)"
+    p="$("$@" -c 'import sys; print(sys.executable)' 2>/dev/null | tr -d '\r')"   # strip CRLF from a Windows Python's stdout, else the emitted path carries a trailing CR
     [ -n "$p" ] && { printf '%s\n' "$p"; exit 0; }
 }
 
@@ -51,7 +53,7 @@ _fail_floor() {
     } >&2
     exit 3
 }
-_note_old() { _too_old="$("$@" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "$_too_old")"; }
+_note_old() { local v; v="$("$@" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null | tr -d '\r')"; [ -n "$v" ] && _too_old="$v"; }
 
 # 1. Explicit override — authoritative. Honor it, but enforce the floor if one is set.
 if [ -n "$PYTHON" ]; then

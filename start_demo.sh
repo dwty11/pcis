@@ -47,6 +47,7 @@ with open('$REPO/demo/demo_tree.json', encoding='utf-8') as f:
 ok, errors = verify_tree_integrity(tree)
 print('OK' if ok else 'FAIL')
 " 2>&1)
+INTEGRITY="${INTEGRITY//$'\r'/}"   # native-Windows Python prints CRLF, so $() yields "OK\r"; strip CR or the exact compare below false-fails
 
 if [ "$INTEGRITY" = "OK" ]; then
   echo "  ✓  demo_tree.json: CLEAN"

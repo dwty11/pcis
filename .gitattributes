@@ -1,0 +1,21 @@
+# Line endings: normalize all text to LF on checkout.
+#
+# Git-for-Windows defaults to core.autocrlf=true, which rewrites tracked text files to CRLF
+# on a Windows clone. That gives demo_tree.json and the *.sh entry points CRLF endings that
+# diverge from the committed (LF) blobs and can break Git Bash scripts. Pinning eol=lf keeps
+# the working tree byte-identical to what was committed and keeps the shell scripts runnable.
+#
+# NOTE: this does NOT fix the runtime bug where native-Windows Python writes CRLF on stdout
+# (that is handled by stripping CR in start_demo.sh / scripts/resolve_python.sh). It fixes the
+# separate file-on-disk problem, so `diagnose_demo_tree.sh` no longer reports working != committed.
+* text=auto eol=lf
+
+# Binary assets — never apply text/eol conversion.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
