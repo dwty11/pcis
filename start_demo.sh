@@ -37,11 +37,15 @@ echo "  ✓  Flask OK"
 
 # ── 3. Verify demo tree integrity ─────────────────────────────────────────
 echo "  [2/5] Verifying demo tree integrity..."
+# Relative paths, run from inside $REPO (see the capture below). On Git Bash/MINGW64, $REPO is a
+# bash-form drive path (/c/<home>/...); MSYS converts paths passed as ARGUMENTS to a native Windows Python
+# but NOT paths embedded in a `-c` string, so an absolute '$REPO/...' here would reach Python as an
+# unresolvable /c/... path. `cd "$REPO"` + relative paths is what step 4 already does.
 _STEP2_PY="import sys, json
-sys.path.insert(0, '$REPO/core')
-sys.path.insert(0, '$REPO')
+sys.path.insert(0, 'core')
+sys.path.insert(0, '.')
 from core.knowledge_tree import verify_tree_integrity
-with open('$REPO/demo/demo_tree.json', encoding='utf-8') as f:
+with open('demo/demo_tree.json', encoding='utf-8') as f:
     tree = json.load(f)
 ok, errors = verify_tree_integrity(tree)
 print('OK' if ok else 'FAIL')
@@ -51,7 +55,7 @@ if errors:
 # Capture stdout and stderr SEPARATELY: the verdict compares only stdout, and PCIS_DEBUG shows
 # the inline python's stderr rather than swallowing it (2>&1 used to merge them, hiding errors).
 _STEP2_ERR="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/pcis_step2_err.$$")"
-INTEGRITY_RAW="$("$PYTHON" -c "$_STEP2_PY" 2>"$_STEP2_ERR")"
+INTEGRITY_RAW="$(cd "$REPO" && "$PYTHON" -c "$_STEP2_PY" 2>"$_STEP2_ERR")"
 INTEGRITY="${INTEGRITY_RAW//$'\r'/}"   # native-Windows Python prints CRLF, so $() yields "OK\r"; strip CR or the exact compare below false-fails
 
 # PCIS_DEBUG=1 bash start_demo.sh -> print the actual captured bytes (od -c makes CR/whitespace visible).

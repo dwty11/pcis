@@ -118,3 +118,42 @@ def test_start_demo_step2_survives_windows_crlf_stdout(tmp_path):
         f"the captured 'OK\\r' != 'OK' — the check is CLEAN, the comparison is what broke:\n{out}"
     )
     assert "demo_tree.json: CLEAN" in out, f"step 2 did not report CLEAN:\n{out}"
+
+
+def test_start_demo_step2_uses_relative_paths_not_embedded_mingw_abspath(tmp_path):
+    """On Git Bash/MINGW64, $REPO is a bash-form drive path like /c/<home>/pcis. MSYS auto-converts
+    paths passed as ARGUMENTS to a native Windows program (/c/... -> C:/...), but NOT a path embedded
+    inside a `python -c` STRING. start_demo step 2 embedded $REPO in open()/sys.path.insert, so a
+    native Windows Python received the raw /c/... path and raised FileNotFoundError -> "" != "OK" ->
+    false FAILED (the real box's error). Fix: `cd "$REPO"` + relative paths, the way step 4 does.
+
+    Reproduced on a Unix host by making open() reject the ABSOLUTE repo path (what native Windows
+    Python does to the embedded MinGW path) while allowing relative opens resolved against cwd — so
+    the embedded-absolute form fails and the cd+relative form works, exactly as on Windows."""
+    pytest.importorskip("flask", reason="start_demo.sh needs flask; skip to avoid a setup.sh bootstrap")
+
+    (tmp_path / "sitecustomize.py").write_text(
+        "import builtins, os\n"
+        "_open = builtins.open\n"
+        "_root = os.environ.get('PCIS_TEST_REJECT_ABS_UNDER', '')\n"
+        "def _win_open(file, *a, **k):\n"
+        "    if isinstance(file, str) and _root and os.path.isabs(file) and (\n"
+        "            file == _root or file.startswith(_root + os.sep)):\n"
+        "        raise FileNotFoundError(2, 'No such file or directory (simulated MinGW abs path)', file)\n"
+        "    return _open(file, *a, **k)\n"
+        "builtins.open = _win_open\n",
+        encoding="utf-8",
+    )
+
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(tmp_path) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PCIS_TEST_REJECT_ABS_UNDER"] = REPO   # native Windows Python can't open the embedded /c/... form
+
+    out = _run_start_demo_to_step2(env)
+
+    assert "[2/5] Verifying demo tree integrity" in out, f"step 2 never ran:\n{out}"
+    assert "integrity FAILED" not in out, (
+        "start_demo step 2 embeds the absolute $REPO path in its -c code; a native Windows Python "
+        f"can't open the MinGW-form path passed inside a string. Use `cd \"$REPO\"` + relative paths:\n{out}"
+    )
+    assert "demo_tree.json: CLEAN" in out, f"step 2 did not report CLEAN:\n{out}"
