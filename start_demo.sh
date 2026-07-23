@@ -37,8 +37,7 @@ echo "  ✓  Flask OK"
 
 # ── 3. Verify demo tree integrity ─────────────────────────────────────────
 echo "  [2/5] Verifying demo tree integrity..."
-INTEGRITY=$($PYTHON -c "
-import sys, json
+_STEP2_PY="import sys, json
 sys.path.insert(0, '$REPO/core')
 sys.path.insert(0, '$REPO')
 from core.knowledge_tree import verify_tree_integrity
@@ -46,8 +45,31 @@ with open('$REPO/demo/demo_tree.json', encoding='utf-8') as f:
     tree = json.load(f)
 ok, errors = verify_tree_integrity(tree)
 print('OK' if ok else 'FAIL')
-" 2>&1)
-INTEGRITY="${INTEGRITY//$'\r'/}"   # native-Windows Python prints CRLF, so $() yields "OK\r"; strip CR or the exact compare below false-fails
+if errors:
+    sys.stderr.write('integrity errors: ' + '; '.join(str(e) for e in errors[:5]) + '\n')"
+
+# Capture stdout and stderr SEPARATELY: the verdict compares only stdout, and PCIS_DEBUG shows
+# the inline python's stderr rather than swallowing it (2>&1 used to merge them, hiding errors).
+_STEP2_ERR="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/pcis_step2_err.$$")"
+INTEGRITY_RAW="$("$PYTHON" -c "$_STEP2_PY" 2>"$_STEP2_ERR")"
+INTEGRITY="${INTEGRITY_RAW//$'\r'/}"   # native-Windows Python prints CRLF, so $() yields "OK\r"; strip CR or the exact compare below false-fails
+
+# PCIS_DEBUG=1 bash start_demo.sh -> print the actual captured bytes (od -c makes CR/whitespace visible).
+if [ -n "${PCIS_DEBUG:-}" ]; then
+  {
+    echo "  ---- PCIS_DEBUG · step 2 ----"
+    echo "  \$PYTHON               : $PYTHON"
+    echo "  \$REPO                 : $REPO"
+    echo "  command               : \"\$PYTHON\" -c \"<step-2 integrity check>\"  (stderr -> temp file)"
+    echo "  raw stdout   (od -c)  :"; printf '%s' "$INTEGRITY_RAW" | od -c | sed 's/^/      /'
+    echo "  after CR-strip(od -c) :"; printf '%s' "$INTEGRITY"     | od -c | sed 's/^/      /'
+    echo "  inline-python stderr  :"; sed 's/^/      /' "$_STEP2_ERR" 2>/dev/null; [ -s "$_STEP2_ERR" ] || echo "      (empty)"
+    if [ "$INTEGRITY" = "OK" ]; then _CMP="EQUAL  -> CLEAN"; else _CMP="NOT EQUAL  -> FAILED"; fi
+    echo "  compare [ \"\$INTEGRITY\" = \"OK\" ] : $_CMP"
+    echo "  -----------------------------"
+  } >&2
+fi
+rm -f "$_STEP2_ERR"
 
 if [ "$INTEGRITY" = "OK" ]; then
   echo "  ✓  demo_tree.json: CLEAN"
