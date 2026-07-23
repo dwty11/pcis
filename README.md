@@ -31,7 +31,7 @@ cd pcis
 ./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ```
 
-The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT) and the counter is now permanently on the record, surfaced for review. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, and the verification the court calls a professional duty is made structural. And it isn't luck: run the untold gardener repeatedly and it lands on the plant **7/10 with the verification note in memory, 0/5 without it** — the note is load-bearing (one model, one tree, one plant; an illustration, not a benchmark).
+The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT), the counter is computed against the tree, and the move is surfaced for review. The demo is single-shot and does not write to disk — a live gardener pass is what commits the counter permanently. PCIS did not prove the ruling doesn't exist, and the claim did not "fail" — it moved, and the verification the court calls a professional duty is made structural. And it isn't luck: run the untold gardener repeatedly and it lands on the plant **7/10 with the verification note in memory, 0/5 without it** — the note is load-bearing (one model, one tree, one plant; an illustration, not a benchmark).
 
 `./run_demo.sh --live` runs the gardener fresh on your own local model; `--verify-self` SHA-256s every script and fixture against the canonical fingerprint. Everything runs on your machine — replay needs nothing but Python. See [`demo/advocate-demo/README.md`](demo/advocate-demo/README.md).
 
@@ -104,7 +104,7 @@ These limits are deliberate — each belongs in a separate layer, and claiming o
 
 ## Operational Safety
 
-In March 2026, a misconfigured environment variable sent the gardener's counter-leaves into a *stale copy* of the tree instead of the canonical one. The canonical tree was never touched, integrity checking caught the divergence, and recovery took minutes. Since then the gardener **fails loud, not wrong**: it refuses to run without an explicit `PCIS_BASE_DIR` — no silent fallback. The incident is why that guard exists.
+In March 2026, a misconfigured environment variable sent the gardener's counter-leaves into a *stale copy* of the tree instead of the canonical one. The canonical tree was never touched, integrity checking caught the divergence, and recovery took minutes. Since then the gardener **fails loud, not wrong**: invoked directly with no `PCIS_BASE_DIR` set, it refuses to run rather than writing into a stale copy. (The `pcis` CLI defaults an unset base directory to the current directory, and refuses to write into the source repo's own `data/`.) The incident is why that guard exists.
 
 ## Why it matters
 
@@ -120,7 +120,7 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 
 ## Requirements
 
-Python 3.10+, Linux, macOS, or Windows (the replay demo runs anywhere with Python; the gardener's write path uses advisory locking that's Unix-only and degrades to atomic single-writer on Windows). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, both fall back to keyword matching / pre-generated challenges. Demo mode needs nothing.
+Python 3.10+, Linux, macOS, or Windows (the replay demo runs anywhere with Python; the gardener's write path uses advisory locking that's Unix-only and degrades to atomic single-writer on Windows). The gardener and semantic search want a local [Ollama](https://ollama.com) or MLX model (the external validator can also use an LLM API key); without one, semantic search falls back to keyword matching, and a live gardener pass needs a model (the replay demo uses a pre-recorded run instead). Demo mode needs nothing.
 
 ---
 
