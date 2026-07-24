@@ -1170,7 +1170,7 @@ async function runQuery() {
     }
 
     resultsDiv.innerHTML = `
-      <div class="match-count">${data.total_matches} matches found — showing top ${data.results.length}</div>
+      <div class="match-count">${data.total_matches} match${data.total_matches === 1 ? '' : 'es'} found — showing top ${data.results.length}</div>
       ${data.results.map((r, i) => `
         <div class="result-card">
           <div class="result-rank">#${i + 1}</div>
@@ -1450,7 +1450,7 @@ async function runSearch() {
     resultsDiv.innerHTML = `
       ${fallbackHtml}
       ${modelHtml}
-      <div class="match-count">${data.results.length} results</div>
+      <div class="match-count">${data.results.length} result${data.results.length === 1 ? '' : 's'}</div>
       ${data.results.map((r, i) => `
         <div class="result-card">
           <div class="result-rank">#${i + 1}</div>
@@ -1565,7 +1565,7 @@ async function loadExternalValidation() {
 
     document.getElementById('gcStats').innerHTML = `
       <div class="stat-card">
-        <div class="stat-value">${data.run_date}</div>
+        <div class="stat-value">${fmtRunTime(data.run_date)}</div>
         <div class="stat-label">Run Date</div>
       </div>
       <div class="stat-card">
@@ -1578,13 +1578,23 @@ async function loadExternalValidation() {
       </div>
     `;
 
-    document.getElementById('gcMerkle').innerHTML = `
+    const _rb = (data.merkle_root_before || ''), _ra = (data.merkle_root_after || '');
+    const _rootUnchanged = _rb && _ra && _rb === _ra;
+    document.getElementById('gcMerkle').innerHTML = _rootUnchanged ? `
+      <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
+          <span style="color:var(--green)">${_ra.slice(0,24)}...</span>
+          <span style="color:var(--text-muted);font-family:inherit;font-size:12px">root unchanged — challenges are recorded in the validation log, not committed as tree leaves</span>
+        </div>
+      </div>
+    ` : `
       <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
         <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root Transition</div>
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
-          <span style="color:var(--text-dim)">${(data.merkle_root_before||'').slice(0,24)}...</span>
+          <span style="color:var(--text-dim)">${_rb.slice(0,24)}...</span>
           <span style="color:var(--purple);font-size:18px">&rarr;</span>
-          <span style="color:var(--green)">${(data.merkle_root_after||'').slice(0,24)}...</span>
+          <span style="color:var(--green)">${_ra.slice(0,24)}...</span>
         </div>
       </div>
     `;
@@ -1598,27 +1608,28 @@ async function loadExternalValidation() {
     list.innerHTML = data.counters.map(c => {
       const rawContent = c.counter_content || c.challenge || c.content || '';
       const originalText = (c.original && c.original.content) ? c.original.content : (c.original_content || '');
-      const originalClip = originalText ? escapeHtml(originalText.slice(0, 100)) + (originalText.length > 100 ? '...' : '') : 'N/A';
       const challenge = rawContent.startsWith('COUNTER: ') ? rawContent.replace(/^COUNTER: \[[^\]]+\]\s*\n?\n?/, '') : rawContent;
-      const branch = c.branch || 'N/A';
+      const branch = c.branch || '';
       const hash = c.hash || '';
-      const hashClip = hash ? hash.slice(0, 24) + '...' : 'N/A';
-      const source = c.source || 'N/A';
+      const source = c.source || '';
       const challengedId = c.challenged_id || '';
-      return `
-        <div class="adversarial-card" style="border-left-color:var(--purple)">
-          <div class="adv-label" style="color:var(--purple)">External Challenge</div>
+      // Only render fields that are actually present — no "N/A" placeholders.
+      const originalBlock = originalText ? `
           <div class="adv-original">
             <div class="adv-original-label">Original Claim${challengedId ? ' (' + escapeHtml(challengedId) + ')' : ''}</div>
-            ${originalClip}
-          </div>
+            ${escapeHtml(originalText.slice(0, 100))}${originalText.length > 100 ? '...' : ''}
+          </div>` : '';
+      const meta = [
+        branch ? `<span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${escapeHtml(branch)}</span>` : '',
+        (c.confidence !== undefined && c.confidence !== null) ? `<span>confidence: ${c.confidence}</span>` : '',
+        hash ? `<span style="color:var(--purple)">${hash.slice(0, 24)}...</span>` : '',
+        source ? `<span>source: ${escapeHtml(source)}</span>` : '',
+      ].filter(Boolean).join('');
+      return `
+        <div class="adversarial-card" style="border-left-color:var(--purple)">
+          <div class="adv-label" style="color:var(--purple)">External Challenge</div>${originalBlock}
           <div class="adv-counter">${escapeHtml(challenge)}</div>
-          <div class="adv-meta">
-            <span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${escapeHtml(branch)}</span>
-            <span>confidence: ${c.confidence}</span>
-            <span style="color:var(--purple)">${hashClip}</span>
-            <span>source: ${escapeHtml(source)}</span>
-          </div>
+          <div class="adv-meta">${meta}</div>
         </div>
       `;
     }).join('');

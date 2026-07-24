@@ -78,6 +78,13 @@ def load_tree():
         return json.load(f)
 
 
+def _clip(text, n):
+    """Truncate for display, adding an ellipsis when the original was longer.
+    Truncation with no marker reads as the whole value; the ellipsis signals more."""
+    text = text or ""
+    return text if len(text) <= n else text[:n] + "…"
+
+
 def _landing_file():
     # hub.html is an optional, gitignored, deployment-specific landing page.
     # Fall back to the shipped demo UI so a fresh clone serves HTML, not a 500.
@@ -241,7 +248,7 @@ def api_tree():
             "sample": sample,
             "all_leaves": [{
                 "id": l["id"],
-                "content": l["content"][:300],
+                "content": _clip(l["content"], 300),
                 "confidence": l["confidence"],
                 "source": l["source"],
                 "created": l["created"],
