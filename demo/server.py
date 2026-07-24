@@ -82,7 +82,7 @@ def _clip(text, n):
     """Truncate for display, adding an ellipsis when the original was longer.
     Truncation with no marker reads as the whole value; the ellipsis signals more."""
     text = text or ""
-    return text if len(text) <= n else text[:n] + "…"
+    return text if len(text) <= n else text[:n] + "..."
 
 
 def _landing_file():
@@ -234,7 +234,7 @@ def api_tree():
         for leaf in leaves[:5]:
             sample.append({
                 "id": leaf["id"],
-                "content": leaf["content"][:200],
+                "content": _clip(leaf["content"], 200),
                 "confidence": leaf["confidence"],
                 "source": leaf["source"],
                 "created": leaf["created"],
@@ -478,7 +478,7 @@ def api_run_validation():
         }), 503
     except Exception as e:
         logger.exception("Live validation failed")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Live validation failed unexpectedly — check the server log."}), 500
 
 
 @app.route("/api/belief", methods=["POST"])
@@ -543,7 +543,7 @@ def api_belief():
                             if leaf["id"] == neighbor_id:
                                 entry = {
                                     "id": neighbor_id,
-                                    "content": leaf["content"][:200],
+                                    "content": _clip(leaf["content"], 200),
                                     "confidence": leaf["confidence"],
                                     "relation": s["relation"],
                                 }
@@ -618,7 +618,7 @@ def api_history():
             for branch in tree["branches"].values():
                 for leaf in branch["leaves"]:
                     if leaf["id"] == c["leaf_id"]:
-                        c["content_snippet"] = leaf["content"][:80]
+                        c["content_snippet"] = _clip(leaf["content"], 80)
                         break
 
         return jsonify({"changes": changes})
@@ -640,7 +640,7 @@ def api_history_leaf(leaf_id):
         for branch in tree["branches"].values():
             for leaf in branch["leaves"]:
                 if leaf["id"] == leaf_id:
-                    content_snippet = leaf["content"][:120]
+                    content_snippet = _clip(leaf["content"], 120)
                     break
 
         return jsonify({
@@ -730,7 +730,7 @@ def api_ingest():
         }), 503
     except Exception as e:
         logger.exception("Ingestion failed")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Ingestion failed unexpectedly — check the server log."}), 500
 
 
 @app.route("/api/ingest/upload", methods=["POST"])

@@ -970,12 +970,12 @@ async function runBoot() {
   }
 }
 
-// Compact a full ISO timestamp for display: date + time, dropping microseconds and
-// UTC offset (2026-04-06T06:33:12.778611+00:00 -> 2026-04-06 06:33). Non-ISO values
-// (e.g. 'N/A') pass through unchanged.
+// Compact a full ISO timestamp for display: date + time in UTC, dropping
+// microseconds and the numeric offset (2026-04-07T06:33:15+00:00 -> 2026-04-07 06:33 UTC).
+// Non-ISO values (e.g. 'N/A') pass through unchanged.
 function fmtRunTime(s) {
   if (!s) return 'N/A';
-  return String(s).replace(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}).*$/, '$1 $2');
+  return String(s).replace(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}).*$/, '$1 $2 UTC');
 }
 
 function addLine(text, cls, delay) {
@@ -1095,7 +1095,7 @@ function renderTreeGrid() {
       <div class="branch-name">${b.name}</div>
       <div class="branch-stats">
         <span>${b.leaf_count} leaves</span>
-        <span>${b.all_leaves.filter(l => l.is_counter).length} counters</span>
+        <span>${b.all_leaves.filter(l => l.is_counter).length} counter${b.all_leaves.filter(l => l.is_counter).length === 1 ? '' : 's'}</span>
       </div>
       <div class="branch-hash">${b.hash}...</div>
     </div>
@@ -1621,6 +1621,7 @@ async function loadExternalValidation() {
           </div>` : '';
       const meta = [
         branch ? `<span style="background:var(--purple-glow);color:var(--purple);padding:2px 8px;border-radius:4px">${escapeHtml(branch)}</span>` : '',
+        (challengedId && !originalText) ? `<span>challenged: ${escapeHtml(challengedId)}</span>` : '',
         (c.confidence !== undefined && c.confidence !== null) ? `<span>confidence: ${c.confidence}</span>` : '',
         hash ? `<span style="color:var(--purple)">${hash.slice(0, 24)}...</span>` : '',
         source ? `<span>source: ${escapeHtml(source)}</span>` : '',
