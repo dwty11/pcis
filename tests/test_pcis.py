@@ -179,6 +179,42 @@ class TestCounterParsing(unittest.TestCase):
         self.assertEqual(len(synapses), 0)
         self.assertEqual(len(flags), 0)
 
+    # --- field-order scramble recovery ---------------------------------------
+    # Real temp-0.7 models (qwen3.5:9b and another cloud model in the cross-model benchmark) emit the leaf id
+    # bracketed in the CONTENT slot instead of the 5th field: COUNTER|branch|[id]|argument|conf.
+    # Strict positional parsing lost the id (hit-detection undercount vs a raw scan). These assert
+    # the id is recovered from wherever the model parked it, without breaking the happy path.
+    PLANT = "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+
+    def test_scramble_bracketed_id_in_content_with_conf(self):
+        """COUNTER|branch|[id]|argument|conf — id in content slot, conf pushed to 5th."""
+        line = f"COUNTER|precedent|[{self.PLANT}]|the cited case is fabricated|0.9"
+        c = gd.parse_gardener_output(line)[0][0]
+        self.assertEqual(c["original_leaf_id"], self.PLANT)
+        self.assertEqual(c["content"], "the cited case is fabricated")
+
+    def test_scramble_bracketed_id_in_content_no_conf(self):
+        """COUNTER|branch|[id]|argument — four fields, id in content slot."""
+        line = f"COUNTER|precedent|[{self.PLANT}]|the cited case is fabricated"
+        c = gd.parse_gardener_output(line)[0][0]
+        self.assertEqual(c["original_leaf_id"], self.PLANT)
+        self.assertEqual(c["content"], "the cited case is fabricated")
+
+    def test_scramble_bracketed_id_trailing(self):
+        """COUNTER|branch|argument [id]|conf — id appended to the argument text."""
+        line = f"COUNTER|precedent|the cited case is fabricated [{self.PLANT}]|0.8"
+        c = gd.parse_gardener_output(line)[0][0]
+        self.assertEqual(c["original_leaf_id"], self.PLANT)
+        self.assertEqual(c["content"], "the cited case is fabricated")
+        self.assertAlmostEqual(c["confidence"], 0.8)
+
+    def test_scramble_confidence_not_mistaken_for_leaf_id(self):
+        """A bare confidence parked in the 5th slot must NOT be accepted as a leaf id."""
+        line = f"COUNTER|precedent|[{self.PLANT}]|fabricated|0.9"
+        c = gd.parse_gardener_output(line)[0][0]
+        self.assertNotEqual(c["original_leaf_id"], "0.9")
+        self.assertEqual(c["original_leaf_id"], self.PLANT)
+
 
 class TestDemoTreeIntegrity(unittest.TestCase):
     """demo_tree.json is well-formed and internally consistent."""

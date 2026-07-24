@@ -376,6 +376,41 @@ def strip_list_marker(line):
     return re.sub(r'^\s*(?:\d+[.)]|[-*•])\s+', '', line)
 
 
+# Field-order scramble: some chat models (seen with qwen3.5:9b and another cloud model in the
+# cross-model benchmark) drop the target leaf id, usually BRACKETED, into the content slot
+# (COUNTER|branch|[id]|argument) or trailing (COUNTER|branch|argument [id]) instead of the 5th
+# field, so a strict positional parse both misses the attribution and shows the id as content.
+_BRACKETED_LEAF_ID = re.compile(r"\[\s*([0-9a-fA-F][0-9a-fA-F-]{7,})\s*\]")
+
+
+def _looks_like_leaf_id(s):
+    """False for a bare number like a confidence '0.9' that a field-order scramble parked in the
+    5th (leaf-id) slot — so the real id can still be recovered from the content. A genuine leaf id
+    (uuid, hash prefix, or a synthetic token like 'leaf987') never parses as a float."""
+    s = (s or "").strip()
+    if not s:
+        return False
+    try:
+        float(s)
+        return False
+    except ValueError:
+        return True
+
+
+def _recover_scrambled_leaf_id(parts, content):
+    """Recover a bracketed leaf id the model put in the content slot / trailing instead of the
+    5th field, and hand back the real argument as content. Returns (leaf_id_or_None, content)."""
+    m = _BRACKETED_LEAF_ID.search(content)
+    if not m:
+        return None, content
+    lid = clean_leaf_id(m.group(1))
+    remainder = (content[:m.start()] + content[m.end():]).strip()
+    # id occupied the whole content slot -> the argument is the next pipe field
+    if not remainder and len(parts) >= 4 and parts[3].strip():
+        remainder = strip_conf(parts[3].strip())
+    return lid, (remainder or content)
+
+
 def parse_gardener_output(response_text):
     """
     Parse the gardener LLM output. Handles both strict pipe-separated format
@@ -415,12 +450,16 @@ def parse_gardener_output(response_text):
             # Original leaf ID: 5th field (new format) or COUNTER: [id] prefix (backward compat)
             original_leaf_id = None
             if len(parts) >= 5 and parts[4].strip():
-                original_leaf_id = clean_leaf_id(parts[4])
+                cand = clean_leaf_id(parts[4])
+                if _looks_like_leaf_id(cand):   # reject a scrambled conf ('0.9') in the id slot
+                    original_leaf_id = cand
             if not original_leaf_id:
                 m = re.match(r"COUNTER:\s*\[([a-f0-9]+)\]", content)
                 if m:
                     original_leaf_id = m.group(1)
                     content = re.sub(r"^COUNTER:\s*\[[a-f0-9]+\]\s*", "", content)
+            if not original_leaf_id:  # field-order scramble: bracketed id in the content slot / trailing
+                original_leaf_id, content = _recover_scrambled_leaf_id(parts, content)
             counters.append({"branch": branch, "content": content, "confidence": conf,
                              "original_leaf_id": original_leaf_id})
 

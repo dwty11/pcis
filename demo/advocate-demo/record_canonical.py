@@ -32,8 +32,34 @@ sys.path.insert(0, REPO)
 import gardener as g  # the shipped gardener — same module the demo runs
 
 
+def _ensure_note_in_window():
+    """Stamp the committed verification note to a today-dated memory file so
+    load_recent_memory(days=5) loads it whenever the demo runs. Without this the note (dated
+    2026-07-17) falls outside the 5-day window and --live silently runs the ABLATION (no-note)
+    condition while presenting itself as the WITH-note demo. Runtime-relative date, fixture-
+    sourced content — writes a gitignored working artifact under fixtures/base/memory/."""
+    base = os.environ.get("PCIS_BASE_DIR", "")
+    memdir = os.path.join(base, "memory")
+    if not base or not os.path.isdir(memdir):
+        return
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    for fn in sorted(os.listdir(memdir)):
+        if not fn.endswith(".md") or fn == f"{today}.md":
+            continue
+        try:
+            txt = open(os.path.join(memdir, fn), encoding="utf-8").read().lower()
+        except OSError:
+            continue
+        if "no such" in txt or "reference-system" in txt or "reference system" in txt:
+            import shutil
+            shutil.copyfile(os.path.join(memdir, fn), os.path.join(memdir, f"{today}.md"))
+            return
+
+
 def build_prompt():
     """Assemble the EXACT prompt core/gardener.py main() sends — no hint, no leaf id."""
+    _ensure_note_in_window()   # so --live runs WITH the note in-window, not a silent ablation
     tree = g.load_tree()
     tree_text = g.format_tree_for_prompt(tree, focus_branch=None)
     recent_memory = g.load_recent_memory(days=5)

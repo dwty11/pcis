@@ -87,6 +87,16 @@ def beat_context():
         print("  " + line)
 
 
+def _hits_plant(target, plant):
+    """A counter targets the plant if its (short-form or full) leaf id matches the plant id —
+    exact, or one is a >=8-hex prefix of the other. Models emit the id in varied forms; the tree
+    stores full UUIDs, so a recovered short id must still count as a hit on the plant."""
+    if not target or not plant:
+        return False
+    t, p = str(target).strip().lower(), str(plant).strip().lower()
+    return t == p or (len(t) >= 8 and (p.startswith(t) or t.startswith(p)))
+
+
 def beat_attack(canonical, plant_id, live=False):
     print("\n" + RULE)
     if live:
@@ -97,7 +107,7 @@ def beat_attack(canonical, plant_id, live=False):
     print(RULE)
     counters = canonical["counters"]
     for c in counters:
-        tag = "[on the plant]" if c["target_leaf_id"] == plant_id else "[routine]     "
+        tag = "[on the plant]" if _hits_plant(c["target_leaf_id"], plant_id) else "[routine]     "
         print(f"  ⚔️  {tag}  {c['branch']} counter, conf {c['confidence']}")
         print(f"        {c['content'][:78]}")
     print()
@@ -133,7 +143,7 @@ def beat_ablation():
 def beat_verdict(tree, canonical, plant_id):
     """Render the money shot ONLY from a genuine counter on the plant. If this pass
     produced none, say so — never inject a counter to manufacture a move."""
-    pc = next((c for c in canonical["counters"] if c["target_leaf_id"] == plant_id), None)
+    pc = next((c for c in canonical["counters"] if _hits_plant(c["target_leaf_id"], plant_id)), None)
     if pc is None:
         print("\n" + RULE)
         print("  NO VERDICT THIS PASS — the gardener raised no counter on the plant.")
