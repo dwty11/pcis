@@ -57,9 +57,43 @@ def _ensure_note_in_window():
             return
 
 
-def build_prompt():
-    """Assemble the EXACT prompt core/gardener.py main() sends — no hint, no leaf id."""
-    _ensure_note_in_window()   # so --live runs WITH the note in-window, not a silent ablation
+def _clear_today_stamp():
+    """Remove any today-dated memory stamp so the ablation run reads BLANK memory. Only ever
+    deletes the generated <today>.md artifact — never the committed dated verification note."""
+    base = os.environ.get("PCIS_BASE_DIR", "")
+    memdir = os.path.join(base, "memory")
+    if not base or not os.path.isdir(memdir):
+        return
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    p = os.path.join(memdir, f"{today}.md")
+    if os.path.exists(p):
+        os.remove(p)
+
+
+def _model_digest(model):
+    """The ollama digest for `model`, or '' if unreachable. A fixture records which model
+    SNAPSHOT produced its numbers — a tag like 'qwen3.5:9b' drifts across re-pulls, the digest
+    doesn't, so a skeptic can tell whether a live re-run is even the same weights."""
+    try:
+        import urllib.request
+        with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=5) as r:
+            data = json.load(r)
+        for m in data.get("models", []):
+            if m.get("name") == model:
+                return m.get("digest", "")
+    except Exception:
+        return ""
+    return ""
+
+
+def build_prompt(with_note=True):
+    """Assemble the EXACT prompt core/gardener.py main() sends — no hint, no leaf id. with_note
+    stamps the verification note into the 5-day window (the shipped demo + --live condition);
+    with_note=False clears any stamp so the gardener reads blank memory (the ablation)."""
+    if with_note:
+        _ensure_note_in_window()   # so --live runs WITH the note in-window, not a silent ablation
+    else:
+        _clear_today_stamp()       # ablation: the gardener sees no verification evidence
     tree = g.load_tree()
     tree_text = g.format_tree_for_prompt(tree, focus_branch=None)
     recent_memory = g.load_recent_memory(days=5)
@@ -91,33 +125,47 @@ def parse_counters(raw):
              "target_leaf_id": c.get("original_leaf_id")} for c in counters]
 
 
+def _hits_plant(target, plant):
+    """Prefix-tolerant plant match — same rule replay.py renders with. A recovered id may be a
+    short form while the tree stores the full UUID, so exact == would undercount vs a raw scan."""
+    if not target or not plant:
+        return False
+    t, p = str(target).strip().lower(), str(plant).strip().lower()
+    return t == p or (len(t) >= 8 and (p.startswith(t) or t.startswith(p)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--passes", type=int, default=10)
     ap.add_argument("--out", default=os.path.join(HERE, "fixtures"))
+    ap.add_argument("--no-note", action="store_true",
+                    help="record the ABLATION condition (blank memory) into no_note_hit_rate.json")
     args = ap.parse_args()
 
+    with_note = not args.no_note
     plant = open(os.path.join(HERE, "fixtures", "PLANT_ID.txt"), encoding="utf-8").read().strip()
-    prompt = build_prompt()
+    prompt = build_prompt(with_note=with_note)
     model = g.GARDENER_MODEL
+    digest = _model_digest(model)
 
     runs = []
     canonical = None
     for i in range(args.passes):
         raw = g.call_ollama(prompt)
         counters = parse_counters(raw)
-        hit = any(c["target_leaf_id"] == plant for c in counters)
-        plant_counter = next((c for c in counters if c["target_leaf_id"] == plant), None)
+        hit = any(_hits_plant(c["target_leaf_id"], plant) for c in counters)
+        plant_counter = next((c for c in counters if _hits_plant(c["target_leaf_id"], plant)), None)
         stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         runs.append({"pass": i + 1, "timestamp": stamp, "n_counters": len(counters),
                      "hit_plant": hit,
                      "plant_counter": plant_counter,
-                     "targets": [c["target_leaf_id"][:8] for c in counters]})
+                     "targets": [(c["target_leaf_id"] or "")[:8] for c in counters]})
         print(f"pass {i+1}/{args.passes}: {len(counters)} counters, plant_hit={hit}")
-        # canonical = the first real run that lands a counter on the plant
-        if canonical is None and hit:
+        # canonical = the first real run that lands a counter on the plant (with-note run only)
+        if with_note and canonical is None and hit:
             canonical = {
                 "model": model,
+                "model_digest": digest,
                 "timestamp": stamp,
                 "prompt": prompt,
                 "raw_response": raw,
@@ -127,15 +175,20 @@ def main():
 
     hits = sum(1 for r in runs if r["hit_plant"])
     os.makedirs(args.out, exist_ok=True)
-    if canonical is not None:
+    rate_file = "hit_rate.json" if with_note else "no_note_hit_rate.json"
+    if with_note and canonical is not None:
         with open(os.path.join(args.out, "canonical_run.json"), "w", encoding="utf-8") as f:
             json.dump(canonical, f, indent=2, ensure_ascii=False)
-    with open(os.path.join(args.out, "hit_rate.json"), "w", encoding="utf-8") as f:
-        json.dump({"model": model, "passes": args.passes, "plant_hits": hits,
+    with open(os.path.join(args.out, rate_file), "w", encoding="utf-8") as f:
+        json.dump({"model": model, "model_digest": digest,
+                   "condition": "with_note" if with_note else "no_note",
+                   "passes": args.passes, "plant_hits": hits,
                    "runs": runs}, f, indent=2, ensure_ascii=False)
     print(f"\nHIT-RATE: {hits}/{args.passes} passes landed a counter on the plant "
-          f"(model {model}).")
-    print("canonical_run.json:", "written" if canonical else "NOT written (no hit in any pass)")
+          f"(model {model} @ {digest[:12]}, {'with' if with_note else 'NO'} note).")
+    print(f"{rate_file}:", "written")
+    if with_note:
+        print("canonical_run.json:", "written" if canonical else "NOT written (no hit in any pass)")
 
 
 if __name__ == "__main__":

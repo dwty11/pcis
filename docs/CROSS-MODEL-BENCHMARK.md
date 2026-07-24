@@ -1,9 +1,12 @@
 # Cross-model detection benchmark — provenance and honest limits
 
 The Advocate Demo ships a single-model *illustration*: run the un-hinted gardener over a
-seeded tree with one planted fabrication and it lands on the plant ~7/10 with the
-verification note in memory, 0/5 without it. The demo README is careful to call that an
-illustration, not a benchmark — one model, one tree, one plant.
+seeded tree with one planted fabrication. It targets the plant at about the same rate whether
+the verification note is in memory or not (~7/10 vs ~6/10) — the note does not decide *whether*
+the fabricated citation is challenged (it is the lone 0.95 model-sourced outlier, attacked
+either way) but *what the challenge says*: a generic doctrinal hedge without the recorded
+evidence, the specific "resolves to no decision — fabricated" finding with it. The demo README
+calls that an illustration, not a benchmark — one model, one tree, one plant.
 
 This note records the larger check behind that claim: **does the adversarial pass detect the
 plant across many different models, or only the one the demo happens to use?** It also records,

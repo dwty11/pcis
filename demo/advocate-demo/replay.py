@@ -119,25 +119,56 @@ def beat_attack(canonical, plant_id, live=False):
         print("  No counters this pass — this model returns nothing on some runs.")
 
 
+def _sample_plant_counter(fixture):
+    """The first hitting pass's counter on the plant, verbatim as recorded — representative of
+    the whole condition: with the note every hit is the specific 'no such decision' finding,
+    without it every hit is a generic doctrinal hedge. The full runs are in the fixture."""
+    for r in fixture.get("runs", []):
+        if r.get("hit_plant") and r.get("plant_counter"):
+            return (r["plant_counter"].get("content") or "").replace("\n", " ").strip()
+    return ""
+
+
 def beat_ablation():
-    """The moat: one recorded hit could be luck. The RATE — and its dependence on
-    the verification note — is what proves the untold gardener FOUND the plant."""
+    """The finding is the COUNTER TEXT, not the rate. The gardener targets this 0.95 outlier with
+    or without the verification note (7/10 vs 6/10 — about the same: it attacks the lone model-
+    sourced high-confidence claim on priors either way). What the note changes is what the
+    challenge SAYS — a generic doctrinal hedge without it, the specific 'resolves to no decision
+    — fabricated' finding with it. The record's own evidence turns a hedge into a finding; at ten
+    passes the two rates are close and carry no more weight than that."""
     with open(os.path.join(FIX, "hit_rate.json"), encoding="utf-8") as f:
         withn = json.load(f)
     with open(os.path.join(FIX, "no_note_hit_rate.json"), encoding="utf-8") as f:
         without = json.load(f)
+
+    def q(s):
+        s = s.strip()
+        return s if len(s) <= 118 else s[:117].rstrip() + "…"
+
+    nc, wc = _sample_plant_counter(without), _sample_plant_counter(withn)
     print("\n" + RULE)
-    print("  WAS THAT LUCK? — the untold gardener, measured across repeated passes")
+    print("  WITH vs WITHOUT THE NOTE — what the recorded evidence changes")
     print(RULE)
-    print(f"    WITH the verification note in memory        "
-          f"{withn['plant_hits']}/{withn['passes']} passes landed a counter on the plant")
-    print(f"    WITHOUT the note (same tree, same plant)    "
-          f"{without['plant_hits']}/{without['passes']} passes")
+    print("  The gardener challenges this citation either way — it is the lone")
+    print("  model-sourced 0.95 claim, a structural outlier. The verification note")
+    print("  doesn't decide WHETHER it challenges; it decides WHAT it can say:")
     print()
-    print("  The note is load-bearing: the gardener finds the fabrication when the")
-    print("  record carries the evidence, and misses it when the memory is blank.")
-    print("  Not a scripted highlight — a measured rate. Bounded: one model")
-    print(f"  ({withn['model']}), one tree, one plant — an illustration, not a benchmark.")
+    if nc:
+        print("  WITHOUT the note — a generic doctrinal hedge:")
+        print(f"      {q(nc)}")
+    if wc:
+        print("  WITH the note — the specific, verified finding:")
+        print(f"      {q(wc)}")
+    print()
+    print(f"  Rate check (10 passes each): {withn['plant_hits']}/{withn['passes']} with the note, "
+          f"{without['plant_hits']}/{without['passes']} without —")
+    print("  about the same. The note changes the challenge, not the odds of")
+    print("  raising one; at ten passes those two numbers are close and prove")
+    print("  nothing on their own. The evidence in the record is the point.")
+    print()
+    print(f"  One model ({withn['model']} @ {withn.get('model_digest','')[:12]}), one tree,")
+    print("  one plant — an illustration, not a benchmark. Live rates vary by")
+    print("  model snapshot and run; --live runs your own.")
 
 
 def beat_verdict(tree, canonical, plant_id):

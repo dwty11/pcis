@@ -1,76 +1,170 @@
 {
-  "setup": "ABLATION — empty memory (the verification note removed). Same seeded tree, same plant, same model as fixtures/hit_rate.json. Without the note the record carries no evidence the citation is fabricated, so a counter that happens to land on the plant is unsupported guesswork. Compare fixtures/hit_rate.json (with the note).",
   "model": "qwen3.5:9b",
-  "passes": 5,
-  "plant_hits": 0,
+  "model_digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+  "condition": "no_note",
+  "passes": 10,
+  "plant_hits": 6,
   "runs": [
     {
       "pass": 1,
-      "timestamp": "2026-07-22T08:39:18Z",
-      "n_counters": 4,
-      "hit_plant": false,
-      "plant_counter": null,
+      "timestamp": "2026-07-24T08:50:25Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Waiver of conflict disclosure rights is not automatic and requires a showing of prejudice or bad faith; Meridian v. Calloway Holdings (2024) may be misapplied here or limited to specific facts not present in Delgado.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
       "targets": [
-        "d3f9300f",
-        "80fbf3a9",
-        "1265e663",
-        "4fc057f9"
+        "54186d09",
+        "26db39ea",
+        "1265e663"
       ]
     },
     {
       "pass": 2,
-      "timestamp": "2026-07-22T08:39:54Z",
-      "n_counters": 5,
+      "timestamp": "2026-07-24T08:50:58Z",
+      "n_counters": 4,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "065",
-        "060",
-        "055",
-        "070",
-        "050"
+        "0.65|541",
+        "0.60|126",
+        "0.70|7f0",
+        "0.65|26d"
       ]
     },
     {
       "pass": 3,
-      "timestamp": "2026-07-22T08:40:31Z",
-      "n_counters": 5,
+      "timestamp": "2026-07-24T08:51:36Z",
+      "n_counters": 6,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "065",
-        "060",
-        "055",
-        "070",
-        "062"
+        "0.65|",
+        "0.60|",
+        "0.62|",
+        "0.70|",
+        "0.55|",
+        "0.58|"
       ]
     },
     {
       "pass": 4,
-      "timestamp": "2026-07-22T08:40:57Z",
+      "timestamp": "2026-07-24T08:52:12Z",
       "n_counters": 5,
-      "hit_plant": false,
-      "plant_counter": null,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Waiver of conflict disclosure is not automatic; it requires a showing of prejudice or bad faith, which is not present here.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
       "targets": [
-        "",
-        "",
-        "",
-        "",
-        ""
+        "54186d09",
+        "4fc057f9",
+        "26db39ea",
+        "7f0f6b8c",
+        "89f29008"
       ]
     },
     {
       "pass": 5,
-      "timestamp": "2026-07-22T08:41:38Z",
-      "n_counters": 5,
+      "timestamp": "2026-07-24T08:52:41Z",
+      "n_counters": 3,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "065",
-        "060",
-        "055",
-        "070",
-        "062"
+        "0.65|541",
+        "0.60|126",
+        "0.62|26d"
+      ]
+    },
+    {
+      "pass": 6,
+      "timestamp": "2026-07-24T08:53:21Z",
+      "n_counters": 5,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Waiver of arbitration rights is fact-specific and rarely automatic; the 14-day disclosure window is often a jurisdictional default rather than a substantive waiver of the right to compel, making this high-confidence claim vulnerable to factual exception.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "1265e663",
+        "7f0f6b8c",
+        "26db39ea",
+        "908df1d2"
+      ]
+    },
+    {
+      "pass": 7,
+      "timestamp": "2026-07-24T08:53:46Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Meridian v. Calloway Holdings is likely an outlier or mis-cited; standard federal and most state arbitration law (FAA § 102/103) mandates disclosure only for conflicts involving the arbitrator themselves or the opposing party, not the client's internal counsel, making a blanket 14-day waiver for 'known conflicts' legally unsound.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "26db39ea",
+        "a7993983"
+      ]
+    },
+    {
+      "pass": 8,
+      "timestamp": "2026-07-24T08:54:14Z",
+      "n_counters": 4,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "Waiver of arbitration rights typically requires a knowing and voluntary relinquishment; a mere 14-day disclosure window is not universally mandated and may depend on specific state contract law, challenging the absolute nature of this claim.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "26db39ea",
+        "a7993983",
+        "7f0f6b8c"
+      ]
+    },
+    {
+      "pass": 9,
+      "timestamp": "2026-07-24T08:54:54Z",
+      "n_counters": 5,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The 14-day disclosure window cited may be a jurisdiction-specific default rather than a universal rule; failure to disclose within that specific window does not automatically waive the right to compel arbitration if the party had a reasonable excuse or if the opposing party consented to an extension, making the absolute waiver claim vulnerable to factual rebuttal",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "1265e663",
+        "26db39ea",
+        "f0314d07",
+        "4fc057f9"
+      ]
+    },
+    {
+      "pass": 10,
+      "timestamp": "2026-07-24T08:55:35Z",
+      "n_counters": 4,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": [
+        "0.65|541",
+        "0.60|126",
+        "0.55|26d",
+        "0.70|7f0"
       ]
     }
   ]

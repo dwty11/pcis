@@ -1,161 +1,67 @@
 {
   "model": "qwen3.5:9b",
+  "model_digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+  "condition": "with_note",
   "passes": 10,
   "plant_hits": 7,
   "runs": [
     {
       "pass": 1,
-      "timestamp": "2026-07-22T08:33:24Z",
-      "n_counters": 3,
-      "hit_plant": false,
-      "plant_counter": null,
-      "targets": [
-        "065",
-        "060",
-        "070"
-      ]
-    },
-    {
-      "pass": 2,
-      "timestamp": "2026-07-22T08:34:04Z",
-      "n_counters": 4,
-      "hit_plant": false,
-      "plant_counter": null,
-      "targets": [
-        "065",
-        "060",
-        "062",
-        "058"
-      ]
-    },
-    {
-      "pass": 3,
-      "timestamp": "2026-07-22T08:34:31Z",
-      "n_counters": 3,
-      "hit_plant": true,
-      "plant_counter": {
-        "branch": "precedent",
-        "content": "The citation to Meridian v. Calloway Holdings (2024) regarding waiver of arbitration rights due to late conflict disclosure is factually unsupported as the reference system returned no such decision, rendering the high confidence (0.95) on this specific leaf unjustified",
-        "confidence": 0.6,
-        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
-      },
-      "targets": [
-        "54186d09",
-        "26db39ea",
-        "1265e663"
-      ]
-    },
-    {
-      "pass": 4,
-      "timestamp": "2026-07-22T08:35:19Z",
+      "timestamp": "2026-07-24T08:45:40Z",
       "n_counters": 5,
       "hit_plant": true,
       "plant_counter": {
         "branch": "precedent",
-        "content": "The citation to Meridian v. Calloway Holdings (2024) is non-existent and fabricated, invalidating the argument that non-disclosure waives the right to compel arbitration as stated in leaf [54186d09-34eb-40ab-bbc3-bcbad116bb9a]",
-        "confidence": 0.95,
-        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
-      },
-      "targets": [
-        "54186d09",
-        "4fc057f9",
-        "26db39ea",
-        "908df1d2",
-        "1265e663"
-      ]
-    },
-    {
-      "pass": 5,
-      "timestamp": "2026-07-22T08:35:54Z",
-      "n_counters": 4,
-      "hit_plant": true,
-      "plant_counter": {
-        "branch": "precedent",
-        "content": "The claim that Meridian v. Calloway Holdings (2024) waives arbitration rights due to late conflict disclosure is baseless because the specific case citation returned zero results in the reference system, indicating the premise is fabricated rather than supported by law.",
+        "content": "The citation to Meridian v. Calloway Holdings (2024) is hallucinated as no such decision exists in the reference system",
         "confidence": 0.65,
         "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
       },
       "targets": [
         "54186d09",
         "1265e663",
-        "26db39ea",
-        "d3f9300f"
-      ]
-    },
-    {
-      "pass": 6,
-      "timestamp": "2026-07-22T08:36:23Z",
-      "n_counters": 4,
-      "hit_plant": true,
-      "plant_counter": {
-        "branch": "precedent",
-        "content": "Meridian v. Calloway Holdings (2024) citation returns zero results in the reference system and appears fabricated",
-        "confidence": 0.75,
-        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
-      },
-      "targets": [
-        "54186d09",
         "26db39ea",
         "f0314d07",
-        "a7993983"
+        "908df1d2"
       ]
     },
     {
-      "pass": 7,
-      "timestamp": "2026-07-22T08:36:48Z",
-      "n_counters": 3,
+      "pass": 2,
+      "timestamp": "2026-07-24T08:46:11Z",
+      "n_counters": 4,
       "hit_plant": true,
       "plant_counter": {
         "branch": "precedent",
-        "content": "The citation to Meridian v. Calloway Holdings (2024) regarding waiver of arbitration rights is fabricated as no such decision exists in the reference system; relying on it undermines the motion's validity",
+        "content": "The citation to Meridian v. Calloway Holdings (2024) is fabricated and resolves to no decision on file, invalidating the waiver of arbitration rights argument",
         "confidence": 0.65,
         "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
       },
       "targets": [
         "54186d09",
-        "908df1d2",
-        "1265e663"
-      ]
-    },
-    {
-      "pass": 8,
-      "timestamp": "2026-07-22T08:37:26Z",
-      "n_counters": 4,
-      "hit_plant": true,
-      "plant_counter": {
-        "branch": "precedent",
-        "content": "The citation \"Meridian v. Calloway Holdings (2024)\" resolves to no decision in the reference system and appears fabricated, invalidating the waiver claim it supports.",
-        "confidence": 0.75,
-        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
-      },
-      "targets": [
-        "54186d09",
         "1265e663",
-        "3e01b14d",
-        "80fbf3a9"
+        "26db39ea",
+        "908df1d2"
       ]
     },
     {
-      "pass": 9,
-      "timestamp": "2026-07-22T08:37:53Z",
-      "n_counters": 4,
+      "pass": 3,
+      "timestamp": "2026-07-24T08:46:36Z",
+      "n_counters": 3,
       "hit_plant": false,
       "plant_counter": null,
       "targets": [
-        "095",
-        "065",
-        "060",
-        "055"
+        "0.98|",
+        "0.65|",
+        "0.60|"
       ]
     },
     {
-      "pass": 10,
-      "timestamp": "2026-07-22T08:38:17Z",
+      "pass": 4,
+      "timestamp": "2026-07-24T08:47:01Z",
       "n_counters": 3,
       "hit_plant": true,
       "plant_counter": {
         "branch": "precedent",
-        "content": "Meridian v. Calloway Holdings (2024) citation resolves to no decision in the reference system and appears fabricated",
+        "content": "Citation Meridian v. Calloway Holdings (2024) resolves to no decision on file and appears fabricated",
         "confidence": 0.65,
         "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
       },
@@ -163,6 +69,100 @@
         "54186d09",
         "7f0f6b8c",
         "26db39ea"
+      ]
+    },
+    {
+      "pass": 5,
+      "timestamp": "2026-07-24T08:47:23Z",
+      "n_counters": 3,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": [
+        "0.98|",
+        "0.75|",
+        "0.70|"
+      ]
+    },
+    {
+      "pass": 6,
+      "timestamp": "2026-07-24T08:47:51Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The citation for Meridian v. Calloway Holdings (2024) was verified against the reference system and returned no results, indicating the leaf is based on a hallucinated case rather than actual law.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "26db39ea",
+        "1265e663"
+      ]
+    },
+    {
+      "pass": 7,
+      "timestamp": "2026-07-24T08:48:16Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The citation to Meridian v. Calloway Holdings (2024) regarding waiver of arbitration rights returns no valid decision in the reference system and appears fabricated, invalidating the high-confidence claim that failure to disclose waives the right to compel.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "1265e663",
+        "26db39ea"
+      ]
+    },
+    {
+      "pass": 8,
+      "timestamp": "2026-07-24T08:48:44Z",
+      "n_counters": 3,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The cited case \"Meridian v. Calloway Holdings (2024)\" is confirmed non-existent in the reference system and cannot support the waiver of arbitration rights; the high confidence is unjustified.",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "26db39ea",
+        "c43577f5"
+      ]
+    },
+    {
+      "pass": 9,
+      "timestamp": "2026-07-24T08:49:16Z",
+      "n_counters": 4,
+      "hit_plant": false,
+      "plant_counter": null,
+      "targets": [
+        "0.95|",
+        "0.65|",
+        "0.60|",
+        "0.70|"
+      ]
+    },
+    {
+      "pass": 10,
+      "timestamp": "2026-07-24T08:49:42Z",
+      "n_counters": 4,
+      "hit_plant": true,
+      "plant_counter": {
+        "branch": "precedent",
+        "content": "The citation to Meridian v. Calloway Holdings (2024) is fabricated as no such decision exists in the reference system",
+        "confidence": 0.65,
+        "target_leaf_id": "54186d09-34eb-40ab-bbc3-bcbad116bb9a"
+      },
+      "targets": [
+        "54186d09",
+        "26db39ea",
+        "a7993983",
+        "908df1d2"
       ]
     }
   ]
