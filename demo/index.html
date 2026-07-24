@@ -879,6 +879,7 @@ body {
       <div class="section-title" style="margin-bottom:0">Adversarial Challenges</div>
       <button id="btnRunValidation" onclick="runLiveValidation()" style="padding:6px 18px;border-radius:6px;border:1px solid var(--purple);background:rgba(167,139,250,0.1);color:var(--purple);font-size:13px;font-weight:600;cursor:pointer">Run Live Validation</button>
     </div>
+    <div id="gcBanner" style="margin-bottom:16px"></div>
     <div id="gcList">
       <div class="loading"><div class="spinner"></div> Loading external validation data...</div>
     </div>
@@ -1629,6 +1630,8 @@ async function loadExternalValidation() {
 
 async function runLiveValidation() {
   const btn = document.getElementById('btnRunValidation');
+  const banner = document.getElementById('gcBanner');
+  banner.innerHTML = '';
   btn.disabled = true;
   btn.textContent = 'Running...';
   try {
@@ -1638,7 +1641,11 @@ async function runLiveValidation() {
     extLoaded = false;
     await loadExternalValidation();
   } catch (e) {
-    alert('Live validation error: ' + e.message);
+    // Inline banner (matching the Search screen) — no modal popup, no raw urllib string.
+    banner.innerHTML = `
+      <div style="padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:12px;color:var(--yellow)">
+        ${escapeHtml(e.message || 'Live validation unavailable')}
+      </div>`;
   } finally {
     btn.disabled = false;
     btn.textContent = 'Run Live Validation';

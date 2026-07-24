@@ -461,7 +461,14 @@ def api_run_validation():
         return jsonify(run_data)
 
     except urllib.error.URLError as e:
-        return jsonify({"error": f"Cannot reach Ollama: {e}"}), 502
+        # Same graceful shape as /api/ingest — friendly + flagged, never the raw
+        # "<urlopen error ...>" string (the client renders it as an inline banner).
+        logger.warning("Live validation unavailable — local LLM unreachable: %s", e)
+        return jsonify({
+            "error": "Live validation needs a local LLM (Ollama), which is unreachable. "
+                     "Start it (`ollama serve`) and pull the model, then retry.",
+            "ollama_unavailable": True,
+        }), 503
     except Exception as e:
         logger.exception("Live validation failed")
         return jsonify({"error": str(e)}), 500
