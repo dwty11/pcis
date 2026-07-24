@@ -222,7 +222,7 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   line-height: 1.8;
-  min-height: 380px;
+  min-height: 240px;
   max-height: 500px;
   overflow-y: auto;
   position: relative;
@@ -245,7 +245,7 @@ body {
 
 .boot-result {
   text-align: center;
-  margin-top: 32px;
+  margin-top: 20px;
   display: none;
 }
 
@@ -729,7 +729,7 @@ body {
       <div class="boot-explain">
         <div class="boot-explain-section">
           <div class="boot-explain-label">What is happening</div>
-          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on every memory and knowledge file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the root hash changes and the status flags CHANGED.<br><br>This is cryptographic tamper detection, computed in real time.</div>
+          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on each tracked file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the root hash changes and the status flags CHANGED.<br><br>This is cryptographic tamper detection, computed in real time.</div>
         </div>
         <div class="boot-explain-section">
           <div class="boot-explain-label">Workspace</div>
@@ -1082,7 +1082,7 @@ function renderTreeStats() {
       <div class="stat-label">Branches</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value green">${treeData.root_hash}...</div>
+      <div class="stat-value green" style="font-size:16px;word-break:break-word">${treeData.root_hash}...</div>
       <div class="stat-label">Merkle Root</div>
     </div>
   `;
