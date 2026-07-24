@@ -588,7 +588,7 @@ def api_belief_recompute():
         return jsonify(result)
     except Exception as e:
         logger.exception("Belief recompute failed")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Belief recompute failed unexpectedly — check the server log."}), 500
 
 
 @app.route("/api/belief/update-log")
@@ -765,7 +765,7 @@ def api_ingest_upload():
         })
     except Exception as e:
         logger.exception("File upload processing failed")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "File upload processing failed unexpectedly — check the server log."}), 500
     finally:
         try:
             os.unlink(tmp_path)
