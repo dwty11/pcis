@@ -10,8 +10,16 @@ paraphrased, or derived from any real / operator knowledge tree. This reseed is
 the one place a shortcut could walk private content back into the public repo —
 so it is authored by hand against the demo's fiction, and nothing else.
 
-Hashes are machine-recomputed via core.knowledge_tree (never hand-typed).
-Idempotent: re-running skips a counter whose challenged leaf already has one.
+Also writes demo/demo_synapses.json: one CONTRADICTS synapse per counter (from
+the counter leaf to its challenged target), mirroring core/gardener.py:1180 —
+the edge the production gardener creates when it commits a counter. Without it
+the dashboard's synapse-driven BELIEF panel is blind to challenges the
+content-driven ADVERSARIAL panel displays, and the two disagree.
+
+Hashes are machine-recomputed via core.knowledge_tree / core.knowledge_synapses
+(never hand-typed). Fully deterministic — a fresh clone reproduces both files
+byte-for-byte. Idempotent: re-running skips a counter whose challenged leaf
+already has a COUNTER leaf, and rewrites the synapse graph from scratch.
 
 Usage:
     python3 demo/seed_demo_counters.py           # reseed in place
@@ -23,6 +31,7 @@ import argparse
 import hashlib
 import json
 import sys
+import uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -30,9 +39,13 @@ REPO_ROOT = HERE.parent
 sys.path.insert(0, str(REPO_ROOT / "core"))
 
 from knowledge_tree import hash_leaf, compute_branch_hash, compute_root_hash  # noqa: E402
+from knowledge_synapses import hash_synapse, compute_synapses_root  # noqa: E402
 
 DEMO_TREE = HERE / "demo_tree.json"
+DEMO_SYNAPSES = HERE / "demo_synapses.json"
 SOURCE = "gardener-demo-2026-04-07"
+SYNAPSE_NOTE = "Gardener counter-challenge"  # mirrors core/gardener.py:1181
+FIXED_TS = "2026-04-07 06:33:15 UTC"  # committed artifact must reproduce byte-for-byte
 
 # --- HAND-AUTHORED SYNTHETIC COUNTERS -------------------------------------
 # Each challenges a REAL demo leaf (by id) with a fresh adversarial argument
@@ -119,7 +132,50 @@ def _make_leaf(counter: dict) -> dict:
     }
 
 
-def reseed(tree: dict) -> int:
+def _make_synapse(counter: dict, counter_leaf_id: str) -> dict:
+    """A CONTRADICTS synapse from a COUNTER leaf to the leaf it challenges.
+
+    Mirrors core/gardener.py:1180 — the production gardener creates exactly this
+    edge when it commits a counter — but built deterministically (fixed created,
+    id derived from the content hash) so the committed artifact reproduces
+    byte-for-byte on a fresh clone.
+    """
+    target = counter["challenged_id"]
+    created = counter["created"]
+    h = hash_synapse(counter_leaf_id, target, "CONTRADICTS", created)
+    return {
+        "id": str(uuid.uuid5(uuid.NAMESPACE_URL, h)),
+        "from_leaf": counter_leaf_id,
+        "to_leaf": target,
+        "relation": "CONTRADICTS",
+        "note": SYNAPSE_NOTE,
+        "source": SOURCE,
+        "created": created,
+        "hash": h,
+    }
+
+
+def build_synapses() -> dict:
+    """The demo synapse graph: one CONTRADICTS edge per synthetic counter.
+
+    Deliberately contains NO REINFORCES edges — REINFORCES is not in
+    core.knowledge_synapses.VALID_RELATIONS, so belief_traversal, belief_updater
+    and the server's enrichment all silently ignore it. The counter->target
+    CONTRADICTS edge is the one relation the belief panel actually reads.
+    """
+    syn = [_make_synapse(c, _make_leaf(c)["id"]) for c in SYNTHETIC_COUNTERS]
+    graph = {
+        "version": 1,
+        "created": FIXED_TS,
+        "last_updated": FIXED_TS,
+        "synapses": syn,
+        "root_hash": "",
+    }
+    graph["root_hash"] = compute_synapses_root(graph)
+    return graph
+
+
+def reseed(tree: dict, synapses: dict) -> int:
     added = 0
     for counter in SYNTHETIC_COUNTERS:
         leaves = tree["branches"][counter["branch"]]["leaves"]
@@ -135,11 +191,13 @@ def reseed(tree: dict) -> int:
     for branch in tree["branches"].values():
         branch["hash"] = compute_branch_hash(branch["leaves"])
     tree["root_hash"] = compute_root_hash(tree)
-    synapse_root = hashlib.sha256(b"NO_SYNAPSES").hexdigest()
+    # Combined root now ties the tree to the REAL demo synapse graph (a
+    # CONTRADICTS edge per counter), not the old NO_SYNAPSES placeholder.
+    synapse_root = synapses["root_hash"]
     tree["combined_root_hash"] = hashlib.sha256(
         (tree["root_hash"] + synapse_root).encode()
     ).hexdigest()
-    tree["last_updated"] = "2026-04-07 06:33:15 UTC"
+    tree["last_updated"] = FIXED_TS
     return added
 
 
@@ -157,10 +215,14 @@ def main(argv=None) -> None:
         print(f"{n} COUNTER leaf(ves) in demo tree")
         sys.exit(0 if n >= len(SYNTHETIC_COUNTERS) else 1)
 
-    added = reseed(tree)
+    synapses = build_synapses()
+    added = reseed(tree, synapses)
     DEMO_TREE.write_text(json.dumps(tree, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    DEMO_SYNAPSES.write_text(json.dumps(synapses, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Reseeded {DEMO_TREE.name}: +{added} synthetic COUNTER leaf(ves); "
           f"root -> {tree['root_hash'][:16]}...")
+    print(f"Wrote {DEMO_SYNAPSES.name}: {len(synapses['synapses'])} CONTRADICTS synapse(s); "
+          f"synapse-root -> {synapses['root_hash'][:16]}...")
 
 
 if __name__ == "__main__":

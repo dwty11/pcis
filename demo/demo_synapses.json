@@ -1,65 +1,58 @@
 {
+  "version": 1,
+  "created": "2026-04-07 06:33:15 UTC",
+  "last_updated": "2026-04-07 06:33:15 UTC",
   "synapses": [
     {
-      "from_leaf": "8380c938d48f",
-      "to_leaf": "81f2c11c9da9",
-      "relation": "REINFORCES",
-      "note": "Co-branch: projects"
+      "id": "859e0841-8c3f-5e10-806a-5285af0bd369",
+      "from_leaf": "e405b26ba1ef",
+      "to_leaf": "809bcf98d393",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge",
+      "source": "gardener-demo-2026-04-07",
+      "created": "2026-04-07 06:33:11 UTC",
+      "hash": "be308aeb7b8552eb07ac1d5970667d9df440ce2fdddc35ba9abd75e74e7cb813"
     },
     {
-      "from_leaf": "81f2c11c9da9",
-      "to_leaf": "cf535cc5ce7e",
-      "relation": "REINFORCES",
-      "note": "Co-branch: projects"
-    },
-    {
-      "from_leaf": "a2b92e85661a",
+      "id": "78539671-4bc3-5afd-9b05-39735408e28f",
+      "from_leaf": "8817f6ae7dbc",
       "to_leaf": "01f3a4ac52bf",
-      "relation": "REINFORCES",
-      "note": "Co-branch: risks"
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge",
+      "source": "gardener-demo-2026-04-07",
+      "created": "2026-04-07 06:33:12 UTC",
+      "hash": "a23615c38a38bc974e8f7637c3a009858bb9e21f1586f1ef0b998718747ab95c"
     },
     {
-      "from_leaf": "01f3a4ac52bf",
-      "to_leaf": "03788b79f9c3",
-      "relation": "REINFORCES",
-      "note": "Co-branch: risks"
+      "id": "74195dda-3e1e-58d7-8331-f1a705db7298",
+      "from_leaf": "8d7524536f09",
+      "to_leaf": "e927fef96ff5",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge",
+      "source": "gardener-demo-2026-04-07",
+      "created": "2026-04-07 06:33:13 UTC",
+      "hash": "94fd0ab23cd93634c605a31e7e5bdf50200db3040c1aa27ee06ba3b6b36ded6c"
     },
     {
-      "from_leaf": "809bcf98d393",
-      "to_leaf": "5b60b28a9005",
-      "relation": "REINFORCES",
-      "note": "Co-branch: decisions"
+      "id": "58a35d66-fb20-5a3c-a2c4-f5fb245ad526",
+      "from_leaf": "6bcd0f750359",
+      "to_leaf": "56c8472e7bda",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge",
+      "source": "gardener-demo-2026-04-07",
+      "created": "2026-04-07 06:33:14 UTC",
+      "hash": "6495d7f5f6da7f457ac7b878aad84c12ceeca9111b15037c2870b11bf3deea1d"
     },
     {
-      "from_leaf": "5b60b28a9005",
-      "to_leaf": "30fffc0d8439",
-      "relation": "REINFORCES",
-      "note": "Co-branch: decisions"
-    },
-    {
-      "from_leaf": "48e0c3176ec6",
-      "to_leaf": "55230ef8ca71",
-      "relation": "REINFORCES",
-      "note": "Co-branch: compliance"
-    },
-    {
-      "from_leaf": "55230ef8ca71",
-      "to_leaf": "687b6eee7eb6",
-      "relation": "REINFORCES",
-      "note": "Co-branch: compliance"
-    },
-    {
-      "from_leaf": "0611623f7016",
-      "to_leaf": "fb0d87573d22",
-      "relation": "REINFORCES",
-      "note": "Co-branch: lessons"
-    },
-    {
-      "from_leaf": "fb0d87573d22",
-      "to_leaf": "d8cd49b998b1",
-      "relation": "REINFORCES",
-      "note": "Co-branch: lessons"
+      "id": "51263d3d-2aec-5de3-8562-9bf1fdbdf4f1",
+      "from_leaf": "c9a50e4ba36d",
+      "to_leaf": "48e0c3176ec6",
+      "relation": "CONTRADICTS",
+      "note": "Gardener counter-challenge",
+      "source": "gardener-demo-2026-04-07",
+      "created": "2026-04-07 06:33:15 UTC",
+      "hash": "f04b9153f2ad6c9f46e1c5e2aba626a606bf4f96f18d1b3c599f84a96899aa74"
     }
   ],
-  "combined_root_hash": "3507a6ec71109d80280212450518b38049ac28e2bcba5add592e8161d169905f"
+  "root_hash": "1ecd03a16f2677c26a539be6526c8784be86dae14b1a954dae03a7818603a437"
 }
