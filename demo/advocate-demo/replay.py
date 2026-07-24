@@ -212,6 +212,15 @@ def _live_run(plant_id):
     import gardener as g
     from record_canonical import build_prompt, parse_counters
     from datetime import datetime, timezone
+    # --live skips the gardener's own dry-run / ensure_ollama_warm() guard and goes straight to
+    # call_ollama, whose failure is a bare "Connection refused" that reads like a network problem.
+    # Give the friendly guidance here instead — no local model reachable is the common case.
+    if not g._ollama_has_model(g.GARDENER_MODEL):
+        print()
+        print(f"  ⚠  No local model ({g.GARDENER_MODEL}) reachable — the live pass needs Ollama.")
+        print("     Install Ollama (https://ollama.com), then:  ollama pull " + g.GARDENER_MODEL)
+        print("     Or run ./run_demo.sh with no flag to replay the recorded run (needs no model).")
+        sys.exit(1)
     raw = g.call_ollama(build_prompt())
     counters = parse_counters(raw)
     return {"model": g.GARDENER_MODEL,

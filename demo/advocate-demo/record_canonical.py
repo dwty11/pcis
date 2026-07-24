@@ -49,28 +49,20 @@ def build_prompt():
 
 
 def parse_counters(raw):
-    """Extract COUNTER lines: [{branch, content, confidence, target_leaf_id}].
+    """Extract COUNTER lines as [{branch, content, confidence, target_leaf_id}].
 
-    Uses the shared gardener.strip_list_marker so a model that wraps its output in a
-    numbered/bulleted list (a real behavior — qwen3.5:9b does it on ~3/10 passes) is not
-    silently dropped. Kept parser-identical to the gardener otherwise.
+    Delegates to the shipped gardener parser (gardener.parse_gardener_output) so the demo
+    shows EXACTLY what the real gardener parses — and inherits its robustness that this
+    file's old hand-rolled split lacked. That split used ``line.split("|")`` with no bound,
+    so a temp-0.7 answer whose content itself contains ``|`` scrambled the fields: a bare
+    leaf-id UUID landed in the content slot and confidence became ``None``. The gardener uses
+    ``split("|", 4)`` (content may contain pipes), falls back to ``Conf=0.X``/0.65 instead of
+    ``None``, and cleans leaf-ids via clean_leaf_id — so counters render as argument text +
+    a real confidence, not "conf None" gibberish.
     """
-    out = []
-    for line in raw.splitlines():
-        line = g.strip_list_marker(line.strip())
-        if not line.startswith("COUNTER|"):
-            continue
-        parts = line.split("|")
-        if len(parts) < 5:
-            continue
-        target = re.sub(r"[^a-f0-9-]", "", parts[4].strip())
-        try:
-            conf = float(parts[3].strip())
-        except ValueError:
-            conf = None
-        out.append({"branch": parts[1].strip(), "content": parts[2].strip(),
-                    "confidence": conf, "target_leaf_id": target})
-    return out
+    counters, _synapses, _flags = g.parse_gardener_output(raw)
+    return [{"branch": c["branch"], "content": c["content"], "confidence": c["confidence"],
+             "target_leaf_id": c.get("original_leaf_id")} for c in counters]
 
 
 def main():
