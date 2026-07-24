@@ -704,6 +704,16 @@ def api_ingest():
             "source": source,
         })
 
+    except urllib.error.URLError as e:
+        # Ingestion needs a local LLM to extract claims — it can't keyword-fallback
+        # the way /api/search does. Degrade gracefully with an actionable message
+        # instead of dumping a raw "<urlopen error ...>" 500 to the page.
+        logger.warning("Ingestion unavailable — local LLM unreachable: %s", e)
+        return jsonify({
+            "error": "Claim extraction needs a local LLM (Ollama), which is unreachable. "
+                     "Start it (`ollama serve`) and pull the model, then retry.",
+            "ollama_unavailable": True,
+        }), 503
     except Exception as e:
         logger.exception("Ingestion failed")
         return jsonify({"error": str(e)}), 500
