@@ -165,8 +165,10 @@ def cmd_search(args):
         return
 
     print(f"Found {len(results)} result(s):\n")
-    for score, leaf in results:
-        print(f"  [{leaf['id'][:12]}] score={score:.3f} branch={leaf.get('branch', '?')}")
+    # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
+    # second element, NOT a key on leaf_data (core/knowledge_search.py:307).
+    for score, leaf_id, leaf in results:
+        print(f"  [{leaf_id[:12]}] score={score:.3f} branch={leaf.get('branch', '?')}")
         print(f"    {leaf['content'][:150]}")
         print()
 
@@ -202,14 +204,19 @@ def cmd_verify(args):
 def cmd_proof(args):
     """Generate a Merkle inclusion proof for a leaf."""
     _set_base_dir(args)
-    from knowledge_tree import load_tree, generate_inclusion_proof
+    from knowledge_tree import load_tree, generate_proof
+    from knowledge_synapses import find_leaf_in_tree
 
     tree = load_tree()
-    proof = generate_inclusion_proof(tree, args.leaf_id)
-
-    if proof is None:
+    # generate_proof needs the branch and raises rather than returning None,
+    # so resolve the leaf first and report a missing id cleanly.
+    # find_leaf_in_tree returns (None, None) when the id is absent.
+    branch_name, _leaf = find_leaf_in_tree(tree, args.leaf_id)
+    if branch_name is None:
         print(f"❌ Leaf {args.leaf_id} not found.")
         sys.exit(1)
+
+    proof = generate_proof(tree, branch_name, args.leaf_id)
 
     print(json.dumps(proof, indent=2))
 
@@ -221,11 +228,14 @@ def cmd_assess(args):
 
     result = assess_belief(args.leaf_id)
 
+    # assess_belief returns net_confidence / contradiction_count
+    # (core/belief_traversal.py:197-209) — there is no effective_confidence
+    # or challenge_count key.
     print(f"Leaf: {args.leaf_id[:12]}")
     print(f"Stance: {result['stance']}")
-    print(f"Effective confidence: {result['effective_confidence']:.3f}")
+    print(f"Net confidence: {result['net_confidence']:.3f}")
     print(f"Supporters: {result['support_count']}")
-    print(f"Challengers: {result['challenge_count']}")
+    print(f"Challengers: {result['contradiction_count']}")
     if result.get("reasoning"):
         print(f"\nReasoning: {result['reasoning']}")
 

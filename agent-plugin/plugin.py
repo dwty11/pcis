@@ -119,16 +119,18 @@ def pcis_search(query, top_k=5, config=None):
 
     from core.knowledge_search import search
 
+    # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
+    # second element, NOT a key on leaf_data (core/knowledge_search.py:307).
     results = search(query, top_k=top_k)
     return [
         {
             "score": round(score, 4),
-            "leaf_id": leaf["id"],
+            "leaf_id": leaf_id,
             "branch": leaf.get("branch", "?"),
             "content": leaf["content"][:200],
             "confidence": leaf.get("confidence", 0),
         }
-        for score, leaf in results
+        for score, leaf_id, leaf in results
     ]
 
 

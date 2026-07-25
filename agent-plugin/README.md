@@ -49,6 +49,21 @@ Once installed, your agent gains three tools:
 | `pcis_search(query, top_k)` | Search the knowledge tree by meaning |
 | `pcis_status()` | Show tree integrity, branch counts, and root hash |
 
+`pcis_search` returns a list of `{score, leaf_id, branch, content, confidence}`
+dicts, ranked by cosine similarity. `content` is truncated to 200 characters.
+
+It requires a semantic search index, which is built separately and needs a
+local Ollama embedding model:
+
+```bash
+python3 core/knowledge_search.py --reindex
+```
+
+Without that index `pcis_search` returns an empty list rather than raising —
+so an agent that gets no results should check the index before concluding the
+tree is empty. `pcis_add` indexes new leaves incrementally, but only if an
+index already exists.
+
 ## Session Lifecycle
 
 On session start, the plugin automatically:
