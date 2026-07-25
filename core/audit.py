@@ -61,7 +61,9 @@ def _sha256_bytes(data):
 
 
 def _now_iso_utc():
-    return datetime.now(timezone.utc).isoformat()
+    # timespec explicit: a bare .isoformat() drops the fractional part when
+    # microsecond is exactly 0.
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 def _project_leaf(leaf, branch_name):

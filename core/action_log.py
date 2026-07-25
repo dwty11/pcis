@@ -84,7 +84,9 @@ def _hash_event(event):
 
 
 def _now_iso_utc():
-    return datetime.now(timezone.utc).isoformat()
+    # timespec explicit: a bare .isoformat() drops the fractional part when
+    # microsecond is exactly 0, and this log is append-only and ordered.
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 def _today_iso_date():

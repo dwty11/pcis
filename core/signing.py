@@ -147,7 +147,7 @@ def sign_root(tree=None, private_key_path=None):
     result = {
         "root_hash": root_hash,
         "signature": signature_hex,
-        "signed_at": datetime.now(timezone.utc).isoformat(),
+        "signed_at": datetime.now(timezone.utc).isoformat(timespec="microseconds"),
         "public_key": public_key_hex,
     }
 

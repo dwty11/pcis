@@ -84,8 +84,12 @@ def _hash_event(event):
 
 
 def _now_iso_utc():
-    """ISO 8601 timestamp in UTC, suitable for the journal."""
-    return datetime.now(timezone.utc).isoformat()
+    """ISO 8601 timestamp in UTC, suitable for the journal.
+
+    timespec is explicit: a bare .isoformat() omits the fractional part when
+    microsecond is exactly 0, and the journal is append-only and ordered.
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 # -----------------------------------------------------------------------
