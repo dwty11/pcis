@@ -221,6 +221,30 @@ def build_retrieval_record(
     )
 
 
+def log_retrieval(
+    *,
+    ledger_path: Optional[str] = None,
+    dedupe: bool = False,
+    **kwargs: Any,
+) -> ProvenanceRecord:
+    """Build a retrieval trace and append it to the provenance ledger.
+
+    Thin composition of :func:`build_retrieval_record` and
+    ``provenance_ledger.append_record`` — every other argument is passed
+    straight through. Returns the record that was built, whether or not
+    ``dedupe`` caused the write to be skipped.
+
+    The ledger is append-only and NOT hash-chained (v0.3), so a persisted
+    trace is a record of what the retriever reported, not tamper-evident
+    proof that the line has not been altered since.
+    """
+    from provenance_ledger import append_record
+
+    record = build_retrieval_record(**kwargs)
+    append_record(record, ledger_path, dedupe=dedupe)
+    return record
+
+
 def verify_retrieval(
     record: ProvenanceRecord,
     *,

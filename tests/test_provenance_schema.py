@@ -264,9 +264,14 @@ class TestC3RedactPaths:
     def test_defaults_to_empty_list(self):
         assert _intake().redact_paths == []
 
+    # Fixtures are deliberately synthetic. C3 exists because a real
+    # employer reference plus an append-only ledger is a permanent leak —
+    # so the test for it must not itself commit a real name to a public
+    # repo. Same regex classes (a literal token, an international phone
+    # shape), none of the real referents.
     def test_accepts_patterns(self):
-        block = _intake(redact_paths=[r"Sberbank", r"\+7\d{10}"])
-        assert block.redact_paths == [r"Sberbank", r"\+7\d{10}"]
+        block = _intake(redact_paths=[r"ExampleCorp", r"\+1\d{10}"])
+        assert block.redact_paths == [r"ExampleCorp", r"\+1\d{10}"]
 
     def test_invalid_regex_is_flagged_not_silently_dropped(self):
         with pytest.raises(ValueError, match="redact_paths"):
@@ -276,11 +281,11 @@ class TestC3RedactPaths:
         from provenance import apply_redactions
 
         out = apply_redactions(
-            "met Ivanov at Sberbank on +79261234567",
-            [r"Sberbank", r"\+7\d{10}"],
+            "met Testperson at ExampleCorp on +15550001111",
+            [r"ExampleCorp", r"\+1\d{10}"],
         )
-        assert "Sberbank" not in out
-        assert "+79261234567" not in out
+        assert "ExampleCorp" not in out
+        assert "+15550001111" not in out
         assert out.count("[REDACTED]") == 2
 
 
