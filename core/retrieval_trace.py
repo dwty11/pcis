@@ -282,6 +282,7 @@ def emit_retrieval_trace(
     synapses: Optional[dict] = None,
     ledger_path: Optional[str] = None,
     dedupe: bool = False,
+    extras: Optional[dict] = None,
 ) -> Optional[ProvenanceRecord]:
     """Trace one retrieval and persist it. Never raises.
 
@@ -306,6 +307,15 @@ def emit_retrieval_trace(
     between what was retrieved and what was shown is machine-readable
     instead of doc-only. (Recorded in the block's ``extras``; whether it
     deserves a real schema field is a v0.3 question for the contract.)
+
+    ``extras`` passes caller-supplied facts into the same block. It exists so
+    a caller does not have to drop to ``log_retrieval`` — and lose the
+    never-raises policy above — just to record one more field. Current use:
+    ``retrieval_mode`` ("semantic" | "keyword"), which says HOW the leaves
+    were selected. Nothing in the v0.2 schema carries that, so a
+    keyword-fallback trace is otherwise indistinguishable from a semantic
+    one; it is a candidate real field for v0.3 and a contract question for
+    the sibling spec.
     """
     if not tracing_enabled():
         return None
@@ -318,11 +328,11 @@ def emit_retrieval_trace(
         if not injection:
             return None
 
-        extras = (
-            {"rendered_truncated_to": rendered_truncated_to}
-            if rendered_truncated_to is not None
-            else None
-        )
+        # Caller extras first, then the named parameter — an explicit
+        # argument outranks a same-named key smuggled through the dict.
+        extras = dict(extras or {})
+        if rendered_truncated_to is not None:
+            extras["rendered_truncated_to"] = rendered_truncated_to
         return log_retrieval(
             ledger_path=ledger_path,
             dedupe=dedupe,

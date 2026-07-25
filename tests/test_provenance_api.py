@@ -1,0 +1,222 @@
+"""test_provenance_api.py — the reader surface for retrieval traces.
+
+Gap 3 from the observability review: the ledger had no reader at all
+(``grep -c provenance demo/index.html`` → 0, no route), so a feature that
+worked was invisible to anyone with a browser.
+
+WHAT THESE TESTS PROTECT
+========================
+The API shape is where the honesty constraints are enforced, because a UI
+can only render what it is given. Two structural choices are load-bearing
+and are pinned here:
+
+1. **No bare pass/fail field is exposed.** ``verify_retrieval`` returns
+   ``ok``, documented as "not a statement about the answer". Serving it
+   would invite exactly the green "Verified" chip the module bans, so the
+   detail route serves the honest summary line and per-leaf statuses
+   instead. A caller cannot render a bare chip from this payload without
+   inventing one.
+
+2. **Display vocabulary only.** ``resolves / drifted / gone / withdrawn``
+   reach the client; the wire values ``pass / mismatch / missing /
+   retracted`` never do.
+
+Plus ``synapses_loaded``, which must always be present: a superseded leaf
+reads ``pass`` when no synapse graph was loaded, and absence of evidence
+rendered as evidence of absence is the failure mode that flag exists for.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_HERE)
+sys.path.insert(0, os.path.join(_ROOT, "core"))
+sys.path.insert(0, _ROOT)
+sys.path.insert(0, _HERE)
+
+# Reuse the emitter suite's real tree + index fixture rather than rebuilding
+# a second, subtly different one.
+from test_retrieval_trace_wiring import (  # noqa: E402,F401
+    _break_ledger,
+    _ledger,
+    env,
+)
+
+WIRE_VALUES = {"pass", "mismatch", "missing", "retracted"}
+DISPLAY_VALUES = {"resolves", "drifted", "gone", "withdrawn"}
+
+
+@pytest.fixture
+def route(env, monkeypatch, tmp_path):
+    from demo import server
+
+    kt, paths, ids = env
+    monkeypatch.setattr(server, "DEMO_TREE_FILE", paths["tree"])
+    monkeypatch.setattr(server, "DEMO_DIR", str(tmp_path / "demo_out"))
+    os.makedirs(str(tmp_path / "demo_out"), exist_ok=True)
+    return server.app.test_client(), paths, ids
+
+
+def _run_query(client, q="deploys"):
+    """Run a retrieval so there is something to read back."""
+    resp = client.post("/api/query", json={"query": q})
+    assert resp.status_code == 200
+    return resp.get_json()
+
+
+class TestQueryResponseCarriesRecordId:
+    def test_query_returns_the_record_id_it_just_wrote(self, route):
+        client, paths, ids = route
+
+        payload = _run_query(client)
+
+        assert payload["provenance_record_id"], (
+            "the browser cannot fetch a trace it was never told the id of"
+        )
+        assert payload["provenance_record_id"] == _ledger(paths["base"])[0].record_id
+
+    def test_record_id_is_null_when_nothing_was_recorded(self, route, monkeypatch):
+        """A failed ledger write must read as 'not recorded', not as absence.
+
+        Silence here is what let a broken emitter look identical to a
+        working one for as long as it did.
+        """
+        client, paths, ids = route
+        _break_ledger(monkeypatch)
+
+        payload = _run_query(client)
+
+        assert payload["results"], "results still served"
+        assert payload["provenance_record_id"] is None
+
+
+class TestProvenanceList:
+    def test_lists_records_newest_first(self, route):
+        client, paths, ids = route
+        _run_query(client, "deploys")
+        _run_query(client, "root")
+
+        listing = client.get("/api/provenance").get_json()
+
+        assert listing["total"] == 2
+        stamps = [r["timestamp"] for r in listing["records"]]
+        assert stamps == sorted(stamps, reverse=True), "newest first"
+
+    def test_each_row_says_how_the_leaves_were_selected(self, route):
+        client, paths, ids = route
+        _run_query(client)
+
+        row = client.get("/api/provenance").get_json()["records"][0]
+
+        assert row["retrieval_mode"] in {"semantic", "keyword"}
+        assert row["sink"] == "pcis.retrieval-trace/demo.query"
+        assert row["leaves"] >= 1
+
+    def test_empty_ledger_is_not_an_error(self, route):
+        client, paths, ids = route
+
+        listing = client.get("/api/provenance")
+
+        assert listing.status_code == 200
+        assert listing.get_json()["records"] == []
+
+
+class TestProvenanceDetail:
+    def test_renders_display_vocabulary_never_wire_values(self, route):
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert detail["leaves"], "a trace with cited leaves must list them"
+        for leaf in detail["leaves"]:
+            assert leaf["status"] in DISPLAY_VALUES, (
+                f"wire value leaked to the client: {leaf['status']}"
+            )
+        blob = json.dumps(detail)
+        for wire in WIRE_VALUES:
+            assert f'"{wire}"' not in blob, f"wire value {wire!r} reached the client"
+
+    def test_exposes_no_bare_pass_fail_field(self, route):
+        """Structural: you cannot render a green chip from this payload."""
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        for banned in ("ok", "valid", "verified", "passed"):
+            assert banned not in detail, (
+                f"{banned!r} invites exactly the bare chip the module bans"
+            )
+
+    def test_always_surfaces_whether_supersession_was_checked(self, route):
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert "synapses_loaded" in detail
+        assert isinstance(detail["synapses_loaded"], bool)
+
+    def test_no_synapse_graph_reads_as_not_checked(self, route):
+        """The demo dir here is empty, so there is genuinely no graph.
+
+        core.knowledge_synapses.load_synapses would hand back a fully-formed
+        EMPTY graph for this case, which would report synapses_loaded=True and
+        claim a check that never happened.
+        """
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert detail["synapses_loaded"] is False
+
+    def test_summary_never_claims_unchanged_while_reporting_drift(self, route):
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        # Edit a cited leaf's content after the trace — real drift.
+        import knowledge_tree as kt
+
+        tree = kt.load_tree(paths["tree"])
+        for branch in tree["branches"].values():
+            for leaf in branch["leaves"]:
+                leaf["content"] = leaf["content"] + " EDITED AFTER TRACE"
+        kt.save_tree(tree, paths["tree"])
+
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert "drifted" in detail["summary"]
+        assert "unchanged" not in detail["summary"], (
+            "reporting drift and claiming unchanged in one line is the bug "
+            "this wording rule exists to prevent"
+        )
+        assert all(leaf["status"] == "drifted" for leaf in detail["leaves"])
+
+    def test_unknown_record_id_is_404_not_a_blank_pass(self, route):
+        client, paths, ids = route
+
+        resp = client.get("/api/provenance/does-not-exist")
+
+        assert resp.status_code == 404
+
+    def test_survives_a_corrupt_synapse_file(self, route, tmp_path):
+        """load_synapses sys.exit(1)s on corrupt JSON — that must never run
+        inside a request, or a bad file takes the server down."""
+        client, paths, ids = route
+        rec_id = _run_query(client)["provenance_record_id"]
+
+        syn = tmp_path / "demo_out" / "demo_synapses.json"
+        syn.write_text("{not json at all", encoding="utf-8")
+
+        resp = client.get(f"/api/provenance/{rec_id}")
+
+        assert resp.status_code == 200, "a corrupt graph must degrade, not kill"
+        assert resp.get_json()["synapses_loaded"] is False

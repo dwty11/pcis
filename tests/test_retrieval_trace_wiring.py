@@ -525,3 +525,217 @@ class TestRunValidationRoute:
 
         assert resp.status_code == 200, "validation must not fail because logging did"
         assert len(resp.get_json()["counters"]) == 3
+
+
+# ===========================================================================
+# 4. emit_retrieval_trace extras passthrough
+# ===========================================================================
+
+
+class TestExtrasPassthrough:
+    """``extras`` is V1 forward-compat plumbing — free-form by design.
+
+    The emitter previously hardcoded it to ``rendered_truncated_to`` only, so
+    a caller had no way to record anything else without dropping to
+    ``log_retrieval`` and losing the never-raises policy that makes provenance
+    safe to wire into a request path.
+    """
+
+    def test_caller_extras_reach_the_record(self, env):
+        from core.knowledge_search import search
+        from retrieval_trace import emit_retrieval_trace
+
+        kt, paths, ids = env
+        emit_retrieval_trace(
+            sink="s",
+            search_results=search("deploys", top_k=5),
+            answer_text="x",
+            extras={"retrieval_mode": "semantic"},
+        )
+
+        assert _ledger(paths["base"])[0].retrieval.extras["retrieval_mode"] == "semantic"
+
+    def test_caller_extras_merge_with_rendered_truncated_to(self, env):
+        """Neither key may clobber the other — they are independent facts."""
+        from core.knowledge_search import search
+        from retrieval_trace import emit_retrieval_trace
+
+        kt, paths, ids = env
+        emit_retrieval_trace(
+            sink="s",
+            search_results=search("deploys", top_k=5),
+            answer_text="x",
+            rendered_truncated_to=200,
+            extras={"retrieval_mode": "keyword"},
+        )
+
+        extras = _ledger(paths["base"])[0].retrieval.extras
+        assert extras["rendered_truncated_to"] == 200
+        assert extras["retrieval_mode"] == "keyword"
+
+    def test_omitting_extras_keeps_the_old_shape(self, env):
+        from core.knowledge_search import search
+        from retrieval_trace import emit_retrieval_trace
+
+        kt, paths, ids = env
+        emit_retrieval_trace(
+            sink="s", search_results=search("deploys", top_k=5), answer_text="x"
+        )
+
+        assert _ledger(paths["base"])[0].retrieval.extras == {}
+
+
+# ===========================================================================
+# 5. demo /api/query  +  /api/search  — the two browser-facing retrievals
+# ===========================================================================
+#
+# Gap 2 from the observability review: /api/query is the path users click and
+# it emitted nothing. /api/search is the second retrieval surface, backing the
+# tab that sits LEFT of Query in the nav — the likelier first click, and it
+# emitted nothing either.
+#
+# The keyword-fallback tests are the load-bearing ones. A fresh clone has no
+# search index (demo/demo_search_index.json is gitignored AND absent from
+# HEAD), so the fallback IS the default path for a stranger, and it is exactly
+# the path the run-validation emitter could never reach with Ollama down.
+
+
+class _RouteBase:
+    @pytest.fixture
+    def route(self, env, monkeypatch, tmp_path):
+        from demo import server
+
+        kt, paths, ids = env
+        monkeypatch.setattr(server, "DEMO_TREE_FILE", paths["tree"])
+        monkeypatch.setattr(server, "DEMO_DIR", str(tmp_path / "demo_out"))
+        os.makedirs(str(tmp_path / "demo_out"), exist_ok=True)
+        return server.app.test_client(), paths, ids
+
+
+def _break_semantic_search(monkeypatch):
+    """Force the keyword fallback, as a missing index or dead Ollama would."""
+    import knowledge_search
+    import core.knowledge_search as core_ks
+
+    def boom(*a, **k):
+        raise RuntimeError("ollama is not running")
+
+    for mod in (knowledge_search, core_ks):
+        monkeypatch.setattr(mod, "search", boom)
+
+
+class TestQueryRoute(_RouteBase):
+    def test_emits_one_record_for_the_whole_result_set(self, route):
+        client, paths, ids = route
+
+        resp = client.post("/api/query", json={"query": "deploys"})
+
+        assert resp.status_code == 200
+        persisted = _ledger(paths["base"])
+        assert len(persisted) == 1, (
+            f"one retrieval is one record, got {len(persisted)}"
+        )
+        block = persisted[0].retrieval
+        assert block.sink == "pcis.retrieval-trace/demo.query"
+        returned = [r["id"] for r in resp.get_json()["results"]]
+        assert block.injected_leaf_ids == returned, (
+            "the record must name exactly the leaves the browser was shown, in rank order"
+        )
+
+    def test_records_semantic_mode(self, route):
+        client, paths, ids = route
+
+        client.post("/api/query", json={"query": "deploys"})
+
+        assert _ledger(paths["base"])[0].retrieval.extras["retrieval_mode"] == "semantic"
+
+    def test_emits_on_the_keyword_fallback(self, route, monkeypatch):
+        """The fresh-clone default path — no index, no Ollama."""
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        resp = client.post("/api/query", json={"query": "root"})
+
+        assert resp.status_code == 200
+        assert resp.get_json()["results"], "fixture must actually match something"
+        persisted = _ledger(paths["base"])
+        assert len(persisted) == 1, "a keyword-fallback retrieval is still a retrieval"
+        assert persisted[0].retrieval.extras["retrieval_mode"] == "keyword"
+
+    def test_no_results_writes_no_record(self, route, monkeypatch):
+        """Nothing was retrieved, so there is nothing to attest.
+
+        Forced onto the keyword path: the fixture's fake embedder returns one
+        constant vector, so the semantic path matches everything and can never
+        produce an empty result set.
+        """
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        resp = client.post("/api/query", json={"query": "zzzznomatchzzzz"})
+
+        assert resp.get_json()["results"] == []
+        assert _ledger(paths["base"]) == []
+
+    def test_producer_model_is_none(self, route):
+        """No model produced an answer here; the record must not imply one."""
+        client, paths, ids = route
+
+        client.post("/api/query", json={"query": "deploys"})
+
+        assert _ledger(paths["base"])[0].retrieval.producer_model is None
+
+    def test_returns_normal_payload_when_ledger_write_fails(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_ledger(monkeypatch)
+
+        resp = client.post("/api/query", json={"query": "deploys"})
+
+        assert resp.status_code == 200, "search must not fail because logging did"
+        assert resp.get_json()["results"], "results must survive a ledger failure"
+
+
+class TestSearchRoute(_RouteBase):
+    def test_emits_one_record_for_the_whole_result_set(self, route):
+        client, paths, ids = route
+
+        resp = client.post("/api/search", json={"query": "deploys"})
+
+        assert resp.status_code == 200
+        persisted = _ledger(paths["base"])
+        assert len(persisted) == 1
+        block = persisted[0].retrieval
+        assert block.sink == "pcis.retrieval-trace/demo.search"
+        returned = [r["id"] for r in resp.get_json()["results"]]
+        assert block.injected_leaf_ids == returned
+
+    def test_emits_on_the_substring_fallback(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        resp = client.post("/api/search", json={"query": "root"})
+
+        assert resp.get_json()["results"], "fixture must actually match something"
+        persisted = _ledger(paths["base"])
+        assert len(persisted) == 1
+        assert persisted[0].retrieval.extras["retrieval_mode"] == "keyword"
+
+    def test_no_results_writes_no_record(self, route, monkeypatch):
+        """See TestQueryRoute.test_no_results_writes_no_record for why the
+        semantic path cannot produce an empty set under this fixture."""
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        resp = client.post("/api/search", json={"query": "zzzznomatchzzzz"})
+
+        assert resp.get_json()["results"] == []
+        assert _ledger(paths["base"]) == []
+
+    def test_returns_normal_payload_when_ledger_write_fails(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_ledger(monkeypatch)
+
+        resp = client.post("/api/search", json={"query": "deploys"})
+
+        assert resp.status_code == 200, "search must not fail because logging did"
+        assert resp.get_json()["results"]

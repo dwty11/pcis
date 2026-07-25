@@ -84,6 +84,75 @@ def load_tree():
         return json.load(f)
 
 
+# Cap on the provenance listing. The route also returns the untruncated
+# total, so a capped list is visibly capped rather than silently complete.
+PROVENANCE_LIST_LIMIT = 50
+
+
+def _emit_route_trace(*, sink, rows, retrieval_mode, tree):
+    """Trace one browser-facing retrieval. Never raises.
+
+    ``rows`` are the result dicts the route is about to return; each carries
+    the leaf id and the exact content the browser will be shown, so hashing
+    them records the copy that was actually injected.
+
+    No model produced an answer on these routes, so the emitted "answer" is
+    the result set itself and ``producer_model`` stays None to say so — the
+    convention set at agent-plugin/plugin.py:163. Reading a value into
+    ``producer_model`` here would assert a generation that never happened.
+
+    ``tree`` is passed in rather than re-loaded: these routes serve the demo
+    tree, and the emitter's own default would anchor the record on a
+    different one.
+    """
+    if not rows:
+        return None  # nothing retrieved — nothing to attest
+    from core.retrieval_trace import emit_retrieval_trace
+
+    record = emit_retrieval_trace(
+        sink=sink,
+        injection=[(r["id"], r["content"]) for r in rows],
+        answer_text=json.dumps(rows, sort_keys=True, ensure_ascii=False),
+        tree=tree,
+        extras={"retrieval_mode": retrieval_mode},
+    )
+    # None when tracing is off or the write failed. The route reports that as
+    # a null id so the client can say "not recorded" — silence would make a
+    # broken emitter indistinguishable from a working one.
+    return record.record_id if record is not None else None
+
+
+def _load_demo_synapses():
+    """The demo synapse graph, or None when there is no real one.
+
+    Deliberately NOT core.knowledge_synapses.load_synapses, which this file
+    uses elsewhere for belief assessment, because two of its behaviours are
+    wrong inside this path:
+
+      * a missing file yields a fully-formed EMPTY graph, and passing that to
+        verify_retrieval reports ``synapses_loaded=True`` — claiming
+        supersession was checked when no graph exists. A superseded leaf
+        reads ``resolves`` in that state, so the false claim is the dangerous
+        direction.
+      * a corrupt file calls ``sys.exit(1)``, which from inside a request
+        takes the server down.
+
+    An existing-but-empty graph also returns None: it is indistinguishable
+    from no graph to a reader, and understating the check is the safe error.
+    """
+    syn_path = os.path.join(DEMO_DIR, "demo_synapses.json")
+    if not os.path.exists(syn_path):
+        return None
+    try:
+        with open(syn_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or not data.get("synapses"):
+        return None
+    return data
+
+
 def _clip(text, n):
     """Truncate for display, adding an ellipsis when the original was longer.
     Truncation with no marker reads as the whole value; the ellipsis signals more."""
@@ -339,7 +408,27 @@ def api_query():
         scored.sort(key=lambda x: x["score"], reverse=True)
         scored = scored[:3]
 
-    return jsonify({"results": scored, "query": query, "total_matches": len(scored)})
+    # Emitted once, AFTER the fallback branch, so both retrieval paths are
+    # covered by one call. The two paths inject text from different sources —
+    # semantic from the search index, keyword from the tree — but both
+    # converge on `scored`, whose dicts carry the id and the exact content
+    # handed to the browser, so `injection` is correct either way.
+    #
+    # This is the path a stranger actually clicks, and it needs no Ollama on
+    # the keyword branch, so a fresh clone produces records out of the box.
+    record_id = _emit_route_trace(
+        sink="pcis.retrieval-trace/demo.query",
+        rows=scored,
+        retrieval_mode="keyword" if use_keyword_fallback else "semantic",
+        tree=tree,
+    )
+
+    return jsonify({
+        "results": scored,
+        "query": query,
+        "total_matches": len(scored),
+        "provenance_record_id": record_id,
+    })
 
 
 @app.route("/api/adversarial")
@@ -483,7 +572,7 @@ def api_run_validation():
 
         # Build the result document
         run_data = {
-            "run_date": datetime.now(TZ_UTC).isoformat(),
+            "run_date": datetime.now(TZ_UTC).isoformat(timespec="microseconds"),
             "model": "qwen3:14b",
             "provider": "local-qwen",
             "entries_challenged": 3,
@@ -862,14 +951,104 @@ def api_search():
         scored.sort(key=lambda x: x["score"], reverse=True)
         results = scored[:top_k]
 
+    record_id = _emit_route_trace(
+        sink="pcis.retrieval-trace/demo.search",
+        rows=results,
+        retrieval_mode="keyword" if fallback else "semantic",
+        tree=tree,
+    )
+
     resp = {
         "results": results,
         "query": query,
         "model": model,
+        "provenance_record_id": record_id,
     }
     if fallback:
         resp["fallback"] = True
     return jsonify(resp)
+
+
+@app.route("/api/provenance")
+def api_provenance_list():
+    """Recent retrieval traces, newest first.
+
+    This lists what was RECORDED. It does not assert the list is complete:
+    emission swallows its own failures by design (provenance must never be
+    able to break a search), so a missing record leaves no gap to notice and
+    coverage is not verifiable from the ledger. The ledger is append-only and
+    deliberately not hash-chained — see core/provenance_ledger.py.
+    """
+    from core.provenance_ledger import load_ledger
+
+    try:
+        records = load_ledger()
+    except Exception as e:  # noqa: BLE001 — a bad ledger must not 500 the demo
+        logger.warning("Provenance ledger unreadable (%s)", type(e).__name__)
+        return jsonify({"records": [], "total": 0, "unreadable": True})
+
+    rows = []
+    for rec in records:
+        block = rec.retrieval
+        if block is None:
+            continue  # intake records are a different kind
+        rows.append({
+            "record_id": rec.record_id,
+            "timestamp": rec.timestamp,
+            "sink": block.sink,
+            "leaves": len(block.injected_leaf_ids),
+            "retrieval_mode": block.extras.get("retrieval_mode"),
+        })
+
+    rows.sort(key=lambda r: r["timestamp"], reverse=True)
+    # `total` is the untruncated count, so a capped list reads as capped
+    # rather than as "that is all there is".
+    return jsonify({"records": rows[:PROVENANCE_LIST_LIMIT], "total": len(rows)})
+
+
+@app.route("/api/provenance/<record_id>")
+def api_provenance_detail(record_id):
+    """Re-verify one recorded trace against the tree as it is right now.
+
+    Serves the honest summary line and per-leaf DISPLAY statuses. It
+    deliberately does NOT serve verify_retrieval's ``ok`` field: that is
+    documented as "not a statement about the answer", and shipping it to a
+    browser invites the bare green "Verified" chip the trace module bans.
+    A client cannot render one from this payload without inventing it.
+    """
+    from core.provenance_ledger import find_by_record_id
+    from core.retrieval_trace import summarize, verify_retrieval
+
+    try:
+        record = find_by_record_id(record_id)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Provenance lookup failed (%s)", type(e).__name__)
+        record = None
+
+    if record is None or record.retrieval is None:
+        return jsonify({"error": "no such retrieval record"}), 404
+
+    block = record.retrieval
+    result = verify_retrieval(
+        record, tree=load_tree(), synapses=_load_demo_synapses()
+    )
+    display = result["display"]
+
+    return jsonify({
+        "record_id": record.record_id,
+        "timestamp": record.timestamp,
+        "sink": block.sink,
+        "retrieval_mode": block.extras.get("retrieval_mode"),
+        "summary": summarize(result),
+        "leaves": [
+            {"id": leaf_id, "status": display[leaf_id]}
+            for leaf_id in block.injected_leaf_ids
+        ],
+        "root_state": result["root_state"],
+        # Always present: a superseded leaf reads "resolves" when no graph was
+        # loaded, so the reader has to be told which case they are looking at.
+        "synapses_loaded": result["synapses_loaded"],
+    })
 
 
 @app.route("/api/status")

@@ -538,6 +538,44 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* ── Retrieval provenance, rendered inline with the results it describes ── */
+.prov-summary {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--purple);
+  border-radius: 8px;
+  padding: 11px 15px;
+  margin-bottom: 16px;
+  line-height: 1.65;
+}
+.prov-caveat { display: block; margin-top: 5px; color: var(--text-muted); font-size: 11px; }
+.prov-note { color: var(--text-muted); }
+.prov-ledger { margin-top: 36px; border-top: 1px solid var(--border); padding-top: 18px; }
+.prov-ledger summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.prov-ledger summary:hover { color: var(--text); }
+.prov-ledger table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.prov-ledger th, .prov-ledger td {
+  text-align: left;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.prov-ledger th { color: var(--text-muted); font-weight: 600; }
+
 /* ── Adversarial Screen ── */
 .adversarial-card {
   background: var(--bg-card);
@@ -786,6 +824,12 @@ body {
     <div id="queryResults">
       <div class="query-empty">Enter a query to search across all knowledge branches</div>
     </div>
+    <details class="prov-ledger" id="provLedger">
+      <summary>recent retrieval traces — append-only ledger</summary>
+      <div id="provLedgerBody">
+        <div class="query-empty" style="font-size:12px">Expand to load</div>
+      </div>
+    </details>
   </div>
 
   <!-- ══════ BELIEF SCREEN ══════ -->
@@ -1148,6 +1192,125 @@ document.getElementById('queryInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') runQuery();
 });
 
+// ── Retrieval provenance ──
+// Rendered INLINE with the results it describes rather than in its own tab:
+// each result card IS a cited leaf, so the per-leaf verdict belongs on the
+// card. A separate tab would make the reader re-associate leaf ids across two
+// screens, and would arrive empty on a fresh clone.
+//
+// Honesty rules (mirrors the ban list in core/retrieval_trace.py):
+//   * never a bare "Verified" chip — the server deliberately does not send a
+//     pass/fail field, so one cannot be rendered without inventing it
+//   * display vocabulary only: resolves / drifted / gone / withdrawn
+//   * an empty trace reads "no cited leaves", never all-pass
+//   * synapses_loaded=false must stay visible — a superseded leaf reads
+//     "resolves" with no graph loaded, which is absence of evidence
+//   * this is RETRIEVAL provenance. Nothing compares answer text to leaf
+//     content, so no wording here may imply the answer is grounded.
+const PROV_COLORS = {
+  resolves: 'var(--green)',
+  drifted: 'var(--yellow)',
+  gone: 'var(--red)',
+  withdrawn: 'var(--orange)',
+};
+
+const PROV_SCOPE_NOTE =
+  'retrieval provenance — the cited leaves still match what was recorded. ' +
+  'It does not establish that the answer is correct or that it used them.';
+
+function provStatusBadge(status) {
+  const color = PROV_COLORS[status] || 'var(--text-muted)';
+  return `<span style="display:inline-block;padding:2px 9px;border-radius:5px;font-size:10px;`
+    + `font-weight:600;letter-spacing:0.4px;background:${color}20;color:${color};`
+    + `border:1px solid ${color}40">${escapeHtml(status)}</span>`;
+}
+
+function provSlot(text) {
+  return `<div class="prov-summary"><span class="prov-note">${escapeHtml(text)}</span></div>`;
+}
+
+async function renderProvenance(recordId, slotId) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+
+  // Null id means the trace was not recorded — say so. Silence would make a
+  // broken emitter look exactly like a working one.
+  if (!recordId) {
+    slot.innerHTML = provSlot('retrieval trace: not recorded for this query');
+    return;
+  }
+
+  slot.innerHTML = provSlot('retrieval trace: checking…');
+  try {
+    const res = await fetch('/api/provenance/' + encodeURIComponent(recordId));
+    if (!res.ok) {
+      slot.innerHTML = provSlot('retrieval trace: record not found');
+      return;
+    }
+    const trace = await res.json();
+
+    // trace.summary already carries the stale-root and no-synapse-graph
+    // caveats (core/retrieval_trace.py summarize) — do not restate them.
+    slot.innerHTML = `
+      <div class="prov-summary">
+        ${escapeHtml(trace.summary)}
+        <span class="prov-caveat">leaves selected by: ${escapeHtml(trace.retrieval_mode || 'unrecorded')}</span>
+        <span class="prov-caveat">${escapeHtml(PROV_SCOPE_NOTE)}</span>
+      </div>`;
+
+    (trace.leaves || []).forEach(leaf => {
+      document
+        .querySelectorAll('[data-prov-leaf="' + CSS.escape(leaf.id) + '"]')
+        .forEach(el => { el.innerHTML = provStatusBadge(leaf.status); });
+    });
+  } catch (e) {
+    slot.innerHTML = provSlot('retrieval trace: unavailable (' + e.message + ')');
+  }
+}
+
+async function loadProvLedger() {
+  const body = document.getElementById('provLedgerBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div> Loading ledger...</div>';
+  try {
+    const res = await fetch('/api/provenance');
+    const data = await res.json();
+    if (data.unreadable) {
+      body.innerHTML = '<div class="query-empty" style="font-size:12px">Ledger unreadable</div>';
+      return;
+    }
+    if (!data.records.length) {
+      body.innerHTML = '<div class="query-empty" style="font-size:12px">No retrieval traces recorded yet</div>';
+      return;
+    }
+    const capped = data.total > data.records.length
+      ? `<div class="prov-caveat">showing ${data.records.length} of ${data.total} records</div>`
+      : '';
+    body.innerHTML = `
+      <table>
+        <tr><th>when</th><th>source</th><th>mode</th><th>leaves</th></tr>
+        ${data.records.map(r => `
+          <tr>
+            <td>${escapeHtml(r.timestamp)}</td>
+            <td>${escapeHtml(r.sink)}</td>
+            <td>${escapeHtml(r.retrieval_mode || '—')}</td>
+            <td>${r.leaves}</td>
+          </tr>`).join('')}
+      </table>
+      ${capped}
+      <div class="prov-caveat">
+        Append-only, and not a coverage claim: tracing swallows its own
+        failures so a search can never be broken by logging, which means a
+        missing record leaves no gap to notice.
+      </div>`;
+  } catch (e) {
+    body.innerHTML = '<div class="query-empty" style="font-size:12px">Ledger unavailable</div>';
+  }
+}
+
+document.getElementById('provLedger').addEventListener('toggle', function () {
+  if (this.open) loadProvLedger();
+});
+
 async function runQuery() {
   const input = document.getElementById('queryInput');
   const query = input.value.trim();
@@ -1171,13 +1334,15 @@ async function runQuery() {
 
     resultsDiv.innerHTML = `
       <div class="match-count">${data.total_matches} match${data.total_matches === 1 ? '' : 'es'} found — showing top ${data.results.length}</div>
+      <div id="provQuerySlot"></div>
       ${data.results.map((r, i) => `
         <div class="result-card">
           <div class="result-rank">#${i + 1}</div>
-          <div class="result-branch">${r.branch}</div>
+          <div class="result-branch">${escapeHtml(r.branch)}</div>
           <div class="result-content">${escapeHtml(r.content)}</div>
           <div class="result-meta">
-            <span>source: ${r.source}</span>
+            <span data-prov-leaf="${escapeHtml(r.id)}"></span>
+            <span>source: ${escapeHtml(r.source)}</span>
             <span>${r.created}</span>
             <span class="confidence-bar">
               conf:
@@ -1190,11 +1355,13 @@ async function runQuery() {
             <span>score: ${r.score}</span>
           </div>
           <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
-            <span class="result-hash">sha256: ${r.hash}</span>
+            <span class="result-hash">sha256: ${escapeHtml(r.hash)}</span>
           </div>
         </div>
       `).join('')}
     `;
+
+    renderProvenance(data.provenance_record_id, 'provQuerySlot');
   } catch (e) {
     resultsDiv.innerHTML = '<div class="query-empty">Error: ' + e.message + '</div>';
   }
@@ -1451,12 +1618,14 @@ async function runSearch() {
       ${fallbackHtml}
       ${modelHtml}
       <div class="match-count">${data.results.length} result${data.results.length === 1 ? '' : 's'}</div>
+      <div id="provSearchSlot"></div>
       ${data.results.map((r, i) => `
         <div class="result-card">
           <div class="result-rank">#${i + 1}</div>
           <div class="result-branch">${escapeHtml(r.branch)}</div>
           <div class="result-content">${escapeHtml(r.content)}</div>
           <div class="result-meta">
+            <span data-prov-leaf="${escapeHtml(r.id)}"></span>
             <span>source: ${escapeHtml(r.source)}</span>
             <span class="confidence-bar">
               conf:
@@ -1471,6 +1640,8 @@ async function runSearch() {
         </div>
       `).join('')}
     `;
+
+    renderProvenance(data.provenance_record_id, 'provSearchSlot');
   } catch (e) {
     resultsDiv.innerHTML = '<div class="query-empty">Error: ' + escapeHtml(e.message) + '</div>';
   }
