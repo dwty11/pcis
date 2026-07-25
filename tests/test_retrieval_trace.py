@@ -524,11 +524,13 @@ class TestN2SameAnswerDifferentOrder:
         """A real index with two distinct ids holding identical content, so
         their cosine scores tie exactly. Returns (build, ids).
 
-        Uses ``core.knowledge_search``, NOT the bare ``knowledge_search``:
-        tests/test_telegram_notify.py:22 replaces
-        ``sys.modules['knowledge_search']`` with a MagicMock at module scope
-        and never restores it, so the bare alias is poisoned for every test
-        that runs after it. The package-qualified module is unaffected.
+        Uses the package-qualified ``core.knowledge_search`` rather than the
+        bare ``knowledge_search``. Both resolve today, but the bare alias is
+        the one a sys.modules mock can hijack: test_telegram_notify.py used
+        to park a MagicMock under that key at module scope without restoring
+        it, which silently poisoned every test imported afterwards. That is
+        fixed, and the package-qualified form is the alias that never had
+        the exposure.
         """
         import core.knowledge_search as ks
 

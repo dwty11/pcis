@@ -19,9 +19,21 @@ os.makedirs(os.path.join(_tmpdir, "memory"), exist_ok=True)
 
 # gardener.py requires PCIS_BASE_DIR to be set (hard exit otherwise)
 # We also need to mock out the knowledge_search import
+_prior_knowledge_search = sys.modules.get('knowledge_search')
 sys.modules['knowledge_search'] = MagicMock()
 
 import gardener as gd
+
+# Undo the sys.modules mock now that gardener has imported what it needs.
+# Leaving a MagicMock parked under the bare 'knowledge_search' key poisons
+# that alias for EVERY test module imported after this one — a later test
+# doing `import knowledge_search` silently gets the mock, and its failure
+# looks like a bug in the code under test. gardener already holds direct
+# references to the mocked attributes, so its behaviour here is unchanged.
+if _prior_knowledge_search is not None:
+    sys.modules['knowledge_search'] = _prior_knowledge_search
+else:
+    del sys.modules['knowledge_search']
 
 
 class TestNotifyTelegram(unittest.TestCase):
