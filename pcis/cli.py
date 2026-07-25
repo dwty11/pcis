@@ -153,24 +153,48 @@ def cmd_show(args):
             print(f"  {name:20} {n:4} leaves")
 
 
+# Display clip for human output. The provenance trace hashes the FULL
+# retrieved text and records this number, so "what was shown" and "what was
+# retrieved" stay distinguishable. A human reading a clipped line can tell;
+# that is why the CLI keeps truncating and the agent-facing API does not.
+SEARCH_DISPLAY_CHARS = 150
+
+
 def cmd_search(args):
-    """Search the knowledge tree."""
+    """Search the knowledge tree.
+
+    Traces the retrieval to the provenance ledger. A trace failure never
+    fails the search — see core/retrieval_trace.emit_retrieval_trace.
+    """
     _set_base_dir(args)
     from knowledge_search import search
+    from retrieval_trace import emit_retrieval_trace
 
     results = search(args.query, top_k=args.top_k, branch_filter=args.branch)
 
     if not results:
+        # Nothing was retrieved, so there is nothing to attest — no trace.
         print("No results found.")
         return
 
     print(f"Found {len(results)} result(s):\n")
     # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
     # second element, NOT a key on leaf_data (core/knowledge_search.py:307).
+    rendered = []
     for score, leaf_id, leaf in results:
-        print(f"  [{leaf_id[:12]}] score={score:.3f} branch={leaf.get('branch', '?')}")
-        print(f"    {leaf['content'][:150]}")
+        head = f"  [{leaf_id[:12]}] score={score:.3f} branch={leaf.get('branch', '?')}"
+        body = f"    {leaf['content'][:SEARCH_DISPLAY_CHARS]}"
+        print(head)
+        print(body)
         print()
+        rendered.extend([head, body])
+
+    emit_retrieval_trace(
+        sink="pcis.retrieval-trace/cli.search",
+        search_results=results,
+        answer_text="\n".join(rendered),
+        rendered_truncated_to=SEARCH_DISPLAY_CHARS,
+    )
 
 
 def cmd_root(args):

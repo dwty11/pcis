@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import urllib.request
+import uuid
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request, send_file
 
@@ -30,6 +31,11 @@ except (AttributeError, ValueError):
 
 # Point knowledge_search at the demo tree before importing it.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+# core/ too: core modules import each other by bare name (the repo's
+# convention), so core.retrieval_trace cannot import without it.
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core")
+)
 import core.knowledge_search as knowledge_search
 from core.knowledge_tree import verify_tree_integrity, add_knowledge, compute_root_hash
 
@@ -425,6 +431,19 @@ def api_run_validation():
         # Get current root hash
         merkle_root_before = tree.get("root_hash", "")
 
+        # One provenance trace per challenged leaf. This route makes ONE model
+        # call per leaf, each prompt carrying exactly one leaf's content, so
+        # three one-leaf-one-answer records are the honest shape — a single
+        # record over three leaves would blur three separate generations into
+        # one much weaker claim. All three share a run_id.
+        #
+        # NOTE: candidates come from load_tree(), never the search index, so
+        # the injected text here is TREE content. The index-vs-tree staleness
+        # signal does not apply to this emitter; post-trace drift still does.
+        from core.retrieval_trace import emit_retrieval_trace
+
+        validation_run_id = f"demo-run-validation-{uuid.uuid4().hex[:12]}"
+
         counters = []
         for branch_name, leaf in chosen:
             prompt = (
@@ -449,6 +468,18 @@ def api_run_validation():
                 "model": "qwen3:14b",
                 "branch": branch_name,
             })
+
+            if challenge_text:
+                # Root is DERIVED, not merkle_root_before: that reads the
+                # stored root_hash, which can lag the tree it came from.
+                emit_retrieval_trace(
+                    sink="pcis.retrieval-trace/demo.run-validation",
+                    injection=[(leaf["id"], leaf["content"])],
+                    answer_text=challenge_text,
+                    tree=tree,
+                    producer_model="qwen3:14b",
+                    run_id=validation_run_id,
+                )
 
         # Build the result document
         run_data = {

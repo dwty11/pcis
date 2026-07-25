@@ -68,9 +68,13 @@ No external dependencies. Python 3.10+.
 from __future__ import annotations
 
 import hashlib
+import os
+import sys
+import uuid
+from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
-from knowledge_tree import compute_root_hash
+from knowledge_tree import compute_root_hash, load_tree
 from knowledge_synapses import find_leaf_in_tree
 from provenance import (
     ProvenanceRecord,
@@ -164,6 +168,7 @@ def build_retrieval_record(
     retractions_applied: Optional[list] = None,
     synapses: Optional[dict] = None,
     claim_content: Optional[str] = None,
+    extras: Optional[dict] = None,
 ) -> ProvenanceRecord:
     """Write a retrieval trace for one emitted answer.
 
@@ -204,6 +209,7 @@ def build_retrieval_record(
         tree_root_at_trace=root,
         retractions_applied=list(retractions_applied or []),
         producer_model=producer_model,
+        extras=dict(extras or {}),
     )
 
     claim = claim_content if claim_content is not None else answer_text
@@ -244,6 +250,106 @@ def log_retrieval(
     record = build_retrieval_record(**kwargs)
     append_record(record, ledger_path, dedupe=dedupe)
     return record
+
+
+TRACE_ENV_VAR = "PCIS_TRACE_RETRIEVAL"
+
+
+def tracing_enabled() -> bool:
+    """Tracing is ON by default; ``PCIS_TRACE_RETRIEVAL=0`` turns it off.
+
+    Consequence worth knowing: with this on, a read command such as
+    ``pcis search`` appends to ``data/provenance-ledger.jsonl`` as a side
+    effect. That directory is where PCIS already writes everything and is
+    gitignored, but writing during a read is new behaviour.
+    """
+    return os.environ.get(TRACE_ENV_VAR, "1").strip().lower() not in (
+        "0", "false", "no", "off", "",
+    )
+
+
+def emit_retrieval_trace(
+    *,
+    sink: str,
+    answer_text: str,
+    search_results: Optional[Iterable] = None,
+    injection: Optional[list] = None,
+    tree: Optional[dict] = None,
+    producer_model: Optional[str] = None,
+    run_id: Optional[str] = None,
+    rendered_truncated_to: Optional[int] = None,
+    retractions_applied: Optional[list] = None,
+    synapses: Optional[dict] = None,
+    ledger_path: Optional[str] = None,
+    dedupe: bool = False,
+) -> Optional[ProvenanceRecord]:
+    """Trace one retrieval and persist it. Never raises.
+
+    Pass ``search_results`` (raw ``knowledge_search.search`` output) for a
+    retrieval-only emitter, or ``injection`` — ``[(leaf_id, content)]`` in
+    rank order — when the caller already holds the text it fed to a model.
+
+    Returns ``None`` when tracing is disabled, nothing was retrieved, or a
+    failure was swallowed. Otherwise returns the record — note that with
+    ``dedupe=True`` an already-present ``record_id`` returns the built
+    record without appending a second line, so a non-None return means "a
+    record exists", not "a line was just written".
+
+    FAILURE POLICY — swallow, warn, never raise. Provenance logging is
+    observability, not the product; it must not be able to break a memory
+    lookup or a CLI search. The honest cost is that a missing record leaves
+    no gap to notice, so coverage is NOT verifiable from the ledger. Nothing
+    in PCIS claims coverage — only that traced retrievals are traced.
+
+    ``rendered_truncated_to`` records that the emitter clipped the text for
+    display while the hash covers the full retrieved content, so the gap
+    between what was retrieved and what was shown is machine-readable
+    instead of doc-only. (Recorded in the block's ``extras``; whether it
+    deserves a real schema field is a v0.3 question for the contract.)
+    """
+    if not tracing_enabled():
+        return None
+
+    try:
+        if injection is None:
+            if not search_results:
+                return None  # nothing retrieved — nothing to attest
+            injection = injection_from_search(search_results)
+        if not injection:
+            return None
+
+        extras = (
+            {"rendered_truncated_to": rendered_truncated_to}
+            if rendered_truncated_to is not None
+            else None
+        )
+        return log_retrieval(
+            ledger_path=ledger_path,
+            dedupe=dedupe,
+            sink=sink,
+            answer_text=answer_text,
+            injection=injection,
+            tree=tree if tree is not None else load_tree(),
+            run_id=run_id or f"{sink.rsplit('/', 1)[-1]}-{uuid.uuid4().hex[:12]}",
+            # UTC, +00:00 form, microseconds ALWAYS present. timespec is
+            # explicit because a bare .isoformat() omits the fractional part
+            # when microsecond happens to be 0, and truncation to seconds
+            # collapses distinct events into sort ties.
+            timestamp=datetime.now(timezone.utc).isoformat(
+                timespec="microseconds"
+            ),
+            producer_model=producer_model,
+            retractions_applied=retractions_applied,
+            synapses=synapses,
+            extras=extras,
+        )
+    except Exception as e:  # noqa: BLE001 — deliberate: never break retrieval
+        print(
+            f"  [provenance] retrieval trace not recorded for {sink}: "
+            f"{type(e).__name__}: {e}",
+            file=sys.stderr,
+        )
+        return None
 
 
 def verify_retrieval(
@@ -310,11 +416,28 @@ def summarize(result: dict) -> str:
     n = result["leaves"]
     if not n:
         return "retrieval trace: no cited leaves"
-    resolved = sum(1 for s in result["re_verification"].values() if s == "pass")
-    line = (
-        f"retrieval trace: {resolved}/{n} cited leaves resolve, "
-        f"unchanged since trace"
-    )
+
+    statuses = result["re_verification"]
+    resolved = sum(1 for s in statuses.values() if s == "pass")
+    if resolved == n:
+        line = (
+            f"retrieval trace: {n}/{n} cited leaves resolve, unchanged "
+            f"since trace"
+        )
+    else:
+        # Never say "unchanged" while reporting drift — name what happened.
+        breakdown = ", ".join(
+            f"{count} {DISPLAY_STATUS[status]}"
+            for status, count in sorted(
+                (
+                    (s, sum(1 for v in statuses.values() if v == s))
+                    for s in set(statuses.values())
+                    if s != "pass"
+                ),
+                key=lambda pair: pair[0],
+            )
+        )
+        line = f"retrieval trace: {resolved}/{n} cited leaves resolve — {breakdown}"
     if result["root_state"] == "stale":
         line += " (tree root has moved since the trace)"
     if not result["synapses_loaded"]:

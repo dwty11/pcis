@@ -610,6 +610,68 @@ class TestN2SameAnswerDifferentOrder:
             reverse.retrieval.injected_leaf_ids
 
 
+class TestSummarize:
+    """The reader-facing line. It must never claim 'unchanged' while
+    reporting drift, and never render an empty trace as all-pass."""
+
+    def test_all_pass_says_unchanged(self, tree_env):
+        from retrieval_trace import summarize, verify_retrieval
+
+        kt, path, ids = tree_env
+        rec = _record(kt, path, ids)
+
+        line = summarize(verify_retrieval(rec, tree=kt.load_tree(path)))
+
+        assert line.startswith("retrieval trace: 3/3 cited leaves resolve")
+        assert "unchanged since trace" in line
+
+    def test_drift_is_named_and_never_called_unchanged(self, tree_env):
+        from knowledge_synapses import find_leaf_in_tree
+        from retrieval_trace import summarize, verify_retrieval
+
+        kt, path, ids = tree_env
+        rec = _record(kt, path, ids)
+        tree = kt.load_tree(path)
+        _b, leaf = find_leaf_in_tree(tree, ids["drifts"])
+        leaf["content"] = "rewritten"
+
+        line = summarize(verify_retrieval(rec, tree=tree))
+
+        assert "2/3 cited leaves resolve" in line
+        assert "1 drifted" in line
+        assert "unchanged" not in line, (
+            "must not claim 'unchanged' while reporting drift"
+        )
+
+    def test_mixed_statuses_are_all_named(self, tree_env):
+        from knowledge_synapses import find_leaf_in_tree
+        from retrieval_trace import summarize, verify_retrieval
+
+        kt, path, ids = tree_env
+        rec = _record(kt, path, ids)
+        tree = kt.load_tree(path)
+        _b, leaf = find_leaf_in_tree(tree, ids["drifts"])
+        leaf["content"] = "rewritten"
+        kt.prune_leaf(tree, "lessons", ids["goes"], hard=True)
+        tree["root_hash"] = kt.compute_root_hash(tree)
+
+        line = summarize(verify_retrieval(rec, tree=tree))
+
+        assert "1/3 cited leaves resolve" in line
+        assert "1 drifted" in line
+        assert "1 gone" in line
+        assert "unchanged" not in line
+
+    def test_empty_trace_reads_as_no_cited_leaves(self, tree_env):
+        from retrieval_trace import summarize, verify_retrieval
+
+        kt, path, ids = tree_env
+        rec = _record(kt, path, ids, keys=[])
+
+        assert summarize(verify_retrieval(rec, tree=kt.load_tree(path))) == \
+            "retrieval trace: no cited leaves"
+
+
 class TestSabotageProbe:
     """Anti-vacuity. If the module re-implements the tree primitives
     internally instead of importing them, these patches go inert and the

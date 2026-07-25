@@ -34,6 +34,21 @@ def _ensure_env(config):
     return base_dir
 
 
+def _ensure_paths():
+    """Put the repo root AND core/ on sys.path.
+
+    core/ is needed too, not just the root: core modules import each other
+    by bare name (``from knowledge_tree import ...``), which is the repo's
+    convention, so importing e.g. core.retrieval_trace fails without it.
+    """
+    plugin_dir = os.path.dirname(os.path.abspath(__file__))
+    pcis_root = os.path.dirname(plugin_dir)
+    for path in (os.path.join(pcis_root, "core"), pcis_root):
+        if path not in sys.path:
+            sys.path.insert(0, path)
+    return pcis_root
+
+
 # ---------------------------------------------------------------------------
 # Session lifecycle
 # ---------------------------------------------------------------------------
@@ -113,25 +128,45 @@ def pcis_search(query, top_k=5, config=None):
 
     Returns:
         List of dicts with score, leaf_id, branch, content, and confidence.
+
+    ``content`` is the leaf's FULL text. It used to be clipped to 200
+    characters, which for an agent is a correctness hazard rather than a
+    cosmetic one: a clip can silently drop a trailing qualifier that
+    reverses the claim, and unlike a human seeing an ellipsis, an agent
+    cannot tell it was handed half a sentence.
+
+    Each retrieval is traced to the provenance ledger. A failure to record
+    the trace never fails the search — see ``emit_retrieval_trace``.
     """
     if config:
         _ensure_env(config)
+    _ensure_paths()
 
     from core.knowledge_search import search
+    from core.retrieval_trace import emit_retrieval_trace
 
     # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
     # second element, NOT a key on leaf_data (core/knowledge_search.py:307).
     results = search(query, top_k=top_k)
-    return [
+    rows = [
         {
             "score": round(score, 4),
             "leaf_id": leaf_id,
             "branch": leaf.get("branch", "?"),
-            "content": leaf["content"][:200],
+            "content": leaf["content"],
             "confidence": leaf.get("confidence", 0),
         }
         for score, leaf_id, leaf in results
     ]
+
+    # Nothing generated an answer here, so the emitted "answer" is the
+    # result set itself and producer_model stays None to say so.
+    emit_retrieval_trace(
+        sink="pcis.retrieval-trace/agent-plugin.search",
+        search_results=results,
+        answer_text=json.dumps(rows, sort_keys=True, ensure_ascii=False),
+    )
+    return rows
 
 
 def pcis_status(config=None):
