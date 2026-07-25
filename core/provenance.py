@@ -5,13 +5,15 @@ intake/retrieval provenance contract.
 
 ONE CONTRACT, TWO CODEBASES, NO SHARED CODE
 ===========================================
-The same contract is implemented independently in OpenClaw. That is
-deliberate: importing across the two codebases would re-couple them, which
-is exactly what PCIS's sanitization removed. The two implementations are
-held in sync by tests/test_schema_parity.py, which asserts this module
-against the contract rather than sharing a line with the other side.
+The same contract is implemented independently in the upstream substrate
+PCIS was extracted from. That is deliberate: importing across the two
+codebases would re-couple them, which is exactly what PCIS's sanitization
+removed. The two implementations are held in sync by
+tests/test_schema_parity.py, which asserts this module against the contract
+rather than sharing a line with the other side.
 
-Spec: ~/.openclaw/workspace/drafts/provenance-schema-v0.2-2026-07-25.md
+Spec: provenance-schema-v0.2-2026-07-25.md, held in the upstream
+workspace. Set PCIS_SIBLING_WORKSPACE to point the parity tests at it.
 
 WHAT A RETRIEVAL RECORD PROVES
 ==============================
@@ -49,7 +51,11 @@ SCHEMA_VERSION = "0.2"
 # === Enums ==================================================================
 
 RECORD_KINDS = ("intake", "retrieval")
-ACTORS = ("whis", "cc", "roc", "gardener", "user")
+# 'architect' is a role name, not a system name. v0.2 renamed it from a
+# private agent's name: a public schema whose actor vocabulary names a
+# private system is a leak in the contract itself, and it would be baked
+# into every line of an append-only ledger format, permanently.
+ACTORS = ("architect", "cc", "roc", "gardener", "user")
 SOURCE_TYPES = (
     "handoff",
     "gardener",

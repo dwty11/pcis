@@ -4,7 +4,8 @@ shared v0.2 contract WITHOUT sharing code with the other implementation.
 WHY THIS TEST EXISTS
 ====================
 The ProvenanceRecord contract is implemented twice: here in PCIS
-(``core/provenance.py``) and in OpenClaw (``provenance_schema.py``). That
+(``core/provenance.py``) and in the upstream substrate PCIS was
+extracted from. That
 duplication is deliberate — importing across the two codebases would
 re-couple them, which is exactly what PCIS's sanitization removed.
 
@@ -34,7 +35,7 @@ three ways, with three different failure modes:
 WHY CLASS 3 IS NOT OPTIONAL
 ===========================
 ``.github/workflows/ci.yml`` runs ``pytest tests/ -v`` on ubuntu-latest,
-and ``WHIS_WORKSPACE`` is set nowhere in this repo. Neither the sibling
+and ``PCIS_SIBLING_WORKSPACE`` is set nowhere in this repo. Neither the sibling
 module nor the spec markdown exists on a CI runner. So on every push and
 every PR, classes 1 and 2 skip and the suite goes green having checked
 nothing. Class 3 is what makes "CI is green" carry information about the
@@ -45,7 +46,8 @@ is no textual or structural comparison available — only behaviour.
 
 PATH RESOLUTION
 ===============
-Reuses ``WHIS_WORKSPACE``, the same switch as ``test_crypto_parity.py``, so
+Reuses ``PCIS_SIBLING_WORKSPACE``, the same switch as
+``test_crypto_parity.py``, so
 one variable enables the whole parity family. If set, ONLY that path is
 tried — an operator who pointed us somewhere deserves a skip, not a silent
 fallback to the default.
@@ -86,25 +88,35 @@ SIBLING_RELPATH = "provenance_schema.py"
 # ---------------------------------------------------------------------------
 
 
+SIBLING_ENV_VAR = "PCIS_SIBLING_WORKSPACE"
+
+
 def _resolve(relpath: str) -> Path | None:
-    explicit = os.environ.get("WHIS_WORKSPACE")
-    if explicit:
-        p = Path(explicit).expanduser() / relpath
-        return p if p.exists() else None
-    default = Path.home() / ".openclaw" / "workspace" / relpath
-    return default if default.exists() else None
+    """Resolve an upstream artifact from the environment only.
+
+    There is deliberately no default location: a public repository should
+    not carry the on-disk layout of a private project, and the path is a
+    property of the operator's machine.
+    """
+    explicit = os.environ.get(SIBLING_ENV_VAR)
+    if not explicit:
+        return None
+    p = Path(explicit).expanduser() / relpath
+    return p if p.exists() else None
 
 
 def _skip_message(relpath: str) -> str:
-    if os.environ.get("WHIS_WORKSPACE"):
-        looked = Path(os.environ["WHIS_WORKSPACE"]).expanduser() / relpath
+    explicit = os.environ.get(SIBLING_ENV_VAR)
+    if not explicit:
+        where = f"{SIBLING_ENV_VAR} is not set"
     else:
-        looked = Path.home() / ".openclaw" / "workspace" / relpath
+        where = f"resolved to {Path(explicit).expanduser() / relpath}"
     return (
-        f"OpenClaw's {relpath} not found (resolved to: {looked}). Set "
-        f"WHIS_WORKSPACE=/path/to/openclaw/workspace to enable this class. "
-        f"The skip is INTENTIONAL — a silent pass would be worse than no "
-        f"test. TestSchemaContractVectors still runs and does not skip."
+        f"upstream {relpath} not available ({where}). Set "
+        f"{SIBLING_ENV_VAR}=/path/to/upstream/workspace to enable this "
+        f"class. The skip is INTENTIONAL — a silent pass would be worse "
+        f"than no test. TestSchemaContractVectors still runs and does not "
+        f"skip."
     )
 
 
@@ -435,11 +447,11 @@ class TestSchemaParityVsSpecFieldNames:
 
     def test_escape_aware_row_split(self):
         """Guards the parser itself: a naive split('|') gives 7 cells here."""
-        row = "| `actor` | enum | `'whis' \\| 'cc' \\| 'roc'` |"
+        row = "| `actor` | enum | `'alpha' \\| 'beta' \\| 'gamma'` |"
         cells = _split_row(row)
         assert len(cells) == 3
         assert cells[0] == "`actor`"
-        assert cells[2] == "`'whis' | 'cc' | 'roc'`"
+        assert cells[2] == "`'alpha' | 'beta' | 'gamma'`"
 
 
 # ---------------------------------------------------------------------------
@@ -606,7 +618,7 @@ class TestSchemaContractVectors:
         with pytest.raises(ValueError):
             ProvenanceRecord(
                 record_id="x", record_kind="intake", timestamp="t", run_id="r",
-                actor="whis", claim_content="c", claim_content_hash="h",
+                actor="cc", claim_content="c", claim_content_hash="h",
                 retraction_expectation="normal",
                 verifier_result=VerifierResult("skipped", "none"),
                 intake=object(), retrieval=object(),
@@ -669,8 +681,8 @@ class TestSchemaContractVectors:
         from provenance import assert_self_certification_blocked
 
         with pytest.raises(PermissionError):
-            assert_self_certification_blocked("whis", "whis", "pass")
-        assert assert_self_certification_blocked("cc", "whis", "pass") is None
+            assert_self_certification_blocked("cc", "cc", "pass")
+        assert assert_self_certification_blocked("cc", "roc", "pass") is None
 
     def test_canonical_json_matches_pcis_journal_convention(self):
         """PCIS hashes and sorts journal lines with these exact separators

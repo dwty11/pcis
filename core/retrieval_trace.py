@@ -59,7 +59,8 @@ is only computed when a synapse graph is actually passed in. PCIS's
 ``synapses_loaded`` flag in the result says which case you are in, and it
 must be surfaced anywhere a status is displayed.
 
-Spec: ~/.openclaw/workspace/drafts/provenance-schema-v0.2-2026-07-25.md
+Spec: provenance-schema-v0.2-2026-07-25.md, held in the upstream
+workspace. Set PCIS_SIBLING_WORKSPACE to point the parity tests at it.
 
 No external dependencies. Python 3.10+.
 """

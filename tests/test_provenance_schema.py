@@ -2,14 +2,15 @@
 
 WHY THIS IS RE-IMPLEMENTED RATHER THAN IMPORTED
 ===============================================
-The contract is shared with OpenClaw, but the code is deliberately NOT.
-Importing OpenClaw's ``provenance_schema`` would re-couple the two
-codebases — exactly what the sanitization removed. The two
+The contract is shared with the upstream substrate, but the code is
+deliberately NOT. Importing the upstream ``provenance_schema`` would
+re-couple the two codebases — exactly what the sanitization removed. The two
 implementations are kept in sync by ``tests/test_schema_parity.py``,
 which asserts this module against the v0.2 contract rather than sharing
 a line of code with it.
 
-Spec: ~/.openclaw/workspace/drafts/provenance-schema-v0.2-2026-07-25.md
+Spec: provenance-schema-v0.2-2026-07-25.md, held in the upstream
+workspace. Set PCIS_SIBLING_WORKSPACE to point the parity tests at it.
 
 These tests are written against the CHANGELOG's rule ids (R1-R4, V1-V2,
 C1-C3) so a reader can trace each assertion to the clause it enforces.
@@ -403,7 +404,7 @@ class TestEnumsAndPinning:
         import provenance as p
 
         assert p.RECORD_KINDS == ("intake", "retrieval")
-        assert p.ACTORS == ("whis", "cc", "roc", "gardener", "user")
+        assert p.ACTORS == ("architect", "cc", "roc", "gardener", "user")
         assert p.RE_VERIFICATION_STATUSES == (
             "pass", "mismatch", "missing", "retracted",
         )
@@ -433,21 +434,21 @@ class TestSelfCertification:
 
         with pytest.raises(PermissionError):
             assert_self_certification_blocked(
-                actor="whis", claim_producer="whis", status="pass"
+                actor="cc", claim_producer="cc", status="pass"
             )
 
     def test_other_actor_may_pass(self):
         from provenance import assert_self_certification_blocked
 
         assert assert_self_certification_blocked(
-            actor="cc", claim_producer="whis", status="pass"
+            actor="cc", claim_producer="roc", status="pass"
         ) is None
 
     def test_self_certified_non_pass_is_allowed(self):
         from provenance import assert_self_certification_blocked
 
         assert assert_self_certification_blocked(
-            actor="whis", claim_producer="whis", status="fail"
+            actor="cc", claim_producer="cc", status="fail"
         ) is None
 
 
