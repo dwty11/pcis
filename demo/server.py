@@ -96,6 +96,41 @@ PROVENANCE_LIST_LIMIT = 50
 # here breaks the test instead of silently escaping it.
 BOOT_STATUSES = ("CLEAN", "MODIFIED", "UNVERIFIABLE", "ERROR")
 
+# Every per-file status api_boot can emit. The headline vocabulary above was
+# guarded by an exported constant and a test; this one was not, one level down.
+FILE_STATUSES = ("OK", "MODIFIED", "MISSING", "UNTRACKED", "NO_MANIFEST")
+
+# Statuses that mean "this file was compared and it matched". Membership here,
+# not absence from a failure list, is what earns CLEAN.
+_FILE_STATUS_GOOD = frozenset({"OK"})
+# Statuses that mean "this file definitely differs from the baseline".
+_FILE_STATUS_BAD = frozenset({"MODIFIED", "MISSING"})
+
+
+def _boot_headline(file_statuses, tree_ok):
+    """Derive the headline from the set of per-file statuses.
+
+    Three states, because two cannot express this honestly:
+      MODIFIED     — something definitely differs (worst news wins)
+      UNVERIFIABLE — the check could not be made
+      CLEAN        — every check was made and every check passed
+
+    INVARIANT(test_unknown_file_status_is_unverifiable): a per-file status that
+    is not explicitly known-good must never produce CLEAN. This is why the
+    function tests for MEMBERSHIP in _FILE_STATUS_GOOD rather than absence from
+    a list of bad ones — an earlier version ended in ``else: status = "CLEAN"``
+    below a comment claiming it fell through to the safe direction, so a status
+    nobody had classified landed on glowing green CLEAN. Adding a status to
+    FILE_STATUSES without classifying it now degrades to UNVERIFIABLE instead of
+    silently passing.
+    """
+    seen = set(file_statuses)
+    if not tree_ok or (seen & _FILE_STATUS_BAD):
+        return "MODIFIED"
+    if seen <= _FILE_STATUS_GOOD:
+        return "CLEAN"
+    return "UNVERIFIABLE"
+
 
 def _load_manifest():
     """The stored file manifest {filename: sha256}, or None if there isn't one.
@@ -317,23 +352,8 @@ def api_boot():
         # accumulated into a boolean as they are produced. The boolean version
         # had to remember to flip in every failing branch and did not: MISSING
         # and MODIFIED set it, NO_MANIFEST and UNTRACKED did not, so three
-        # "NO MANIFEST" lines sat under a glowing green CLEAN. Deriving from the
-        # set makes a forgotten branch impossible — a new status must be
-        # classified here or it falls through to UNVERIFIABLE, which is the safe
-        # direction. [PCIS-CAPTION-PROVENANCE]
-        #
-        # Three states, not two. "Nothing compared" is not "nothing wrong", and
-        # calling it a failure is equally untrue:
-        #   MODIFIED     — something definitely differs (worst news wins)
-        #   UNVERIFIABLE — the check could not be made
-        #   CLEAN        — every check was made and every check passed
-        seen = {f["status"] for f in file_checks}
-        if not tree_ok or seen & {"MODIFIED", "MISSING"}:
-            status = "MODIFIED"
-        elif seen & {"NO_MANIFEST", "UNTRACKED"}:
-            status = "UNVERIFIABLE"
-        else:
-            status = "CLEAN"
+        # "NO MANIFEST" lines sat under a glowing green CLEAN.
+        status = _boot_headline({f["status"] for f in file_checks}, tree_ok)
         files_ok = status == "CLEAN"
 
         # Epistemic health: assess every leaf's belief stance
@@ -684,8 +704,12 @@ def api_run_validation():
             })
 
             if challenge_text:
-                # Root is DERIVED, not merkle_root_before: that reads the
-                # stored root_hash, which can lag the tree it came from.
+                # Anchored on the tree passed in, which is the same object
+                # merkle_root_before was derived from six lines earlier — both
+                # via compute_root_hash, not the stored root_hash field.
+                # (This comment previously said merkle_root_before "reads the
+                # stored root_hash", which stopped being true when that line
+                # was fixed and the comment was not.)
                 emit_retrieval_trace(
                     sink="pcis.retrieval-trace/demo.run-validation",
                     injection=[(leaf["id"], leaf["content"])],

@@ -180,6 +180,69 @@ class TestBootRootIsLabelledHonestly:
         )
 
 
+class TestHeadlineDerivationIsSafeByConstruction:
+    """The headline claim, made executable.
+
+    A comment said an unrecognised per-file status "falls through to
+    UNVERIFIABLE, which is the safe direction". Six lines below it,
+    ``else: status = "CLEAN"`` did the opposite — so a status nobody had
+    classified landed on glowing green CLEAN, the exact failure of the two
+    previous rounds, inside the fix meant to make it impossible.
+
+    Tested against the pure function rather than through the route, so
+    invented statuses can be fed in directly.
+    """
+
+    def test_unknown_file_status_is_unverifiable(self):
+        """The invariant the comment asserts. Named by INVARIANT() in server.py."""
+        from demo.server import _boot_headline
+
+        assert _boot_headline({"OK", "UNREADABLE"}, tree_ok=True) == "UNVERIFIABLE"
+        assert _boot_headline({"STALE"}, tree_ok=True) == "UNVERIFIABLE"
+        assert _boot_headline({"SOMETHING_INVENTED_LATER"}, tree_ok=True) == "UNVERIFIABLE"
+
+    def test_clean_requires_every_status_to_be_known_good(self):
+        from demo.server import _boot_headline
+
+        assert _boot_headline({"OK"}, tree_ok=True) == "CLEAN"
+        assert _boot_headline(set(), tree_ok=True) == "CLEAN"  # nothing tracked
+
+    def test_definite_failure_outranks_everything(self):
+        from demo.server import _boot_headline
+
+        assert _boot_headline({"OK", "MODIFIED"}, tree_ok=True) == "MODIFIED"
+        assert _boot_headline({"OK", "MISSING"}, tree_ok=True) == "MODIFIED"
+        assert _boot_headline({"OK"}, tree_ok=False) == "MODIFIED"
+        assert _boot_headline({"NO_MANIFEST", "MODIFIED"}, tree_ok=True) == "MODIFIED"
+
+    def test_every_declared_file_status_is_classified(self):
+        """Per-file vocabulary gets the same exported-constant treatment the
+        headline vocabulary already has — it was guarded one level up and not
+        at this one."""
+        from demo.server import FILE_STATUSES, _boot_headline
+
+        for st in FILE_STATUSES:
+            assert _boot_headline({st}, tree_ok=True) in {
+                "CLEAN", "MODIFIED", "UNVERIFIABLE"
+            }, f"{st} produced an unclassified headline"
+
+    def test_declared_vocabulary_matches_what_the_route_emits(self):
+        """The constant must describe the code, not a stale copy of it."""
+        import re
+
+        from demo.server import FILE_STATUSES
+
+        src = open(os.path.join(_ROOT, "demo", "server.py"), encoding="utf-8").read()
+        block = src[src.index("def api_boot"): src.index("def _boot_headline")]
+        emitted = set(re.findall(r'"status":\s*"([A-Z_]+)"', block))
+        emitted |= set(re.findall(r'st\s*=\s*"([A-Z_]+)"', block))
+
+        assert emitted <= set(FILE_STATUSES), (
+            f"api_boot emits {emitted - set(FILE_STATUSES)} which FILE_STATUSES "
+            "does not declare"
+        )
+
+
 class TestStatusVocabularyIsRenderable:
     """#3 — a status the CSS cannot style renders as default text.
 

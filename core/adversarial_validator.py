@@ -104,6 +104,29 @@ ADVERSARIAL_PROMPT = (
 )
 
 
+def _merkle_snapshot(tree):
+    """Root derived from LEAF CONTENT, for both ends of a before/after pair.
+
+    INVARIANT(test_stale_branch_hash_alone_does_not_manufacture_a_transition):
+    before and after must be measured the same way, or a difference reports
+    "we computed it differently" rather than "it changed".
+
+    ``merkle_before`` used to be ``compute_root_hash(tree)`` — which reads the
+    tree's STORED branch hashes — while ``merkle_after`` recomputed every branch
+    hash from leaf content first. A stale stored branch hash, with no content
+    change at all, therefore produced two different values, and this pair is
+    written to adversarial_validation_run.json and rendered as a MERKLE ROOT
+    TRANSITION. A difference in derivation method, captioned as change over time.
+
+    Works on a deep copy: the validator is documented read-only over the tree
+    it is handed.
+    """
+    snapshot = json.loads(json.dumps(tree))
+    for branch in snapshot.get("branches", {}).values():
+        branch["hash"] = compute_branch_hash(branch["leaves"])
+    return compute_root_hash(snapshot)
+
+
 def load_config():
     """Load config.json if it exists, return dict."""
     if os.path.exists(CONFIG_FILE):
@@ -307,7 +330,7 @@ def main():
     with open(TREE_FILE, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
-    merkle_before = compute_root_hash(tree)
+    merkle_before = _merkle_snapshot(tree)
     print(f"  Merkle root (before): {merkle_before[:24]}...")
 
     # Select leaves
@@ -392,11 +415,7 @@ def main():
 
     # Compute final Merkle root (for reporting only — demo_tree.json is NOT modified)
     # The demo tree is a curated static showcase; only adversarial_validation_run.json is written.
-    temp_tree = json.loads(json.dumps(tree))  # deep copy
-    for name in temp_tree["branches"]:
-        branch = temp_tree["branches"][name]
-        branch["hash"] = compute_branch_hash(branch["leaves"])
-    merkle_after = compute_root_hash(temp_tree)
+    merkle_after = _merkle_snapshot(tree)
     print(f"  Merkle root (after):  {merkle_after[:24]}...")
     print(f"  demo_tree.json unchanged (read-only for validator)")
 
