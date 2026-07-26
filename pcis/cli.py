@@ -160,6 +160,49 @@ def cmd_show(args):
 SEARCH_DISPLAY_CHARS = 150
 
 
+def cmd_reindex(args):
+    """Rebuild the semantic search index.
+
+    Exists because the failure messages tell the reader to run it. A remedy
+    printed by a tool has to be a command that tool actually has.
+    """
+    _set_base_dir(args)
+    from knowledge_search import reindex
+
+    reindex()
+
+
+def _keyword_search(query, top_k, branch_filter=None):
+    """Substring/keyword search over the TREE, in search()'s tuple shape.
+
+    The dashboard has degraded this way since it shipped; the CLI had no
+    fallback at all, so a stranger without Ollama had no working search on the
+    primary documented tool. Same code path, second call site.
+
+    Returns (score, leaf_id, leaf_data) to match knowledge_search.search, so the
+    caller renders and traces one shape.
+    """
+    from knowledge_tree import load_tree
+
+    words = [w for w in query.lower().split() if w]
+    if not words:
+        return []
+    out = []
+    for bname, branch in load_tree().get("branches", {}).items():
+        if branch_filter and bname != branch_filter:
+            continue
+        for leaf in branch.get("leaves", []):
+            hay = (leaf.get("content", "") + " " + leaf.get("source", "")).lower()
+            hits = sum(1 for w in words if w in hay)
+            if hits:
+                data = dict(leaf)
+                data["branch"] = bname
+                out.append((round(hits * leaf.get("confidence", 0.7), 4),
+                            leaf["id"], data))
+    out.sort(key=lambda t: t[0], reverse=True)
+    return out[:top_k]
+
+
 def cmd_search(args):
     """Search the knowledge tree.
 
@@ -171,11 +214,23 @@ def cmd_search(args):
     from retrieval_trace import emit_retrieval_trace
 
     results = search(args.query, top_k=args.top_k, branch_filter=args.branch)
+    mode = "semantic"
+
+    if not results:
+        # search() has already explained why (no index / no Ollama). Degrade the
+        # way the dashboard does rather than dead-ending: the demo claims to run
+        # entirely locally on a clean machine, and a command that cannot work
+        # without an undocumented dependency makes that claim false.
+        results = _keyword_search(args.query, args.top_k, args.branch)
+        mode = "keyword"
 
     if not results:
         # Nothing was retrieved, so there is nothing to attest — no trace.
         print("No results found.")
         return
+
+    if mode == "keyword":
+        print("  Using keyword matching (semantic search unavailable).\n")
 
     print(f"Found {len(results)} result(s):\n")
     # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
@@ -194,6 +249,12 @@ def cmd_search(args):
         search_results=results,
         answer_text="\n".join(rendered),
         rendered_truncated_to=SEARCH_DISPLAY_CHARS,
+        # The keyword path reads the TREE, so a trace of it re-verified against
+        # that same tree is self-referential. Declaring the source is what stops
+        # this fallback from reporting a pass it cannot support — without it the
+        # emitter would label it "index", which search_results= normally implies.
+        extras={"retrieval_mode": mode,
+                "injection_source": "index" if mode == "semantic" else "tree"},
     )
 
 
@@ -792,6 +853,7 @@ def main():
     p.add_argument("--branch", help="Restrict to branch")
 
     # root
+    sub.add_parser("reindex", help="Rebuild the semantic search index (needs Ollama)")
     sub.add_parser("root", help="Print Merkle root hash")
 
     # verify
@@ -921,6 +983,7 @@ def main():
         "add": cmd_add,
         "show": cmd_show,
         "search": cmd_search,
+        "reindex": cmd_reindex,
         "root": cmd_root,
         "verify": cmd_verify,
         "proof": cmd_proof,

@@ -19,10 +19,15 @@ not belong in it.**
 Run against a scratch copy, never the shipped tree:
 
 ```sh
-cp -R demo /tmp/pcis-tamper/demo && ln -s "$PWD/core" /tmp/pcis-tamper/core
+mkdir -p /tmp/pcis-tamper/data
+cp -R demo /tmp/pcis-tamper/demo
+ln -s "$PWD/core" /tmp/pcis-tamper/core
 OLLAMA_HOST=http://127.0.0.1:1 PCIS_BASE_DIR=/tmp/pcis-tamper \
   python3 /tmp/pcis-tamper/demo/server.py --port 5599
 ```
+
+(Run from the repo root. The rule this file enforces applies to this block
+too — it was published without `mkdir -p` and did not run as written.)
 
 `OLLAMA_HOST` pointed at a dead port forces the keyword-fallback path, which is
 the documented first-run state and the one a stranger actually gets.

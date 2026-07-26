@@ -9,13 +9,13 @@ Usage:
     python3 knowledge_search.py "what did I learn about identity?"
     python3 knowledge_search.py "cost lessons" --top 5
     python3 knowledge_search.py "architectural decisions" --branch technical
-    python3 knowledge_search.py --reindex              # rebuild all embeddings
+    pcis reindex                                        # rebuild all embeddings
     python3 knowledge_search.py --stats                 # show index stats
     python3 knowledge_search.py --model nomic-embed-text  # change embedding model
 
-Setup (one time):
+Setup (one time, OPTIONAL — `pcis search` works without it via keyword matching):
     ollama pull nomic-embed-text
-    python3 knowledge_search.py --reindex
+    pcis reindex
 
 How it works:
     1. Every knowledge leaf gets embedded into a vector (768 dimensions)
@@ -192,7 +192,9 @@ def reindex(model=None):
 
     if not check_model_available(model):
         print(f"\n  Model '{model}' not found in Ollama.")
-        print(f"  Pull it first: ollama pull {model}")
+        print(f"  Pull it first:  ollama pull {model}")
+        print("  Semantic search is optional — `pcis search` falls back to "
+              "keyword matching without it.")
         sys.exit(1)
 
     tree = load_tree()
@@ -249,7 +251,7 @@ def incremental_index(leaf_id, branch_name, content, source="", confidence=0.7):
 
     if index["model"] != EMBED_MODEL and index["leaf_count"] > 0:
         print(f"  Warning: index uses {index['model']}, current model is {EMBED_MODEL}")
-        print(f"  Run --reindex to rebuild with the current model.")
+        print("  Run `pcis reindex` to rebuild with the current model.")
         return False
 
     embed_text = f"[{branch_name}] {content}"
@@ -288,12 +290,20 @@ def search(query, top_k=3, branch_filter=None, min_confidence=0.0, min_score=0.4
     index = load_index()
 
     if not index["embeddings"]:
-        print("Search index is empty. Run: python3 knowledge_search.py --reindex")
+        print("  No semantic search index yet.")
+        print("  Semantic search needs Ollama running locally:")
+        print(f"      ollama pull {EMBED_MODEL}")
+        print("      pcis reindex")
+        print("  Without it, keyword search is used instead.")
         return []
 
     query_vec = get_embedding(query)
     if not query_vec:
-        print("Failed to embed query. Is Ollama running?")
+        print("  Could not embed the query — Ollama is not reachable.")
+        print("  Semantic search needs Ollama running locally:")
+        print(f"      ollama pull {EMBED_MODEL}")
+        print("      pcis reindex")
+        print("  Without it, keyword search is used instead.")
         return []
 
     results = []
