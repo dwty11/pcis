@@ -148,6 +148,22 @@ def pcis_search(query, top_k=5, config=None):
     # search() yields (score, leaf_id, leaf_data) — the id is the tuple's
     # second element, NOT a key on leaf_data (core/knowledge_search.py:307).
     results = search(query, top_k=top_k)
+    mode = "semantic"
+    if not results:
+        # knowledge_search has already printed "keyword search is used
+        # instead" — a sentence that was true for the CLI and false here,
+        # so this boundary returned [] and an agent read an empty TREE
+        # rather than an unavailable dependency. Worse than a wrong sentence
+        # to a human, because nothing downstream can tell the two apart.
+        # SAME module identity as the `search` import above: core/ is also on
+        # sys.path, so `knowledge_search` and `core.knowledge_search` are two
+        # distinct module objects with separate TREE_FILE/INDEX_FILE globals.
+        # Mixing them would read a different tree than the caller configured.
+        from core.knowledge_search import keyword_search
+
+        results = keyword_search(query, top_k=top_k)
+        mode = "keyword"
+
     rows = [
         {
             "score": round(score, 4),
@@ -165,6 +181,12 @@ def pcis_search(query, top_k=5, config=None):
         sink="pcis.retrieval-trace/agent-plugin.search",
         search_results=results,
         answer_text=json.dumps(rows, sort_keys=True, ensure_ascii=False),
+        # The keyword path reads the TREE. Re-verified against that same tree
+        # the comparison is self-referential, so the source must be declared or
+        # search_results= would label it "index" and the reader would render a
+        # verdict it has not earned.
+        extras={"retrieval_mode": mode,
+                "injection_source": "index" if mode == "semantic" else "tree"},
     )
     return rows
 

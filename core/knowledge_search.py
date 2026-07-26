@@ -183,6 +183,41 @@ def load_tree():
             sys.exit(1)
 
 
+def keyword_search(query, top_k=3, branch_filter=None):
+    """Substring/keyword search over the TREE, in search()'s tuple shape.
+
+    Lives HERE, beside the messages that promise it. Those messages
+    ("keyword search is used instead") were emitted by this module while the
+    only implementation sat in pcis/cli.py — so the sentence was true for the
+    CLI and false for the agent plugin, which returned [] and let an agent read
+    an empty tree. A claim in one module about another module's behaviour is
+    the same defect as a caption about a value computed elsewhere.
+
+    Callers that fall back must declare ``injection_source="tree"`` when
+    tracing: this reads the tree, so a trace of it re-verified against that
+    same tree is self-referential and must not report a pass.
+
+    Returns (score, leaf_id, leaf_data) to match search().
+    """
+    words = [w for w in (query or "").lower().split() if w]
+    if not words:
+        return []
+    out = []
+    for bname, branch in load_tree().get("branches", {}).items():
+        if branch_filter and bname != branch_filter:
+            continue
+        for leaf in branch.get("leaves", []):
+            hay = (leaf.get("content", "") + " " + leaf.get("source", "")).lower()
+            hits = sum(1 for w in words if w in hay)
+            if hits:
+                data = dict(leaf)
+                data["branch"] = bname
+                out.append((round(hits * leaf.get("confidence", 0.7), 4),
+                            leaf["id"], data))
+    out.sort(key=lambda t: t[0], reverse=True)
+    return out[:top_k]
+
+
 def reindex(model=None):
     """Rebuild the entire search index. Run after adding many leaves."""
     model = model or EMBED_MODEL

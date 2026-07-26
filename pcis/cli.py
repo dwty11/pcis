@@ -172,37 +172,6 @@ def cmd_reindex(args):
     reindex()
 
 
-def _keyword_search(query, top_k, branch_filter=None):
-    """Substring/keyword search over the TREE, in search()'s tuple shape.
-
-    The dashboard has degraded this way since it shipped; the CLI had no
-    fallback at all, so a stranger without Ollama had no working search on the
-    primary documented tool. Same code path, second call site.
-
-    Returns (score, leaf_id, leaf_data) to match knowledge_search.search, so the
-    caller renders and traces one shape.
-    """
-    from knowledge_tree import load_tree
-
-    words = [w for w in query.lower().split() if w]
-    if not words:
-        return []
-    out = []
-    for bname, branch in load_tree().get("branches", {}).items():
-        if branch_filter and bname != branch_filter:
-            continue
-        for leaf in branch.get("leaves", []):
-            hay = (leaf.get("content", "") + " " + leaf.get("source", "")).lower()
-            hits = sum(1 for w in words if w in hay)
-            if hits:
-                data = dict(leaf)
-                data["branch"] = bname
-                out.append((round(hits * leaf.get("confidence", 0.7), 4),
-                            leaf["id"], data))
-    out.sort(key=lambda t: t[0], reverse=True)
-    return out[:top_k]
-
-
 def cmd_search(args):
     """Search the knowledge tree.
 
@@ -221,7 +190,8 @@ def cmd_search(args):
         # way the dashboard does rather than dead-ending: the demo claims to run
         # entirely locally on a clean machine, and a command that cannot work
         # without an undocumented dependency makes that claim false.
-        results = _keyword_search(args.query, args.top_k, args.branch)
+        from knowledge_search import keyword_search
+        results = keyword_search(args.query, args.top_k, args.branch)
         mode = "keyword"
 
     if not results:
