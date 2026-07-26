@@ -89,6 +89,14 @@ def load_tree():
 PROVENANCE_LIST_LIMIT = 50
 
 
+# Every status api_boot can put in `status`. The stylesheet must define a
+# .boot-status class for each, or the value renders as unstyled default text —
+# which is how MODIFIED once displayed quieter than CLEAN. Imported by
+# tests/test_boot_manifest.py rather than restated there, so adding a status
+# here breaks the test instead of silently escaping it.
+BOOT_STATUSES = ("CLEAN", "MODIFIED", "UNVERIFIABLE", "ERROR")
+
+
 def _load_manifest():
     """The stored file manifest {filename: sha256}, or None if there isn't one.
 
@@ -288,30 +296,45 @@ def api_boot():
         # Regenerate the manifest with: python3 demo/make_manifest.py
         manifest = _load_manifest()
         file_checks = []
-        files_ok = True
         for fname in DEMO_TRACKED_FILES:
             fpath = os.path.join(DEMO_DIR, fname)
             if not os.path.exists(fpath):
                 file_checks.append({"file": fname, "hash": None, "status": "MISSING"})
-                files_ok = False
                 continue
             with open(fpath, "rb") as f:
                 h = hashlib.sha256(f.read()).hexdigest()
             if manifest is None:
-                # Nothing to compare against. Never "OK" — that was the bug.
-                st = "NO_MANIFEST"
+                st = "NO_MANIFEST"      # nothing to compare against
             elif fname not in manifest:
-                st = "UNTRACKED"
+                st = "UNTRACKED"        # manifest exists but says nothing about this file
             elif manifest[fname] == h:
                 st = "OK"
             else:
                 st = "MODIFIED"
-                files_ok = False
             file_checks.append({"file": fname, "hash": h[:24], "status": st})
 
-        # files_ok was previously computed and never allowed to affect the
-        # headline status, so a MISSING tracked file still read CLEAN.
-        status = "CLEAN" if (tree_ok and files_ok) else "MODIFIED"
+        # The headline is DERIVED from the per-file statuses rather than
+        # accumulated into a boolean as they are produced. The boolean version
+        # had to remember to flip in every failing branch and did not: MISSING
+        # and MODIFIED set it, NO_MANIFEST and UNTRACKED did not, so three
+        # "NO MANIFEST" lines sat under a glowing green CLEAN. Deriving from the
+        # set makes a forgotten branch impossible — a new status must be
+        # classified here or it falls through to UNVERIFIABLE, which is the safe
+        # direction. [PCIS-CAPTION-PROVENANCE]
+        #
+        # Three states, not two. "Nothing compared" is not "nothing wrong", and
+        # calling it a failure is equally untrue:
+        #   MODIFIED     — something definitely differs (worst news wins)
+        #   UNVERIFIABLE — the check could not be made
+        #   CLEAN        — every check was made and every check passed
+        seen = {f["status"] for f in file_checks}
+        if not tree_ok or seen & {"MODIFIED", "MISSING"}:
+            status = "MODIFIED"
+        elif seen & {"NO_MANIFEST", "UNTRACKED"}:
+            status = "UNVERIFIABLE"
+        else:
+            status = "CLEAN"
+        files_ok = status == "CLEAN"
 
         # Epistemic health: assess every leaf's belief stance
         epistemic = None
@@ -614,7 +637,13 @@ def api_run_validation():
         chosen = random.sample(candidates, 3)
 
         # Get current root hash
-        merkle_root_before = tree.get("root_hash", "")
+        # DERIVED, to match merkle_root_after. This read the STORED root_hash
+        # field while `after` was a fresh compute_root_hash — so a stale stored
+        # root made the two differ for that reason alone, and the UI captioned a
+        # difference in DERIVATION METHOD as a change over TIME. Both ends of a
+        # before/after pair must be measured the same way or the comparison is
+        # not about time at all. [PCIS-CAPTION-PROVENANCE]
+        merkle_root_before = compute_root_hash(tree)
 
         # One provenance trace per challenged leaf. This route makes ONE model
         # call per leaf, each prompt carrying exactly one leaf's content, so

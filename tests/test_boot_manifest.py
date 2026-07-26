@@ -121,6 +121,46 @@ class TestManifestComparison:
         assert statuses["index.html"] == "UNTRACKED"
 
 
+class TestUnverifiableIsItsOwnState:
+    """Nothing compared is not the same as nothing wrong.
+
+    The first fix set files_ok=False in the MISSING and MODIFIED branches and
+    missed NO_MANIFEST and UNTRACKED, so three "? NO MANIFEST" lines sat under
+    a glowing green CLEAN — the same defect, in the same function, as the one
+    the fix was for. And CLEAN was the wrong word regardless: an unverifiable
+    check has not passed, and calling it a failure is equally untrue.
+    """
+
+    def test_absent_manifest_is_unverifiable_not_clean(self, boot):
+        client, demo_dir = boot
+
+        data = client.get("/api/boot").get_json()
+
+        assert data["status"] == "UNVERIFIABLE", (
+            "zero files compared to anything must not render as CLEAN"
+        )
+
+    def test_untracked_file_is_unverifiable_not_clean(self, boot):
+        client, demo_dir = boot
+        _write_manifest(demo_dir, files=("server.py", "demo_tree.json"))
+
+        data = client.get("/api/boot").get_json()
+
+        assert data["status"] == "UNVERIFIABLE"
+
+    def test_a_real_failure_outranks_unverifiable(self, boot):
+        """A definite mismatch is worse news than an absent comparison."""
+        client, demo_dir = boot
+        _write_manifest(demo_dir, files=("server.py", "demo_tree.json"))
+        (demo_dir / "server.py").write_text("tampered\n", encoding="utf-8")
+
+        data = client.get("/api/boot").get_json()
+
+        assert data["status"] == "MODIFIED", (
+            "index.html is UNTRACKED and server.py is MODIFIED — the failure wins"
+        )
+
+
 class TestBootRootIsLabelledHonestly:
     def test_root_is_reported_as_stored_and_as_recomputed(self, boot):
         """The terminal claimed the root was 'computed from N file hashes'.
@@ -150,15 +190,21 @@ class TestStatusVocabularyIsRenderable:
     can emit and the classes the stylesheet defines.
     """
 
-    SERVER_STATUSES = {"CLEAN", "MODIFIED", "ERROR"}
-
     def test_every_server_status_has_a_css_class(self):
+        """The status list is IMPORTED, not restated here.
+
+        A hardcoded copy in this file would be the same defect one level up: a
+        list maintained by hand that silently stops matching what the server
+        actually emits. Adding a status to server.py must break this test.
+        """
+        from demo.server import BOOT_STATUSES
+
         html = open(
             os.path.join(_ROOT, "demo", "index.html"), encoding="utf-8"
         ).read()
         defined = set(re.findall(r"\.boot-status\.([a-z]+)\s*\{", html))
 
-        missing = {s for s in self.SERVER_STATUSES if s.lower() not in defined}
+        missing = {s for s in BOOT_STATUSES if s.lower() not in defined}
         assert not missing, (
             f"status(es) {missing} would fall through to unstyled default text; "
             f"CSS defines only {sorted(defined)}"

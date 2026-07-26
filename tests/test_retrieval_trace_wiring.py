@@ -511,6 +511,36 @@ class TestRunValidationRoute:
             assert rec.retrieval.tree_root_at_trace == expected
             assert rec.retrieval.tree_root_at_trace != "d" * 64
 
+    def test_before_and_after_are_derived_the_same_way(self, route):
+        """A difference in DERIVATION must not be captioned as change over TIME.
+
+        The first fix made `after` a fresh compute_root_hash while `before`
+        stayed the STORED root_hash field. With a stale stored root the two
+        differ for that reason alone, and the UI renders a before→after
+        transition — reporting a change that never happened.
+        """
+        import knowledge_tree as kt
+
+        client, paths, ids = route
+        tree = kt.load_tree(paths["tree"])
+        kt.add_knowledge(tree, "technical", "a third claim to challenge")
+        # a STALE stored root: the field disagrees with the tree it describes
+        tree["root_hash"] = "d" * 64
+        with open(paths["tree"], "w", encoding="utf-8") as f:
+            json.dump(tree, f)
+
+        with patch("urllib.request.urlopen", return_value=_FakeOllama("a challenge")):
+            resp = client.post("/api/run-validation")
+
+        data = resp.get_json()
+        assert data["merkle_root_before"] != "d" * 64, (
+            "before must be derived, not read from the stale stored field"
+        )
+        assert data["merkle_root_before"] == data["merkle_root_after"], (
+            "nothing was committed; a stale stored root must not manufacture "
+            "a before/after transition"
+        )
+
     def test_merkle_root_after_is_measured_not_copied(self, route, monkeypatch):
         """`merkle_root_after` was assigned `merkle_root_before` verbatim.
 

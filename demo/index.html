@@ -264,6 +264,13 @@ body {
    ERROR (see api_boot). Pinned by tests/test_boot_manifest.py. */
 .boot-status.clean { color: var(--green); text-shadow: 0 0 40px var(--green-glow); }
 .boot-status.changed { color: var(--yellow); text-shadow: 0 0 40px rgba(251,191,36,0.3); }
+/* "Could not check" is its own state — not reassuring, not alarming. Amber
+   with a glow so it is never quieter than CLEAN, but no pulse: nothing is
+   known to be wrong. */
+.boot-status.unverifiable {
+  color: var(--yellow);
+  text-shadow: 0 0 44px rgba(251,191,36,0.45);
+}
 .boot-status.modified {
   color: var(--red);
   text-shadow: 0 0 56px rgba(248,113,113,0.55);
@@ -1966,6 +1973,13 @@ async function loadExternalValidation() {
       </div>
     `;
 
+    // CAPTION PROVENANCE: both roots are DERIVED by compute_root_hash — before
+    // from the tree at the start of the run, after from the tree at the end.
+    // They must be measured the same way or a difference means "we computed it
+    // differently", not "it changed": `before` previously read the STORED
+    // root_hash field, so a stale stored value rendered a before→after
+    // transition for a change that never happened. This was the only Merkle
+    // block without a provenance note, which is how it survived the sweep.
     const _rb = (data.merkle_root_before || ''), _ra = (data.merkle_root_after || '');
     const _rootUnchanged = _rb && _ra && _rb === _ra;
     document.getElementById('gcMerkle').innerHTML = _rootUnchanged ? `
