@@ -320,6 +320,7 @@ def emit_retrieval_trace(
     if not tracing_enabled():
         return None
 
+    used_search_results = injection is None
     try:
         if injection is None:
             if not search_results:
@@ -333,6 +334,14 @@ def emit_retrieval_trace(
         extras = dict(extras or {})
         if rendered_truncated_to is not None:
             extras["rendered_truncated_to"] = rendered_truncated_to
+        # The emitter knows its own source when it was handed search results:
+        # knowledge_search.search reads data/search-index.json and NEVER the
+        # tree, so re-verifying against the tree compares two artifacts. A
+        # caller passing ``injection`` supplies text from somewhere we cannot
+        # see, so it must declare the source itself or the trace is treated as
+        # unattestable. See verify_retrieval. [PCIS-ATTEST]
+        if used_search_results and "injection_source" not in extras:
+            extras["injection_source"] = "index"
         return log_retrieval(
             ledger_path=ledger_path,
             dedupe=dedupe,
@@ -378,8 +387,31 @@ def verify_retrieval(
       root_state       — 'current' | 'stale'
       synapses_loaded  — False means supersession was NOT checked; a
                          superseded leaf reads 'pass'. Surface this.
+      injection_source — 'index' | 'tree' | None, from the record's extras
+      attestable       — whether a PASS here can be believed (see below)
+      attestation_gap  — when not attestable, why, in a reader-facing sentence
       leaves           — how many cited leaves were checked
       ok               — every leaf passes AND the root is unchanged
+
+    THE RULE: a detected difference is always evidence; only a pass needs
+    attestability.
+
+    A mismatch proves the comparison is live — it just failed, so it could
+    fail. A pass proves nothing unless the check had the capacity to fail. It
+    lacks that capacity when the text was injected FROM the tree and verified
+    AGAINST that same tree with nothing changed between: comparing a value to
+    itself. Everything below — ``injection_source``, the root check — is only
+    how that capacity gets computed. The rule is the invariant; the plumbing
+    is an implementation detail.
+
+    Consequence: ``attestable`` is False only when every leaf passes and
+    nothing independent backs it. Any non-pass status makes the whole result
+    reportable, including its passes.
+
+    What even an attestable trace does NOT establish: authenticity. It says
+    the tree has not changed since the retrieval, never that the content is
+    genuine. Content-versus-its-own-hashes is a separate layer —
+    ``knowledge_tree.verify_tree_integrity``.
 
     ``ok`` is not a statement about the answer. It means: the cited leaves
     still say what the record says they said, against the tree state the
@@ -399,9 +431,51 @@ def verify_retrieval(
         synapses,
     )
     root_current = compute_root_hash(tree)
+    # ⚠️ root_state is NOT a proxy for "the tree changed". compute_root_hash
+    # derives from the STORED branch hashes, so editing a leaf's content
+    # without rehashing leaves the root byte-identical while the content
+    # differs — which is exactly the naive tamper this module exists to
+    # survive. `stale` means "changed AND rehashed". Do not reach for this as
+    # a change signal; use the per-leaf statuses, which read content.
     root_state = (
         "current" if root_current == block.tree_root_at_trace else "stale"
     )
+
+    # ATTESTABILITY — does re-verification have independent purchase? A trace
+    # whose injected text came FROM the tree, re-verified AGAINST that same
+    # tree with nothing changed in between, compares a value to itself: it
+    # cannot fail, so a pass proves nothing and must not be presented as one.
+    # The distinction is same-ARTIFACT, not same-request.
+    #
+    #   index-sourced        -> always attestable (index and tree can disagree)
+    #   tree-sourced, moved  -> attestable (recorded text vs a changed tree)
+    #   tree-sourced, unmoved-> NOT attestable (self-referential)
+    #   source unrecorded    -> NOT attestable (fail toward friction)
+    #
+    # Note what even an attestable trace does NOT establish: authenticity. It
+    # says the tree has not changed since the retrieval, never that the content
+    # is genuine. Content-vs-its-own-hashes is a separate layer entirely —
+    # knowledge_tree.verify_tree_integrity. [PCIS-ATTEST]
+    # THE RULE (see docstring): a detected difference is always evidence;
+    # only a pass needs attestability. Everything below computes whether the
+    # check had the capacity to fail.
+    observed_change = any(s != "pass" for s in statuses.values())
+
+    injection_source = (block.extras or {}).get("injection_source")
+    if observed_change or root_state == "stale":
+        attestable, gap = True, None
+    elif injection_source == "index":
+        attestable, gap = True, None
+    elif injection_source == "tree":
+        attestable = False
+        gap = ("this trace was drawn from the tree and the tree has not "
+               "changed since, so re-verification compares the tree to "
+               "itself and cannot fail")
+    else:
+        attestable = False
+        gap = ("the injection source was not recorded and the tree has not "
+               "changed since, so it cannot be shown that re-verification is "
+               "independent of where the text came from")
 
     return {
         "re_verification": statuses,
@@ -410,7 +484,12 @@ def verify_retrieval(
         "root_current": root_current,
         "root_state": root_state,
         "synapses_loaded": synapses is not None,
+        "injection_source": injection_source,
+        "attestable": attestable,
+        "attestation_gap": gap,
         "leaves": len(statuses),
+        # `ok` remains a same-state comparison and is NOT an attestation. It is
+        # deliberately not served to any client; see the demo's detail route.
         "ok": root_state == "current"
         and all(s == "pass" for s in statuses.values()),
     }
@@ -426,6 +505,17 @@ def summarize(result: dict) -> str:
     n = result["leaves"]
     if not n:
         return "retrieval trace: no cited leaves"
+
+    # A self-referential comparison has no verdict to report. Saying
+    # "N/N cited leaves resolve, unchanged since trace" here is the exact
+    # sentence a cold reader saw printed over tampered content on
+    # 2026-07-25. Absent the key (a hand-built dict), keep the old behaviour
+    # rather than silently changing what an existing caller means.
+    if not result.get("attestable", True):
+        return (
+            f"retrieval trace: {n} cited {'leaf' if n == 1 else 'leaves'} recorded — "
+            f"no elapsed check ({result.get('attestation_gap', 'source unknown')})"
+        )
 
     statuses = result["re_verification"]
     resolved = sum(1 for s in statuses.values() if s == "pass")

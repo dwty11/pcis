@@ -528,6 +528,137 @@ class TestRunValidationRoute:
 
 
 # ===========================================================================
+# 3b. ATTESTABILITY — can this trace's re-verification prove anything?
+# ===========================================================================
+#
+# Found by a cold reader tampering a leaf (2026-07-25). On the demo's keyword
+# fallback the injected content is read from the TREE and re-verified against
+# the TREE, so the comparison is self-referential and structurally cannot fail
+# — the module docstring names this exact anti-pattern. A tamper made BEFORE
+# the trace is baked into the record as ground truth and reads "resolves".
+#
+# The distinction is same-ARTIFACT, not same-request: the record is written and
+# verified in separate requests, but from one source. It is a property of the
+# record plus the tree, so it belongs here rather than in one caller's UI.
+
+
+class TestAttestability:
+    def _emit(self, env, **kw):
+        from core.knowledge_search import search
+        from retrieval_trace import emit_retrieval_trace
+
+        return emit_retrieval_trace(
+            sink="s", search_results=search("deploys", top_k=5), answer_text="x", **kw
+        )
+
+    def test_index_sourced_is_attestable(self, env):
+        """search() reads only the index, never the tree — a real comparison."""
+        import knowledge_tree as kt
+        from retrieval_trace import verify_retrieval
+
+        _, paths, _ = env
+        rec = self._emit(env)
+        res = verify_retrieval(rec, tree=kt.load_tree(paths["tree"]))
+
+        assert res["injection_source"] == "index"
+        assert res["attestable"] is True
+        assert res["attestation_gap"] is None
+
+    def test_tree_sourced_with_unmoved_root_is_NOT_attestable(self, env):
+        """The self-referential case: same artifact in and out, tree unchanged."""
+        import knowledge_tree as kt
+        from retrieval_trace import emit_retrieval_trace, verify_retrieval
+
+        _, paths, ids = env
+        tree = kt.load_tree(paths["tree"])
+        leaf = tree["branches"]["technical"]["leaves"][0]
+        rec = emit_retrieval_trace(
+            sink="s", injection=[(leaf["id"], leaf["content"])],
+            answer_text="x", tree=tree, extras={"injection_source": "tree"},
+        )
+        res = verify_retrieval(rec, tree=kt.load_tree(paths["tree"]))
+
+        assert res["injection_source"] == "tree"
+        assert res["attestable"] is False, (
+            "comparing the tree to itself cannot fail; it must not be presented "
+            "as a passing check"
+        )
+        assert "itself" in res["attestation_gap"]
+
+    def test_tree_sourced_becomes_attestable_once_the_root_moves(self, env):
+        """Elapsed time is what gives a tree-sourced trace purchase."""
+        import knowledge_tree as kt
+        from retrieval_trace import emit_retrieval_trace, verify_retrieval
+
+        _, paths, ids = env
+        tree = kt.load_tree(paths["tree"])
+        leaf = tree["branches"]["technical"]["leaves"][0]
+        rec = emit_retrieval_trace(
+            sink="s", injection=[(leaf["id"], leaf["content"])],
+            answer_text="x", tree=tree, extras={"injection_source": "tree"},
+        )
+        # the tree moves on: an unrelated leaf is added
+        tree2 = kt.load_tree(paths["tree"])
+        kt.add_knowledge(tree2, "lessons", "something new entirely")
+        kt.save_tree(tree2, paths["tree"])
+
+        res = verify_retrieval(rec, tree=kt.load_tree(paths["tree"]))
+        assert res["root_state"] == "stale"
+        assert res["attestable"] is True
+        assert res["re_verification"][leaf["id"]] == "pass"
+
+    def test_unrecorded_source_fails_toward_friction(self, env):
+        """An old record with no injection_source cannot be assumed independent."""
+        import knowledge_tree as kt
+        from retrieval_trace import emit_retrieval_trace, verify_retrieval
+
+        _, paths, ids = env
+        tree = kt.load_tree(paths["tree"])
+        leaf = tree["branches"]["technical"]["leaves"][0]
+        rec = emit_retrieval_trace(
+            sink="s", injection=[(leaf["id"], leaf["content"])],
+            answer_text="x", tree=tree,
+        )
+        res = verify_retrieval(rec, tree=kt.load_tree(paths["tree"]))
+
+        assert res["injection_source"] is None
+        assert res["attestable"] is False
+
+    def test_summarize_does_not_claim_a_pass_it_cannot_make(self, env):
+        """The exact line the cold read saw: 'N/N resolve, unchanged since trace'."""
+        import knowledge_tree as kt
+        from retrieval_trace import emit_retrieval_trace, summarize, verify_retrieval
+
+        _, paths, ids = env
+        tree = kt.load_tree(paths["tree"])
+        leaf = tree["branches"]["technical"]["leaves"][0]
+        rec = emit_retrieval_trace(
+            sink="s", injection=[(leaf["id"], leaf["content"])],
+            answer_text="x", tree=tree, extras={"injection_source": "tree"},
+        )
+        line = summarize(verify_retrieval(rec, tree=kt.load_tree(paths["tree"])))
+
+        assert "resolve" not in line, f"claimed a pass it cannot make: {line}"
+        assert "unchanged since trace" not in line, line
+        assert "no elapsed check" in line, line
+
+    def test_emitter_labels_search_results_as_index_sourced(self, env):
+        """The emitter knows: search() provably reads the index, never the tree."""
+        rec = self._emit(env)
+        assert rec.retrieval.extras["injection_source"] == "index"
+
+    def test_explicit_caller_source_is_not_overridden(self, env):
+        from core.knowledge_search import search
+        from retrieval_trace import emit_retrieval_trace
+
+        rec = emit_retrieval_trace(
+            sink="s", search_results=search("deploys", top_k=5), answer_text="x",
+            extras={"injection_source": "tree"},
+        )
+        assert rec.retrieval.extras["injection_source"] == "tree"
+
+
+# ===========================================================================
 # 4. emit_retrieval_trace extras passthrough
 # ===========================================================================
 
@@ -573,7 +704,9 @@ class TestExtrasPassthrough:
         assert extras["rendered_truncated_to"] == 200
         assert extras["retrieval_mode"] == "keyword"
 
-    def test_omitting_extras_keeps_the_old_shape(self, env):
+    def test_omitting_extras_adds_only_the_derived_source(self, env):
+        """No caller extras means extras holds exactly what the emitter itself
+        can prove — the injection source — and nothing invented."""
         from core.knowledge_search import search
         from retrieval_trace import emit_retrieval_trace
 
@@ -582,7 +715,7 @@ class TestExtrasPassthrough:
             sink="s", search_results=search("deploys", top_k=5), answer_text="x"
         )
 
-        assert _ledger(paths["base"])[0].retrieval.extras == {}
+        assert _ledger(paths["base"])[0].retrieval.extras == {"injection_source": "index"}
 
 
 # ===========================================================================

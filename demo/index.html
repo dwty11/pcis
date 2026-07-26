@@ -575,6 +575,20 @@ body {
   color: var(--text-dim);
 }
 .prov-ledger th { color: var(--text-muted); font-weight: 600; }
+.prov-row { cursor: pointer; }
+.prov-row:hover td { color: var(--text); background: rgba(255,255,255,0.03); }
+.prov-row:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
+.prov-legend {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-bright);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.prov-legend b { color: var(--text-dim); }
+.prov-legend-row { display: block; margin-top: 3px; }
 
 /* ── Adversarial Screen ── */
 .adversarial-card {
@@ -1207,23 +1221,79 @@ document.getElementById('queryInput').addEventListener('keydown', e => {
 //     "resolves" with no graph loaded, which is absence of evidence
 //   * this is RETRIEVAL provenance. Nothing compares answer text to leaf
 //     content, so no wording here may imply the answer is grounded.
-const PROV_COLORS = {
-  resolves: 'var(--green)',
-  drifted: 'var(--yellow)',
-  gone: 'var(--red)',
-  withdrawn: 'var(--orange)',
+// The retrieval chip answers a question about TIME: has anything changed since
+// this retrieval? Every label says "since trace" so it cannot be misread as a
+// statement about whether the content is genuine — that is tree integrity's
+// question, rendered separately and deliberately never in green.
+const PROV_CHIP = {
+  resolves: {
+    label: 'unchanged since trace', color: 'var(--green)',
+    title: 'The tree has changed since this retrieval, and this leaf still matches what was recorded.',
+  },
+  drifted: {
+    label: 'changed since trace', color: 'var(--yellow)',
+    title: 'This leaf’s content differs from what was recorded at retrieval time.',
+  },
+  gone: {
+    label: 'removed since trace', color: 'var(--red)',
+    title: 'This leaf is no longer in the tree.',
+  },
+  withdrawn: {
+    label: 'withdrawn since trace', color: 'var(--orange)',
+    title: 'This leaf was retracted or superseded after the trace.',
+  },
 };
 
-const PROV_SCOPE_NOTE =
-  'retrieval provenance — the cited leaves still match what was recorded. ' +
-  'It does not establish that the answer is correct or that it used them.';
+const PROV_CHIP_NONE = {
+  label: 'no elapsed check', color: 'var(--text-muted)',
+  title: 'This trace was drawn from the tree and the tree has not changed since. '
+       + 'Re-verifying would compare the tree to itself, which cannot fail — so nothing is claimed. '
+       + 'This is the honest state for a fresh retrieval, not a failure.',
+};
 
 function provStatusBadge(status) {
-  const color = PROV_COLORS[status] || 'var(--text-muted)';
-  return `<span style="display:inline-block;padding:2px 9px;border-radius:5px;font-size:10px;`
-    + `font-weight:600;letter-spacing:0.4px;background:${color}20;color:${color};`
-    + `border:1px solid ${color}40">${escapeHtml(status)}</span>`;
+  const s = PROV_CHIP[status] || PROV_CHIP_NONE;
+  return `<span role="img" tabindex="0" aria-label="${escapeHtml(s.label)}. ${escapeHtml(s.title)}"`
+    + ` title="${escapeHtml(s.title)}"`
+    + ` style="display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;`
+    + `font-weight:600;letter-spacing:0.4px;cursor:help;background:${s.color}20;color:${s.color};`
+    + `border:1px solid ${s.color}40">${escapeHtml(s.label)}</span>`;
 }
+
+// TREE INTEGRITY — a different question, on purpose given a different shape,
+// place and vocabulary: monospace rather than a pill, attached to the hash it
+// is about, and MUTED when clean. Clean integrity is never green, so two green
+// things can never be misread as double confirmation.
+function integrityLine(hash, ok) {
+  const short = escapeHtml((hash || '').slice(0, 24));
+  if (ok === false) {
+    return `<span class="result-hash" style="color:var(--red)" `
+      + `title="The stored hash does not match this leaf’s current content. Something edited the content without rehashing it.">`
+      + `sha256: ${short} · ✗ CONTENT DOES NOT MATCH THIS HASH</span>`;
+  }
+  if (ok === true) {
+    return `<span class="result-hash" `
+      + `title="This leaf’s content still hashes to its stored value. Clean is shown muted, not green: it is a baseline expectation, not an achievement.">`
+      + `sha256: ${short} · content matches this hash</span>`;
+  }
+  return `<span class="result-hash" title="Integrity could not be checked for this leaf.">`
+    + `sha256: ${short} · integrity unchecked</span>`;
+}
+
+// Told, not left to be inferred: neither indicator covers both tamper shapes.
+const PROV_LEGEND =
+  '<div class="prov-legend">'
+  + '<b>Two independent checks.</b> '
+  + '<span class="prov-legend-row"><b>Tree integrity</b> (monospace, by the hash) &mdash; '
+  + 'does the content match its own hashes, right now?</span>'
+  + '<span class="prov-legend-row"><b>Retrieval trace</b> (chip) &mdash; '
+  + 'has anything changed since this retrieval?</span>'
+  + '<span class="prov-legend-row">Editing content and leaving the hash is caught by integrity. '
+  + 'Editing content <i>and</i> recomputing the hash passes integrity, but moves the tree root &mdash; '
+  + 'which makes earlier traces checkable and shows the drift. Neither check covers both; together they do.</span>'
+  + '<span class="prov-legend-row">On a fresh clone with a fresh retrieval, <b>both read muted, and that is correct</b> &mdash; '
+  + 'nothing has elapsed yet to check against.</span>'
+  + '</div>';
 
 function provSlot(text) {
   return `<div class="prov-summary"><span class="prov-note">${escapeHtml(text)}</span></div>`;
@@ -1251,12 +1321,20 @@ async function renderProvenance(recordId, slotId) {
 
     // trace.summary already carries the stale-root and no-synapse-graph
     // caveats (core/retrieval_trace.py summarize) — do not restate them.
+    // scope_note comes from the server, keyed on the emitter: these routes
+    // generate no answer, so answer-shaped copy would be a borrowed claim.
+    const gap = trace.attestable === false && trace.attestation_gap
+      ? `<span class="prov-caveat">why no verdict: ${escapeHtml(trace.attestation_gap)}</span>`
+      : '';
     slot.innerHTML = `
       <div class="prov-summary">
         ${escapeHtml(trace.summary)}
-        <span class="prov-caveat">leaves selected by: ${escapeHtml(trace.retrieval_mode || 'unrecorded')}</span>
-        <span class="prov-caveat">${escapeHtml(PROV_SCOPE_NOTE)}</span>
-      </div>`;
+        ${gap}
+        <span class="prov-caveat">leaves selected by: ${escapeHtml(trace.retrieval_mode || 'unrecorded')}`
+          + ` · source: ${escapeHtml(trace.injection_source || 'unrecorded')}</span>
+        <span class="prov-caveat">${escapeHtml(trace.scope_note || '')}</span>
+      </div>
+      ${PROV_LEGEND}`;
 
     (trace.leaves || []).forEach(leaf => {
       document
@@ -1285,11 +1363,21 @@ async function loadProvLedger() {
     const capped = data.total > data.records.length
       ? `<div class="prov-caveat">showing ${data.records.length} of ${data.total} records</div>`
       : '';
+    // Rows are the primary surface, not a footnote: a fresh trace claims
+    // nothing by design, so checking an OLDER record against the tree as it
+    // stands now is where this feature actually demonstrates drift.
     body.innerHTML = `
+      <div class="prov-caveat" style="margin-bottom:8px">
+        Open a record to re-check it against the tree <i>as it is now</i>.
+        Older records are the interesting ones — a trace taken before a change
+        can show drift, while one taken a moment ago has nothing to compare to.
+      </div>
       <table>
         <tr><th>when</th><th>source</th><th>mode</th><th>leaves</th></tr>
         ${data.records.map(r => `
-          <tr>
+          <tr class="prov-row" tabindex="0" role="button"
+              aria-label="Re-check record from ${escapeHtml(r.timestamp)} against the current tree"
+              data-record="${escapeHtml(r.record_id)}">
             <td>${escapeHtml(r.timestamp)}</td>
             <td>${escapeHtml(r.sink)}</td>
             <td>${escapeHtml(r.retrieval_mode || '—')}</td>
@@ -1297,13 +1385,53 @@ async function loadProvLedger() {
           </tr>`).join('')}
       </table>
       ${capped}
+      <div id="provRecordDetail"></div>
       <div class="prov-caveat">
         Append-only, and not a coverage claim: tracing swallows its own
         failures so a search can never be broken by logging, which means a
         missing record leaves no gap to notice.
       </div>`;
+
+    body.querySelectorAll('.prov-row').forEach(row => {
+      const open = () => openProvRecord(row.dataset.record);
+      row.addEventListener('click', open);
+      row.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
   } catch (e) {
     body.innerHTML = '<div class="query-empty" style="font-size:12px">Ledger unavailable</div>';
+  }
+}
+
+async function openProvRecord(recordId) {
+  const panel = document.getElementById('provRecordDetail');
+  if (!panel) return;
+  panel.innerHTML = '<div class="loading"><div class="spinner"></div> Re-checking against the current tree...</div>';
+  try {
+    const res = await fetch('/api/provenance/' + encodeURIComponent(recordId));
+    if (!res.ok) { panel.innerHTML = provSlot('record not found'); return; }
+    const t = await res.json();
+    const gap = t.attestable === false && t.attestation_gap
+      ? `<span class="prov-caveat">why no verdict: ${escapeHtml(t.attestation_gap)}</span>` : '';
+    panel.innerHTML = `
+      <div class="prov-summary" style="margin-top:14px">
+        <b>${escapeHtml(t.timestamp)}</b> · ${escapeHtml(t.sink)}
+        <span class="prov-caveat">${escapeHtml(t.summary)}</span>
+        ${gap}
+        <span class="prov-caveat">tree root ${escapeHtml(t.root_state)} since the trace`
+          + ` · source: ${escapeHtml(t.injection_source || 'unrecorded')}</span>
+        <div style="margin-top:10px">
+          ${(t.leaves || []).map(l => `
+            <div style="margin:6px 0;font-family:'JetBrains Mono',monospace;font-size:11px">
+              ${provStatusBadge(l.status)}
+              <span style="color:var(--text-muted);margin-left:8px">${escapeHtml(l.id)}</span>
+            </div>`).join('')}
+        </div>
+        <span class="prov-caveat">${escapeHtml(t.scope_note || '')}</span>
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = provSlot('unavailable (' + e.message + ')');
   }
 }
 
@@ -1355,7 +1483,7 @@ async function runQuery() {
             <span>score: ${r.score}</span>
           </div>
           <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
-            <span class="result-hash">sha256: ${escapeHtml(r.hash)}</span>
+            ${integrityLine(r.hash, r.content_hash_ok)}
           </div>
         </div>
       `).join('')}
@@ -1636,6 +1764,9 @@ async function runSearch() {
               ${r.confidence}
             </span>
             <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">score: ${r.score}</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
+            ${integrityLine(r.hash, r.content_hash_ok)}
           </div>
         </div>
       `).join('')}

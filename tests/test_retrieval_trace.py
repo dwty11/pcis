@@ -615,15 +615,36 @@ class TestSummarize:
     reporting drift, and never render an empty trace as all-pass."""
 
     def test_all_pass_says_unchanged(self, tree_env):
+        """An all-pass line is only earned when the check COULD have failed.
+
+        Declared index-sourced: search() reads the index and never the tree, so
+        comparing it against the tree is a real comparison even with the root
+        unmoved. Without that declaration this scenario is self-referential and
+        must not produce a pass — see the sibling test below, which is the
+        state a cold read found rendering "3/3 resolve" over tampered content.
+        """
         from retrieval_trace import summarize, verify_retrieval
 
         kt, path, ids = tree_env
-        rec = _record(kt, path, ids)
+        rec = _record(kt, path, ids, extras={"injection_source": "index"})
 
         line = summarize(verify_retrieval(rec, tree=kt.load_tree(path)))
 
         assert line.startswith("retrieval trace: 3/3 cited leaves resolve")
         assert "unchanged since trace" in line
+
+    def test_tree_sourced_unchanged_tree_makes_no_claim(self, tree_env):
+        """The self-referential case must not produce a pass line."""
+        from retrieval_trace import summarize, verify_retrieval
+
+        kt, path, ids = tree_env
+        rec = _record(kt, path, ids, extras={"injection_source": "tree"})
+
+        line = summarize(verify_retrieval(rec, tree=kt.load_tree(path)))
+
+        assert "resolve" not in line, line
+        assert "unchanged since trace" not in line, line
+        assert "no elapsed check" in line, line
 
     def test_drift_is_named_and_never_called_unchanged(self, tree_env):
         from knowledge_synapses import find_leaf_in_tree

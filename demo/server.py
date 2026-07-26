@@ -89,6 +89,43 @@ def load_tree():
 PROVENANCE_LIST_LIMIT = 50
 
 
+def _scope_note(sink):
+    """What this record does and does not establish — per emitter.
+
+    Not one shared string: /api/query and /api/search return retrieved leaves
+    and generate nothing, while run-validation feeds a leaf to a model and
+    shows its output. Copy written for a generation path, pasted onto a
+    retrieval-only one, asserts something nobody checked.
+    """
+    if sink.endswith("run-validation"):
+        return (
+            "Retrieval provenance. Records which leaf was fed to the model and "
+            "whether it has changed since. It does not establish that the "
+            "challenge text is correct, or that the model actually used the leaf."
+        )
+    return (
+        "Retrieval provenance. Records which leaves this search returned and "
+        "whether they have changed since. It does not check that the leaves are "
+        "true, and it is not a claim that these are the only or best matches."
+    )
+
+
+def _content_hash_ok(leaf, branch_name):
+    """Does this leaf's content still hash to its own stored value?
+
+    TREE INTEGRITY — a different question from the retrieval trace, and the
+    only one of the two that catches a tamper made BEFORE a trace was taken.
+    Uses the same primitive as knowledge_tree.verify_tree_integrity rather
+    than parsing that function's error strings.
+    """
+    try:
+        from core.knowledge_tree import hash_leaf
+
+        return hash_leaf(leaf["content"], branch_name, leaf["created"]) == leaf.get("hash")
+    except Exception:
+        return None  # unknown — never silently "ok"
+
+
 def _emit_route_trace(*, sink, rows, retrieval_mode, tree):
     """Trace one browser-facing retrieval. Never raises.
 
@@ -114,7 +151,14 @@ def _emit_route_trace(*, sink, rows, retrieval_mode, tree):
         injection=[(r["id"], r["content"]) for r in rows],
         answer_text=json.dumps(rows, sort_keys=True, ensure_ascii=False),
         tree=tree,
-        extras={"retrieval_mode": retrieval_mode},
+        extras={
+            "retrieval_mode": retrieval_mode,
+            # Both browser paths hand over text they already hold, so the
+            # emitter cannot infer the source. Semantic came from the search
+            # index; keyword fallback read the tree — and a tree-sourced trace
+            # re-verified against that same tree proves nothing. [PCIS-ATTEST]
+            "injection_source": "index" if retrieval_mode == "semantic" else "tree",
+        },
     )
     # None when tracing is off or the write failed. The route reports that as
     # a null id so the client can say "not recorded" — silence would make a
@@ -358,9 +402,11 @@ def api_query():
 
     # Build a lookup from leaf id -> hash (not stored in the search index).
     hash_lookup = {}
-    for branch in tree["branches"].values():
+    integrity_lookup = {}
+    for branch_name, branch in tree["branches"].items():
         for leaf in branch["leaves"]:
             hash_lookup[leaf["id"]] = leaf.get("hash", "")
+            integrity_lookup[leaf["id"]] = _content_hash_ok(leaf, branch_name)
 
     use_keyword_fallback = False
     try:
@@ -376,6 +422,10 @@ def api_query():
                 "created": leaf_data.get("created", ""),
                 "id": leaf_id,
                 "score": round(score, 3),
+                # Integrity is always checked against the TREE, even when the
+                # displayed text came from the index: the question is whether
+                # the tree's content matches the tree's own stored hash.
+                "content_hash_ok": integrity_lookup.get(leaf_id),
             })
         if not scored:
             use_keyword_fallback = True
@@ -404,6 +454,7 @@ def api_query():
                         "created": leaf["created"],
                         "id": leaf["id"],
                         "score": round(score, 3),
+                        "content_hash_ok": _content_hash_ok(leaf, branch_name),
                     })
         scored.sort(key=lambda x: x["score"], reverse=True)
         scored = scored[:3]
@@ -912,6 +963,16 @@ def api_search():
     tree = load_tree()
     fallback = False
     model = knowledge_search.EMBED_MODEL
+    integrity_lookup = {
+        leaf["id"]: _content_hash_ok(leaf, bname)
+        for bname, branch in tree["branches"].items()
+        for leaf in branch["leaves"]
+    }
+    hash_lookup = {
+        leaf["id"]: leaf.get("hash", "")
+        for branch in tree["branches"].values()
+        for leaf in branch["leaves"]
+    }
 
     try:
         raw = knowledge_search.search(query, top_k=top_k, branch_filter=branch_filter)
@@ -924,6 +985,8 @@ def api_search():
                 "confidence": leaf_data.get("confidence", 0.7),
                 "score": round(score, 4),
                 "source": leaf_data.get("source", ""),
+                "hash": hash_lookup.get(leaf_id, ""),
+                "content_hash_ok": integrity_lookup.get(leaf_id),
             })
         if not results:
             raise ValueError("no semantic results")
@@ -947,6 +1010,8 @@ def api_search():
                         "confidence": leaf["confidence"],
                         "score": score,
                         "source": leaf["source"],
+                        "hash": leaf.get("hash", ""),
+                        "content_hash_ok": integrity_lookup.get(leaf["id"]),
                     })
         scored.sort(key=lambda x: x["score"], reverse=True)
         results = scored[:top_k]
@@ -1034,14 +1099,23 @@ def api_provenance_detail(record_id):
     )
     display = result["display"]
 
+    # When the comparison is self-referential there IS no verdict, so none is
+    # sent. Same structural choice as never serving `ok`: a client cannot
+    # render a status it was not given. [PCIS-ATTEST]
+    attestable = result["attestable"]
+
     return jsonify({
         "record_id": record.record_id,
         "timestamp": record.timestamp,
         "sink": block.sink,
         "retrieval_mode": block.extras.get("retrieval_mode"),
+        "injection_source": result["injection_source"],
+        "attestable": attestable,
+        "attestation_gap": result["attestation_gap"],
+        "scope_note": _scope_note(block.sink),
         "summary": summarize(result),
         "leaves": [
-            {"id": leaf_id, "status": display[leaf_id]}
+            {"id": leaf_id, "status": display[leaf_id] if attestable else None}
             for leaf_id in block.injected_leaf_ids
         ],
         "root_state": result["root_state"],

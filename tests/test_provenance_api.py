@@ -44,6 +44,7 @@ sys.path.insert(0, _HERE)
 # a second, subtly different one.
 from test_retrieval_trace_wiring import (  # noqa: E402,F401
     _break_ledger,
+    _break_semantic_search,
     _ledger,
     env,
 )
@@ -125,6 +126,150 @@ class TestProvenanceList:
 
         assert listing.status_code == 200
         assert listing.get_json()["records"] == []
+
+
+def _tamper_a_leaf(tree_path, marker="[[TAMPERED BY COLD READ]] "):
+    """Edit a leaf's CONTENT and leave its stored hash alone — the naive tamper.
+
+    Tree integrity catches this (content no longer hashes to the stored value).
+    The retrieval trace cannot, on a tree-sourced path: the tampered text is
+    what got injected, so it is what the record attests to.
+    """
+    import knowledge_tree as kt
+
+    tree = kt.load_tree(tree_path)
+    for bname, branch in tree["branches"].items():
+        for leaf in branch["leaves"]:
+            leaf_id = leaf["id"]
+            leaf["content"] = marker + leaf["content"]
+            with open(tree_path, "w", encoding="utf-8") as f:
+                json.dump(tree, f)
+            return leaf_id
+    raise AssertionError("fixture had no leaf to tamper")
+
+
+class TestAttestabilityReachesTheClient:
+    def test_keyword_fallback_is_labelled_tree_sourced(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        rec_id = _run_query(client, "root")["provenance_record_id"]
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert detail["injection_source"] == "tree"
+        assert detail["attestable"] is False
+
+    def test_semantic_path_is_labelled_index_sourced_and_attestable(self, route):
+        client, paths, ids = route
+
+        rec_id = _run_query(client)["provenance_record_id"]
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert detail["injection_source"] == "index"
+        assert detail["attestable"] is True
+
+    def test_unattestable_detail_sends_NO_per_leaf_verdict(self, route, monkeypatch):
+        """Structural: a client cannot render green from a payload with no status."""
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        rec_id = _run_query(client, "root")["provenance_record_id"]
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+
+        assert detail["leaves"], "the cited leaves are still listed"
+        for leaf in detail["leaves"]:
+            assert leaf["status"] is None, (
+                f"sent a verdict it cannot support: {leaf['status']!r}"
+            )
+        blob = json.dumps(detail)
+        for word in DISPLAY_VALUES:
+            assert f'"{word}"' not in blob, f"{word!r} reached the client unattestably"
+        assert detail["attestation_gap"], "must say WHY there is no verdict"
+
+    def test_unattestable_summary_makes_no_claim(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+
+        rec_id = _run_query(client, "root")["provenance_record_id"]
+        summary = client.get(f"/api/provenance/{rec_id}").get_json()["summary"]
+
+        assert "resolve" not in summary, summary
+        assert "unchanged since trace" not in summary, summary
+        assert "no elapsed check" in summary, summary
+
+
+class TestTreeIntegrityIsASeparateClaim:
+    def test_results_carry_content_hash_ok(self, route):
+        client, paths, ids = route
+
+        payload = _run_query(client)
+
+        for r in payload["results"]:
+            assert r["content_hash_ok"] is True
+
+    def test_tampered_leaf_reads_false(self, route):
+        client, paths, ids = route
+        tampered = _tamper_a_leaf(paths["tree"])
+
+        payload = _run_query(client, "tampered")
+
+        hit = [r for r in payload["results"] if r["id"] == tampered]
+        assert hit, "the tampered leaf should still be retrievable"
+        assert hit[0]["content_hash_ok"] is False, (
+            "content no longer hashes to its stored value — integrity must say so"
+        )
+
+
+class TestRocsTamperShowsNoGreenAnywhere:
+    """The 2026-07-25 cold read, end to end.
+
+    Edit a leaf, run the default path (keyword fallback), and assert the
+    payloads a browser receives contain no basis for a green verdict — from
+    either indicator. This is the regression that must never come back.
+    """
+
+    def test_no_green_from_either_indicator(self, route, monkeypatch):
+        client, paths, ids = route
+        _break_semantic_search(monkeypatch)
+        tampered = _tamper_a_leaf(paths["tree"])
+
+        payload = _run_query(client, "tampered")
+        card = [r for r in payload["results"] if r["id"] == tampered][0]
+
+        # 1. tree integrity: the tampered card must fail its own hash
+        assert card["content_hash_ok"] is False
+
+        # 2. retrieval trace: no verdict at all on a self-referential path
+        detail = client.get(
+            f"/api/provenance/{payload['provenance_record_id']}"
+        ).get_json()
+        assert detail["attestable"] is False
+        assert all(leaf["status"] is None for leaf in detail["leaves"])
+        assert "resolve" not in detail["summary"]
+
+
+class TestScopeNotePerEmitter:
+    def test_retrieval_only_note_does_not_mention_an_answer(self, route):
+        client, paths, ids = route
+
+        rec_id = _run_query(client)["provenance_record_id"]
+        note = client.get(f"/api/provenance/{rec_id}").get_json()["scope_note"]
+
+        assert note, "every record must carry its own scope note"
+        assert "answer" not in note.lower(), (
+            f"query/search have no generated answer; copy borrowed from a "
+            f"generation path: {note!r}"
+        )
+
+    def test_generation_emitter_gets_answer_aware_copy(self, route):
+        """run-validation DOES generate text, so its caveat differs."""
+        from demo import server
+
+        client, paths, ids = route
+        note = server._scope_note("pcis.retrieval-trace/demo.run-validation")
+
+        assert "answer" in note.lower() or "challenge" in note.lower(), note
+        assert note != server._scope_note("pcis.retrieval-trace/demo.query")
 
 
 class TestProvenanceDetail:
