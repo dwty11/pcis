@@ -511,6 +511,47 @@ class TestRunValidationRoute:
             assert rec.retrieval.tree_root_at_trace == expected
             assert rec.retrieval.tree_root_at_trace != "d" * 64
 
+    def test_merkle_root_after_is_measured_not_copied(self, route, monkeypatch):
+        """`merkle_root_after` was assigned `merkle_root_before` verbatim.
+
+        The field name asserted a post-state nobody measured, and the UI's
+        "root unchanged" branch was therefore always taken — the transition
+        branch was unreachable. A future change that DID commit leaves would
+        have reported unchanged and nobody would have known.
+
+        Here a leaf is committed DURING the run, so before and after must differ.
+        """
+        import knowledge_tree as kt
+
+        client, paths, ids = route
+        tree = kt.load_tree(paths["tree"])
+        kt.add_knowledge(tree, "technical", "a third claim to challenge")
+        kt.save_tree(tree, paths["tree"])
+
+        committed = {"done": False}
+
+        class _CommittingOllama(_FakeOllama):
+            def read(self):
+                # simulate the run committing a leaf partway through
+                if not committed["done"]:
+                    t = kt.load_tree(paths["tree"])
+                    kt.add_knowledge(t, "lessons", "committed mid-run")
+                    kt.save_tree(t, paths["tree"])
+                    committed["done"] = True
+                return super().read()
+
+        with patch("urllib.request.urlopen", return_value=_CommittingOllama("a challenge")):
+            resp = client.post("/api/run-validation")
+
+        data = resp.get_json()
+        assert committed["done"], "fixture must actually commit something"
+        assert data["merkle_root_after"] != data["merkle_root_before"], (
+            "a leaf was committed during the run; the after-root must reflect it"
+        )
+        assert data["merkle_root_after"] == kt.compute_root_hash(
+            kt.load_tree(paths["tree"])
+        ), "after-root must be derived from the tree as it stands at the end"
+
     def test_route_still_succeeds_when_ledger_write_fails(self, route, monkeypatch):
         import knowledge_tree as kt
 

@@ -257,9 +257,30 @@ body {
   letter-spacing: 4px;
   margin-bottom: 12px;
 }
+/* Every status the server can emit needs a class here, or it renders as
+   unstyled default text. MODIFIED had none: the alarm showed plain white while
+   CLEAN got green plus a 40px glow — a failure state quieter than the success
+   state, which teaches a reader to relax. Server statuses: CLEAN, MODIFIED,
+   ERROR (see api_boot). Pinned by tests/test_boot_manifest.py. */
 .boot-status.clean { color: var(--green); text-shadow: 0 0 40px var(--green-glow); }
-.boot-status.changed { color: var(--yellow); }
-.boot-status.error { color: var(--red); }
+.boot-status.changed { color: var(--yellow); text-shadow: 0 0 40px rgba(251,191,36,0.3); }
+.boot-status.modified {
+  color: var(--red);
+  text-shadow: 0 0 56px rgba(248,113,113,0.55);
+  animation: boot-alarm 1.4s ease-in-out infinite;
+}
+.boot-status.error {
+  color: var(--red);
+  text-shadow: 0 0 56px rgba(248,113,113,0.55);
+  animation: boot-alarm 1.4s ease-in-out infinite;
+}
+@keyframes boot-alarm {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-status.modified, .boot-status.error { animation: none; }
+}
 
 .boot-root {
   font-family: 'JetBrains Mono', monospace;
@@ -781,17 +802,31 @@ body {
       <div class="boot-explain">
         <div class="boot-explain-section">
           <div class="boot-explain-label">What is happening</div>
-          <div class="boot-explain-text">The system runs a live SHA-256 integrity check on each tracked file. Each file is rehashed and compared against the stored manifest. If a single byte has changed anywhere — the root hash changes and the status flags CHANGED.<br><br>This is cryptographic tamper detection, computed in real time.</div>
+          <!-- CAPTION PROVENANCE: two independent checks run here, and they are
+               not the same check. File hashes are compared against
+               demo/demo_manifest.json. The tree's own hashes are recomputed from
+               leaf content by verify_tree_integrity. A file edit does NOT move
+               the tree root, and a leaf edit does NOT change a file hash beyond
+               demo_tree.json — do not merge them into one sentence. -->
+          <div class="boot-explain-text">Two checks run, and they answer different questions. <b>Tracked files</b> are re-hashed and compared against the stored manifest, so a changed byte in any of them is flagged. <b>The knowledge tree</b> is separately re-hashed from leaf content upward, so an edited claim is flagged even if no file was added or removed. Either one failing sets the status to MODIFIED.<br><br>Neither check can tell an authorised edit from tampering. What they establish is that the bytes moved since the manifest was last written. And the check cannot vouch for the code running it — <code>server.py</code> hashes itself, so a tampered <code>server.py</code> could simply report OK; catching that means comparing the hashes independently, from outside this page.</div>
         </div>
         <div class="boot-explain-section">
           <div class="boot-explain-label">Workspace</div>
-          <div class="boot-explain-text">/secure/ai-memory/workspace/ is the persistent memory layer — the directory containing all identity files, the knowledge tree, and the integrity manifest. This is what PCIS protects. Everything the AI knows about your clients, your products, and your compliance history lives here — signed, dated, and tamper-evident.</div>
+          <!-- CAPTION PROVENANCE: this demo reads demo/ — demo_tree.json,
+               demo_manifest.json, demo_synapses.json. The old copy named a
+               workspace path that exists nowhere in this repo, and described a
+               manifest that did not exist at all. Name the files a reader can
+               actually open. -->
+          <div class="boot-explain-text">In this demo the memory layer is the <code>demo/</code> directory: <code>demo_tree.json</code> holds the knowledge tree, <code>demo_manifest.json</code> is the baseline the file check compares against, and <code>demo_synapses.json</code> holds the relationships between claims. In a deployment this is the persistent store the agent reads before answering — the claims, their confidence, and what contradicts them.<br><br>Tamper-evident, not tamper-proof: the checks tell you the bytes changed, not who changed them or whether they were allowed to.</div>
         </div>
       </div>
     </div>
     <div class="boot-result" id="bootResult">
       <div class="boot-status" id="bootStatus"></div>
-      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Merkle Root</div>
+      <!-- CAPTION PROVENANCE: bootRoot is data.merkle_root = the tree's STORED
+           root_hash field. The boot terminal separately shows whether a fresh
+           recomputation agrees with it. -->
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Merkle Root <span style="color:var(--text-muted);font-size:11px">(stored in the tree; agreement with a fresh recomputation is shown above)</span></div>
       <div class="boot-root" id="bootRoot"></div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-muted)" id="bootTimestamp"></div>
     </div>
@@ -984,8 +1019,12 @@ async function runBoot() {
   addLine('PCIS Integrity Verification System v1.0', 'label', 0);
   addLine('━'.repeat(48), 'dim', 100);
   addLine('', 'dim', 200);
+  // CAPTION PROVENANCE: name the directory this actually reads. The previous
+  // line printed a workspace path that exists nowhere in the repo — the same
+  // fabrication as the explainer beside it, which is why fixing one and not
+  // the other left it half-done.
   addLine('Initializing SHA-256 verification engine...', 'dim', 300);
-  addLine('Workspace: /secure/ai-memory/workspace/', 'file', 500);
+  addLine('Reading: demo/  (demo_tree.json, demo_manifest.json, demo_synapses.json)', 'file', 500);
   addLine('', 'dim', 600);
 
   try {
@@ -996,19 +1035,51 @@ async function runBoot() {
     addLine('Scanning tracked memory files:', 'label', delay);
     delay += 200;
 
+    // Statuses come from api_boot's manifest comparison: OK / MODIFIED /
+    // MISSING / UNTRACKED / NO_MANIFEST. Anything that is not OK must not read
+    // like OK — the original bug was a literal "OK" with no comparison behind it.
+    const FILE_STATUS = {
+      OK:          { text: '✓ OK',          cls: 'ok'   },
+      MODIFIED:    { text: '✗ MODIFIED',    cls: 'err'  },
+      MISSING:     { text: '✗ MISSING',     cls: 'err'  },
+      UNTRACKED:   { text: '? UNTRACKED',   cls: 'warn' },
+      NO_MANIFEST: { text: '? NO MANIFEST', cls: 'warn' },
+    };
+    let needsManifestHint = false;
     for (const fc of data.file_checks) {
-      const statusColor = fc.status === 'OK' ? 'ok' : 'err';
-      const statusText = fc.status === 'OK' ? '✓ OK' : '✗ MISSING';
-      const hashText = fc.hash ? fc.hash : '—';
-      addLine(`  ${statusText}  ${fc.file}`, statusColor, delay);
-      addLine(`         ${hashText}`, 'hash', delay + 30);
+      const s = FILE_STATUS[fc.status] || { text: '? ' + fc.status, cls: 'warn' };
+      if (fc.status !== 'OK' && fc.status !== 'MISSING') needsManifestHint = true;
+      addLine(`  ${s.text}  ${fc.file}`, s.cls, delay);
+      addLine(`         ${fc.hash ? fc.hash : '—'}`, 'hash', delay + 30);
       delay += 120;
+    }
+    // Annoying-but-obvious beats annoying-and-opaque: staleness is left manual
+    // on purpose (an auto-regenerated baseline is just "whatever the last
+    // working tree happened to be", which nobody vouched for), so the way out
+    // has to be on screen.
+    if (needsManifestHint) {
+      delay += 60;
+      addLine('  If you edited a tracked file on purpose, re-baseline it:', 'warn', delay);
+      addLine('      python3 demo/make_manifest.py', 'file', delay + 40);
+      delay += 160;
     }
 
     delay += 200;
     addLine('', 'dim', delay);
     addLine('━'.repeat(48), 'dim', delay + 50);
-    addLine(`Computing Merkle root from ${data.file_checks.length} file hashes...`, 'dim', delay + 150);
+    // CAPTION PROVENANCE: data.merkle_root is the tree's STORED root_hash field,
+    // read verbatim from demo_tree.json. It is not computed at boot and it is
+    // not a function of the file hashes above. The old line said "Computing
+    // Merkle root from N file hashes", which named a mechanism no value here
+    // comes from. data.merkle_root_recomputed IS derived now, so the two are
+    // shown together and the reader can see they agree.
+    const _rootAgrees = data.merkle_root_recomputed === data.merkle_root_stored;
+    addLine(`Tree root (stored in demo_tree.json): ${(data.merkle_root_stored || '').slice(0, 24)}...`,
+            'dim', delay + 150);
+    addLine(_rootAgrees
+              ? '  recomputed from branch hashes: matches'
+              : '  recomputed from branch hashes: DOES NOT MATCH stored value',
+            _rootAgrees ? 'dim' : 'err', delay + 200);
 
     setTimeout(() => {
       result.classList.add('visible');
@@ -1141,7 +1212,8 @@ function renderTreeStats() {
     </div>
     <div class="stat-card">
       <div class="stat-value green" style="font-size:16px;word-break:break-word">${treeData.root_hash}...</div>
-      <div class="stat-label">Merkle Root</div>
+      <!-- CAPTION PROVENANCE: tree_stats.root_hash = the STORED field, not recomputed here. -->
+      <div class="stat-label">Merkle Root <span style="color:var(--text-muted)">(stored)</span></div>
     </div>
   `;
 }
@@ -1621,7 +1693,12 @@ async function runBelief() {
             <span>leaf: ${a.leaf_id}</span>
             <span>support: ${a.support_count}</span>
             <span>contradictions: ${a.contradiction_count}</span>
-            <span style="color:var(--text-muted)">Belief state verified &middot; root hash: <span style="color:var(--purple)">${rootHash ? rootHash.slice(0, 24) + '...' : 'unavailable'}</span></span>
+            <!-- CAPTION PROVENANCE: rootHash is the tree's STORED root_hash,
+                 fetched separately. Nothing in this belief assessment is
+                 verified against it. The old caption read "Belief state
+                 verified · root hash: …", which put "verified" next to a hash
+                 and implied one was checked against the other. -->
+            <span style="color:var(--text-muted)">assessed against tree root <span style="color:var(--purple)">${rootHash ? rootHash.slice(0, 24) + '...' : 'unavailable'}</span> (stored value; not re-verified here)</span>
           </div>
         </div>
       `).join('')}

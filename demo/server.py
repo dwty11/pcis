@@ -89,6 +89,25 @@ def load_tree():
 PROVENANCE_LIST_LIMIT = 50
 
 
+def _load_manifest():
+    """The stored file manifest {filename: sha256}, or None if there isn't one.
+
+    None is deliberately distinct from an empty dict: "no manifest" must render
+    as NO_MANIFEST, never as a pass. A boot check with nothing to compare
+    against is exactly what shipped a green tick over a tampered file.
+    """
+    path = os.path.join(DEMO_DIR, "demo_manifest.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    files = data.get("files") if isinstance(data, dict) else None
+    return files if isinstance(files, dict) else None
+
+
 def _scope_note(sink):
     """What this record does and does not establish — per emitter.
 
@@ -262,20 +281,37 @@ def api_boot():
         # Primary check: recompute every hash from leaf content up
         tree_ok, integrity_errors = verify_tree_integrity(tree)
 
-        # Secondary check: file checksums
+        # Secondary check: file checksums, ACTUALLY compared against a stored
+        # manifest. This used to append a literal "OK" per file whose only
+        # alternative was MISSING — so a tampered file showed a changed hash
+        # beside a green tick, on the tab whose caption promised comparison.
+        # Regenerate the manifest with: python3 demo/make_manifest.py
+        manifest = _load_manifest()
         file_checks = []
         files_ok = True
         for fname in DEMO_TRACKED_FILES:
             fpath = os.path.join(DEMO_DIR, fname)
-            if os.path.exists(fpath):
-                with open(fpath, "rb") as f:
-                    h = hashlib.sha256(f.read()).hexdigest()
-                file_checks.append({"file": fname, "hash": h[:24], "status": "OK"})
-            else:
+            if not os.path.exists(fpath):
                 file_checks.append({"file": fname, "hash": None, "status": "MISSING"})
                 files_ok = False
+                continue
+            with open(fpath, "rb") as f:
+                h = hashlib.sha256(f.read()).hexdigest()
+            if manifest is None:
+                # Nothing to compare against. Never "OK" — that was the bug.
+                st = "NO_MANIFEST"
+            elif fname not in manifest:
+                st = "UNTRACKED"
+            elif manifest[fname] == h:
+                st = "OK"
+            else:
+                st = "MODIFIED"
+                files_ok = False
+            file_checks.append({"file": fname, "hash": h[:24], "status": st})
 
-        status = "CLEAN" if tree_ok else "MODIFIED"
+        # files_ok was previously computed and never allowed to affect the
+        # headline status, so a MISSING tracked file still read CLEAN.
+        status = "CLEAN" if (tree_ok and files_ok) else "MODIFIED"
 
         # Epistemic health: assess every leaf's belief stance
         epistemic = None
@@ -325,7 +361,16 @@ def api_boot():
 
         resp = {
             "status": status,
+            # PROVENANCE OF THESE TWO VALUES, because the caption used to get
+            # this wrong: `stored` is read verbatim from the tree file and is
+            # NOT computed at boot; `recomputed` is derived now from the tree's
+            # branch hashes. NEITHER is a function of the file hashes above.
+            # The terminal line that said "Computing Merkle root from N file
+            # hashes" named a mechanism no value here comes from.
             "merkle_root": tree.get("root_hash", ""),
+            "merkle_root_stored": tree.get("root_hash", ""),
+            "merkle_root_recomputed": compute_root_hash(tree),
+            "manifest_present": manifest is not None,
             "tree_integrity": "VERIFIED" if tree_ok else "MISMATCH",
             "timestamp": datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "changed": 0 if tree_ok else 1,
@@ -629,7 +674,15 @@ def api_run_validation():
             "entries_challenged": 3,
             "counters": counters,
             "merkle_root_before": merkle_root_before,
-            "merkle_root_after": merkle_root_before,
+            # MEASURED, not copied. This was `merkle_root_before` verbatim, so
+            # the name asserted a post-state nobody had looked at — and the
+            # UI's "root unchanged" branch was always taken, making its
+            # transition branch unreachable. Today this run does not commit
+            # leaves so the two usually match; if that ever changes, the
+            # difference now shows instead of being defined away.
+            # Derived from the tree as it stands NOW, not from the stored
+            # root_hash field, which can lag the tree it came from.
+            "merkle_root_after": compute_root_hash(load_tree()),
         }
 
         out_path = os.path.join(DEMO_DIR, "external_validation_run.json")
