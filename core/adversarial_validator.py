@@ -29,7 +29,14 @@ except (AttributeError, ValueError):
     pass
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from knowledge_tree import compute_root_hash, compute_branch_hash, hash_leaf
+from knowledge_tree import hash_leaf
+# compute_root_hash / compute_branch_hash are deliberately NOT imported at
+# module scope: they are the wrong tool everywhere except inside
+# _merkle_snapshot, and a before/after pair computed with the raw
+# compute_root_hash reads STORED branch hashes, which is the defect this
+# module already shipped once. Out of scope means a reviewer cannot
+# reintroduce it by accident — subtraction rather than a test that the
+# mistake was not made.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -121,6 +128,8 @@ def _merkle_snapshot(tree):
     Works on a deep copy: the validator is documented read-only over the tree
     it is handed.
     """
+    from knowledge_tree import compute_branch_hash, compute_root_hash
+
     snapshot = json.loads(json.dumps(tree))
     for branch in snapshot.get("branches", {}).values():
         branch["hash"] = compute_branch_hash(branch["leaves"])

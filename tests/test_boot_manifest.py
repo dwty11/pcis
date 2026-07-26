@@ -197,23 +197,33 @@ class TestHeadlineDerivationIsSafeByConstruction:
         """The invariant the comment asserts. Named by INVARIANT() in server.py."""
         from demo.server import _boot_headline
 
-        assert _boot_headline({"OK", "UNREADABLE"}, tree_ok=True) == "UNVERIFIABLE"
-        assert _boot_headline({"STALE"}, tree_ok=True) == "UNVERIFIABLE"
-        assert _boot_headline({"SOMETHING_INVENTED_LATER"}, tree_ok=True) == "UNVERIFIABLE"
+        assert _boot_headline({"OK", "UNREADABLE"}, tree_ok=True)[0] == "UNVERIFIABLE"
+        assert _boot_headline({"STALE"}, tree_ok=True)[0] == "UNVERIFIABLE"
+        assert _boot_headline({"SOMETHING_INVENTED_LATER"}, tree_ok=True)[0] == "UNVERIFIABLE"
 
     def test_clean_requires_every_status_to_be_known_good(self):
         from demo.server import _boot_headline
 
-        assert _boot_headline({"OK"}, tree_ok=True) == "CLEAN"
-        assert _boot_headline(set(), tree_ok=True) == "CLEAN"  # nothing tracked
+        assert _boot_headline({"OK"}, tree_ok=True)[0] == "CLEAN"
+
+    def test_zero_verifications_is_not_clean(self):
+        """Class A boundary: an empty check set is a blessed pass over nothing.
+
+        My own earlier test asserted CLEAN here — the same defect as
+        NO_MANIFEST, one level further out. CLEAN must mean checks were made
+        AND passed.
+        """
+        from demo.server import _boot_headline
+
+        assert _boot_headline(set(), tree_ok=True)[0] == "UNVERIFIABLE"
 
     def test_definite_failure_outranks_everything(self):
         from demo.server import _boot_headline
 
-        assert _boot_headline({"OK", "MODIFIED"}, tree_ok=True) == "MODIFIED"
-        assert _boot_headline({"OK", "MISSING"}, tree_ok=True) == "MODIFIED"
-        assert _boot_headline({"OK"}, tree_ok=False) == "MODIFIED"
-        assert _boot_headline({"NO_MANIFEST", "MODIFIED"}, tree_ok=True) == "MODIFIED"
+        assert _boot_headline({"OK", "MODIFIED"}, tree_ok=True)[0] == "MODIFIED"
+        assert _boot_headline({"OK", "MISSING"}, tree_ok=True)[0] == "MODIFIED"
+        assert _boot_headline({"OK"}, tree_ok=False)[0] == "MODIFIED"
+        assert _boot_headline({"NO_MANIFEST", "MODIFIED"}, tree_ok=True)[0] == "MODIFIED"
 
     def test_every_declared_file_status_is_classified(self):
         """Per-file vocabulary gets the same exported-constant treatment the
@@ -222,9 +232,11 @@ class TestHeadlineDerivationIsSafeByConstruction:
         from demo.server import FILE_STATUSES, _boot_headline
 
         for st in FILE_STATUSES:
-            assert _boot_headline({st}, tree_ok=True) in {
-                "CLEAN", "MODIFIED", "UNVERIFIABLE"
-            }, f"{st} produced an unclassified headline"
+            status, severity = _boot_headline({st}, tree_ok=True)
+            assert status in {"CLEAN", "MODIFIED", "UNVERIFIABLE"}, st
+            assert severity in {"ok", "bad", "unknown"}, (
+                f"{st} produced severity {severity!r}, which the CSS cannot style"
+            )
 
     def test_declared_vocabulary_matches_what_the_route_emits(self):
         """The constant must describe the code, not a stale copy of it."""
@@ -253,21 +265,29 @@ class TestStatusVocabularyIsRenderable:
     can emit and the classes the stylesheet defines.
     """
 
-    def test_every_server_status_has_a_css_class(self):
-        """The status list is IMPORTED, not restated here.
+    def test_every_severity_the_classifier_can_return_has_a_css_class(self):
+        """Severities are ELICITED from the classifier, not listed here.
 
-        A hardcoded copy in this file would be the same defect one level up: a
-        list maintained by hand that silently stops matching what the server
-        actually emits. Adding a status to server.py must break this test.
+        The client no longer maps status→class; it styles on the severity the
+        server derived. So the coverage question is which severities
+        _boot_headline and _file_status_display can actually produce — obtained
+        by running them, not by keeping a copy of the answer.
         """
-        from demo.server import BOOT_STATUSES
+        from demo.server import FILE_STATUSES, _boot_headline, _file_status_display
+
+        produced = set()
+        for tree_ok in (True, False):
+            for statuses in [set()] + [{s} for s in FILE_STATUSES] + [{"INVENTED_LATER"}]:
+                produced.add(_boot_headline(statuses, tree_ok)[1])
+        for st in list(FILE_STATUSES) + ["INVENTED_LATER"]:
+            produced.add(_file_status_display(st)[1])
 
         html = open(
             os.path.join(_ROOT, "demo", "index.html"), encoding="utf-8"
         ).read()
         defined = set(re.findall(r"\.boot-status\.([a-z]+)\s*\{", html))
 
-        missing = {s for s in BOOT_STATUSES if s.lower() not in defined}
+        missing = {s for s in produced if s not in defined}
         assert not missing, (
             f"status(es) {missing} would fall through to unstyled default text; "
             f"CSS defines only {sorted(defined)}"
@@ -283,8 +303,8 @@ class TestStatusVocabularyIsRenderable:
             m = re.search(r"\.boot-status\." + cls + r"\s*\{([^}]*)\}", html)
             return m.group(1) if m else ""
 
-        clean, modified = rule("clean"), rule("modified")
-        assert "text-shadow" in clean, "fixture assumption: clean glows"
-        assert "text-shadow" in modified, (
+        ok, bad = rule("ok"), rule("bad")
+        assert "text-shadow" in ok, "fixture assumption: the all-clear glows"
+        assert "text-shadow" in bad, (
             "the failure state must be at least as prominent as the success state"
         )

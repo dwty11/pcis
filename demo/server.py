@@ -108,28 +108,50 @@ _FILE_STATUS_BAD = frozenset({"MODIFIED", "MISSING"})
 
 
 def _boot_headline(file_statuses, tree_ok):
-    """Derive the headline from the set of per-file statuses.
+    """Return (status, severity) for the boot headline.
 
-    Three states, because two cannot express this honestly:
-      MODIFIED     — something definitely differs (worst news wins)
-      UNVERIFIABLE — the check could not be made
-      CLEAN        — every check was made and every check passed
+    Both come from this one function so they cannot disagree: severity is not a
+    lookup table the client keeps, it is what this classification already
+    decided. The client styles on severity, so a status added here carries its
+    own presentation instead of falling through to unstyled default text.
 
     INVARIANT(test_unknown_file_status_is_unverifiable): a per-file status that
-    is not explicitly known-good must never produce CLEAN. This is why the
-    function tests for MEMBERSHIP in _FILE_STATUS_GOOD rather than absence from
-    a list of bad ones — an earlier version ended in ``else: status = "CLEAN"``
-    below a comment claiming it fell through to the safe direction, so a status
-    nobody had classified landed on glowing green CLEAN. Adding a status to
-    FILE_STATUSES without classifying it now degrades to UNVERIFIABLE instead of
-    silently passing.
+    is not explicitly known-good must never produce CLEAN. Membership in
+    _FILE_STATUS_GOOD is required — absence from a bad-list is not enough.
+    INVARIANT(test_zero_verifications_is_not_clean): CLEAN must mean checks were
+    made and passed, never that none were made.
     """
     seen = set(file_statuses)
     if not tree_ok or (seen & _FILE_STATUS_BAD):
-        return "MODIFIED"
-    if seen <= _FILE_STATUS_GOOD:
-        return "CLEAN"
-    return "UNVERIFIABLE"
+        return "MODIFIED", "bad"
+    if seen and seen <= _FILE_STATUS_GOOD:
+        return "CLEAN", "ok"
+    return "UNVERIFIABLE", "unknown"
+
+
+def _file_check(fname, short_hash, status):
+    """One file's result, carrying the presentation its own status implies."""
+    label, severity = _file_status_display(status)
+    return {"file": fname, "hash": short_hash, "status": status,
+            "label": label, "severity": severity}
+
+
+def _file_status_display(status):
+    """Label and severity DERIVED from the classification that drives behaviour.
+
+    Not a parallel presentation table: severity reads the same sets
+    _boot_headline decides on, so a status moved between them changes colour
+    automatically, and a new status renders as unknown rather than as a
+    hardcoded tick. The label is the status itself, so no string can assert a
+    state the check did not return.
+    """
+    if status in _FILE_STATUS_GOOD:
+        severity = "ok"
+    elif status in _FILE_STATUS_BAD:
+        severity = "bad"
+    else:
+        severity = "unknown"
+    return status.replace("_", " "), severity
 
 
 def _load_manifest():
@@ -170,6 +192,34 @@ def _scope_note(sink):
         "whether they have changed since. It does not check that the leaves are "
         "true, and it is not a claim that these are the only or best matches."
     )
+
+
+def _integrity_display(ok):
+    """(label, severity) for a content-hash check, from its return value.
+
+    Three outcomes because the check has three: matched, did not match, and
+    could not be performed. `None` must never render as a pass.
+    """
+    if ok is True:
+        return "content matches this hash", "ok"
+    if ok is False:
+        return "CONTENT DOES NOT MATCH THIS HASH", "bad"
+    return "integrity unchecked", "unknown"
+
+
+def _leaf_row(leaf_id, verify_result, attestable):
+    """One cited leaf, carrying the phrasing its own verdict implies."""
+    from core.retrieval_trace import leaf_presentation
+
+    wire = verify_result["re_verification"].get(leaf_id) if attestable else None
+    label, severity, explanation = leaf_presentation(wire)
+    return {
+        "id": leaf_id,
+        "status": verify_result["display"][leaf_id] if attestable else None,
+        "label": label,
+        "severity": severity,
+        "explanation": explanation,
+    }
 
 
 def _content_hash_ok(leaf, branch_name):
@@ -334,7 +384,7 @@ def api_boot():
         for fname in DEMO_TRACKED_FILES:
             fpath = os.path.join(DEMO_DIR, fname)
             if not os.path.exists(fpath):
-                file_checks.append({"file": fname, "hash": None, "status": "MISSING"})
+                file_checks.append(_file_check(fname, None, "MISSING"))
                 continue
             with open(fpath, "rb") as f:
                 h = hashlib.sha256(f.read()).hexdigest()
@@ -346,14 +396,15 @@ def api_boot():
                 st = "OK"
             else:
                 st = "MODIFIED"
-            file_checks.append({"file": fname, "hash": h[:24], "status": st})
+            file_checks.append(_file_check(fname, h[:24], st))
 
         # The headline is DERIVED from the per-file statuses rather than
         # accumulated into a boolean as they are produced. The boolean version
         # had to remember to flip in every failing branch and did not: MISSING
         # and MODIFIED set it, NO_MANIFEST and UNTRACKED did not, so three
         # "NO MANIFEST" lines sat under a glowing green CLEAN.
-        status = _boot_headline({f["status"] for f in file_checks}, tree_ok)
+        status, status_severity = _boot_headline(
+            {f["status"] for f in file_checks}, tree_ok)
         files_ok = status == "CLEAN"
 
         # Epistemic health: assess every leaf's belief stance
@@ -404,6 +455,9 @@ def api_boot():
 
         resp = {
             "status": status,
+            # Styling travels WITH the value that decided it, so the client
+            # never keeps a copy of this vocabulary to drift from.
+            "status_severity": status_severity,
             # PROVENANCE OF THESE TWO VALUES, because the caption used to get
             # this wrong: `stored` is read verbatim from the tree file and is
             # NOT computed at boot; `recomputed` is derived now from the tree's
@@ -514,6 +568,7 @@ def api_query():
                 # displayed text came from the index: the question is whether
                 # the tree's content matches the tree's own stored hash.
                 "content_hash_ok": integrity_lookup.get(leaf_id),
+                "integrity": _integrity_display(integrity_lookup.get(leaf_id)),
             })
         if not scored:
             use_keyword_fallback = True
@@ -543,6 +598,7 @@ def api_query():
                         "id": leaf["id"],
                         "score": round(score, 3),
                         "content_hash_ok": _content_hash_ok(leaf, branch_name),
+                        "integrity": _integrity_display(_content_hash_ok(leaf, branch_name)),
                     })
         scored.sort(key=lambda x: x["score"], reverse=True)
         scored = scored[:3]
@@ -1093,6 +1149,7 @@ def api_search():
                 "source": leaf_data.get("source", ""),
                 "hash": hash_lookup.get(leaf_id, ""),
                 "content_hash_ok": integrity_lookup.get(leaf_id),
+                "integrity": _integrity_display(integrity_lookup.get(leaf_id)),
             })
         if not results:
             raise ValueError("no semantic results")
@@ -1118,6 +1175,7 @@ def api_search():
                         "source": leaf["source"],
                         "hash": leaf.get("hash", ""),
                         "content_hash_ok": integrity_lookup.get(leaf["id"]),
+                        "integrity": _integrity_display(integrity_lookup.get(leaf["id"])),
                     })
         scored.sort(key=lambda x: x["score"], reverse=True)
         results = scored[:top_k]
@@ -1220,10 +1278,10 @@ def api_provenance_detail(record_id):
         "attestation_gap": result["attestation_gap"],
         "scope_note": _scope_note(block.sink),
         "summary": summarize(result),
-        "leaves": [
-            {"id": leaf_id, "status": display[leaf_id] if attestable else None}
-            for leaf_id in block.injected_leaf_ids
-        ],
+        # Presentation travels with the verdict, from core.retrieval_trace,
+        # so the client keeps no vocabulary of its own to drift from.
+        "leaves": [_leaf_row(leaf_id, result, attestable)
+                   for leaf_id in block.injected_leaf_ids],
         "root_state": result["root_state"],
         # Always present: a superseded leaf reads "resolves" when no graph was
         # loaded, so the reader has to be told which case they are looking at.

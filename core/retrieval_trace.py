@@ -98,6 +98,56 @@ DISPLAY_STATUS = {
     "retracted": "withdrawn",
 }
 
+# Reader-facing phrasing and severity, kept HERE beside the classification they
+# describe rather than in a client-side table. A caption emitted from the thing
+# it describes has zero distance from the computation and cannot assert a state
+# the check did not return.
+#
+# The phrasing is temporal on purpose — this axis answers "has anything changed
+# since this retrieval", never "is the content genuine", which is
+# knowledge_tree.verify_tree_integrity's question.
+#
+# Severity is deliberately coarser than status: three values, so the stylesheet
+# needs three classes and the specificity lives in the label. Fewer colours is
+# less to keep in step.
+DISPLAY_PHRASING = {
+    "pass": (
+        "unchanged since trace", "ok",
+        "This leaf's content still matches what was recorded at retrieval time, "
+        "and this check could have failed — so the match means something.",
+    ),
+    "mismatch": (
+        "changed since trace", "changed",
+        "This leaf's content differs from what was recorded at retrieval time.",
+    ),
+    "missing": (
+        "removed since trace", "changed",
+        "This leaf is no longer in the tree.",
+    ),
+    "retracted": (
+        "withdrawn since trace", "changed",
+        "This leaf was retracted or superseded after the trace.",
+    ),
+}
+
+# What a leaf reads when the comparison could not have failed. Not a status —
+# the absence of one.
+NO_VERDICT_PHRASING = (
+    "no elapsed check", "unknown",
+    "This trace was drawn from the tree and the tree has not changed since. "
+    "Re-verifying would compare the tree to itself, which cannot fail — so "
+    "nothing is claimed. This is the honest state for a fresh retrieval, not a "
+    "failure.",
+)
+
+
+def leaf_presentation(wire_status):
+    """(label, severity, explanation) for a re-verification status, or for the
+    absence of one when ``wire_status`` is None."""
+    if wire_status is None:
+        return NO_VERDICT_PHRASING
+    return DISPLAY_PHRASING[wire_status]
+
 
 def content_hash(content: str) -> str:
     """Pure SHA-256 of leaf content — no branch, no timestamp.

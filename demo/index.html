@@ -236,8 +236,8 @@ body {
 @keyframes fadeIn { to { opacity: 1; } }
 
 .boot-terminal .ok { color: var(--green); }
-.boot-terminal .warn { color: var(--yellow); }
-.boot-terminal .err { color: var(--red); }
+.boot-terminal .warn, .boot-terminal .unknown { color: var(--yellow); }
+.boot-terminal .err, .boot-terminal .bad { color: var(--red); }
 .boot-terminal .dim { color: var(--text-muted); }
 .boot-terminal .hash { color: var(--purple); }
 .boot-terminal .file { color: var(--accent); }
@@ -262,21 +262,15 @@ body {
    CLEAN got green plus a 40px glow — a failure state quieter than the success
    state, which teaches a reader to relax. Server statuses: CLEAN, MODIFIED,
    ERROR (see api_boot). Pinned by tests/test_boot_manifest.py. */
-.boot-status.clean { color: var(--green); text-shadow: 0 0 40px var(--green-glow); }
-.boot-status.changed { color: var(--yellow); text-shadow: 0 0 40px rgba(251,191,36,0.3); }
+.boot-status.ok { color: var(--green); text-shadow: 0 0 40px var(--green-glow); }
 /* "Could not check" is its own state — not reassuring, not alarming. Amber
    with a glow so it is never quieter than CLEAN, but no pulse: nothing is
    known to be wrong. */
-.boot-status.unverifiable {
+.boot-status.unknown {
   color: var(--yellow);
   text-shadow: 0 0 44px rgba(251,191,36,0.45);
 }
-.boot-status.modified {
-  color: var(--red);
-  text-shadow: 0 0 56px rgba(248,113,113,0.55);
-  animation: boot-alarm 1.4s ease-in-out infinite;
-}
-.boot-status.error {
+.boot-status.bad {
   color: var(--red);
   text-shadow: 0 0 56px rgba(248,113,113,0.55);
   animation: boot-alarm 1.4s ease-in-out infinite;
@@ -286,7 +280,7 @@ body {
   50%      { opacity: 0.72; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .boot-status.modified, .boot-status.error { animation: none; }
+  .boot-status.bad { animation: none; }
 }
 
 .boot-root {
@@ -581,6 +575,16 @@ body {
 }
 .prov-caveat { display: block; margin-top: 5px; color: var(--text-muted); font-size: 11px; }
 .prov-note { color: var(--text-muted); }
+.prov-chip {
+  display: inline-block; padding: 2px 9px; border-radius: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.4px; cursor: help;
+}
+.prov-ok      { background: rgba(52,211,153,0.12);  color: var(--green);      border: 1px solid rgba(52,211,153,0.25); }
+.prov-changed { background: rgba(251,191,36,0.12);  color: var(--yellow);     border: 1px solid rgba(251,191,36,0.25); }
+.prov-unknown { background: rgba(136,136,160,0.10); color: var(--text-muted); border: 1px solid rgba(136,136,160,0.22); }
+.prov-hash-ok      { color: var(--text-muted); }
+.prov-hash-bad     { color: var(--red); }
+.prov-hash-unknown { color: var(--text-muted); }
 .prov-ledger { margin-top: 36px; border-top: 1px solid var(--border); padding-top: 18px; }
 .prov-ledger summary {
   cursor: pointer;
@@ -1042,22 +1046,15 @@ async function runBoot() {
     addLine('Scanning tracked memory files:', 'label', delay);
     delay += 200;
 
-    // Statuses come from api_boot's manifest comparison: OK / MODIFIED /
-    // MISSING / UNTRACKED / NO_MANIFEST. Anything that is not OK must not read
-    // like OK — the original bug was a literal "OK" with no comparison behind it.
-    const FILE_STATUS = {
-      OK:          { text: '✓ OK',          cls: 'ok'   },
-      MODIFIED:    { text: '✗ MODIFIED',    cls: 'err'  },
-      MISSING:     { text: '✗ MISSING',     cls: 'err'  },
-      UNTRACKED:   { text: '? UNTRACKED',   cls: 'warn' },
-      NO_MANIFEST: { text: '? NO MANIFEST', cls: 'warn' },
-    };
+    // No status vocabulary lives here. api_boot derives each file's label and
+    // severity from the same sets that decide the headline, so the client
+    // cannot hold a copy that drifts, and no literal here asserts a state the
+    // check did not return. Severity names ARE the css class names.
     let needsManifestHint = false;
     for (const fc of data.file_checks) {
-      const s = FILE_STATUS[fc.status] || { text: '? ' + fc.status, cls: 'warn' };
-      if (fc.status !== 'OK' && fc.status !== 'MISSING') needsManifestHint = true;
-      addLine(`  ${s.text}  ${fc.file}`, s.cls, delay);
-      addLine(`         ${fc.hash ? fc.hash : '—'}`, 'hash', delay + 30);
+      if (fc.severity !== 'ok' && fc.status !== 'MISSING') needsManifestHint = true;
+      addLine(`  ${escapeHtml(fc.label)}  ${escapeHtml(fc.file)}`, fc.severity, delay);
+      addLine(`         ${fc.hash ? escapeHtml(fc.hash) : '—'}`, 'hash', delay + 30);
       delay += 120;
     }
     // Annoying-but-obvious beats annoying-and-opaque: staleness is left manual
@@ -1092,7 +1089,7 @@ async function runBoot() {
       result.classList.add('visible');
       const statusEl = document.getElementById('bootStatus');
       statusEl.textContent = data.status;
-      statusEl.className = 'boot-status ' + data.status.toLowerCase();
+      statusEl.className = 'boot-status ' + data.status_severity;
       document.getElementById('bootRoot').textContent = data.merkle_root;
       document.getElementById('bootTimestamp').textContent = data.timestamp;
       document.getElementById('headerRoot').textContent = 'root: ' + data.merkle_root.slice(0, 16) + '...';
@@ -1304,85 +1301,74 @@ document.getElementById('queryInput').addEventListener('keydown', e => {
 // this retrieval? Every label says "since trace" so it cannot be misread as a
 // statement about whether the content is genuine — that is tree integrity's
 // question, rendered separately and deliberately never in green.
-const PROV_CHIP = {
-  resolves: {
-    label: 'unchanged since trace', color: 'var(--green)',
-    // Not "the tree has changed" — a pass is attestable when the check COULD
-    // have failed, which is a different condition and often a different leaf.
-    title: 'This leaf’s content still matches what was recorded at retrieval time, '
-         + 'and this check could have failed — so the match means something.',
-  },
-  drifted: {
-    label: 'changed since trace', color: 'var(--yellow)',
-    title: 'This leaf’s content differs from what was recorded at retrieval time.',
-  },
-  gone: {
-    label: 'removed since trace', color: 'var(--red)',
-    title: 'This leaf is no longer in the tree.',
-  },
-  withdrawn: {
-    label: 'withdrawn since trace', color: 'var(--orange)',
-    title: 'This leaf was retracted or superseded after the trace.',
-  },
-};
-
-const PROV_CHIP_NONE = {
-  label: 'no elapsed check', color: 'var(--text-muted)',
-  title: 'This trace was drawn from the tree and the tree has not changed since. '
-       + 'Re-verifying would compare the tree to itself, which cannot fail — so nothing is claimed. '
-       + 'This is the honest state for a fresh retrieval, not a failure.',
-};
-
-function provStatusBadge(status) {
-  const s = PROV_CHIP[status] || PROV_CHIP_NONE;
-  return `<span role="img" tabindex="0" aria-label="${escapeHtml(s.label)}. ${escapeHtml(s.title)}"`
-    + ` title="${escapeHtml(s.title)}"`
-    + ` style="display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;`
-    + `font-weight:600;letter-spacing:0.4px;cursor:help;background:${s.color}20;color:${s.color};`
-    + `border:1px solid ${s.color}40">${escapeHtml(s.label)}</span>`;
+// No chip vocabulary here. core/retrieval_trace.py emits label, severity and
+// explanation beside the classification that produced them, so a literal in
+// this file cannot assert a verdict the check did not return. Severity names
+// ARE the css class names — nothing left to map.
+function provStatusBadge(leaf) {
+  const label = (leaf && leaf.label) || 'no elapsed check';
+  const sev = (leaf && leaf.severity) || 'unknown';
+  const why = (leaf && leaf.explanation) || '';
+  return `<span class="prov-chip prov-${escapeHtml(sev)}" role="img" tabindex="0"`
+    + ` aria-label="${escapeHtml(label)}. ${escapeHtml(why)}"`
+    + ` title="${escapeHtml(why)}">${escapeHtml(label)}</span>`;
 }
-
-// TREE INTEGRITY — a different question, on purpose given a different shape,
-// place and vocabulary: monospace rather than a pill, attached to the hash it
-// is about, and MUTED when clean. Clean integrity is never green, so two green
-// things can never be misread as double confirmation.
-function integrityLine(hash, ok) {
-  const short = escapeHtml((hash || '').slice(0, 24));
-  if (ok === false) {
-    return `<span class="result-hash" style="color:var(--red)" `
-      + `title="The stored hash does not match this leaf’s current content. Something edited the content without rehashing it.">`
-      + `sha256: ${short} · ✗ CONTENT DOES NOT MATCH THIS HASH</span>`;
-  }
-  if (ok === true) {
-    return `<span class="result-hash" `
-      + `title="This leaf’s content still hashes to its stored value. Clean is shown muted, not green: it is a baseline expectation, not an achievement.">`
-      + `sha256: ${short} · content matches this hash</span>`;
-  }
-  return `<span class="result-hash" title="Integrity could not be checked for this leaf.">`
-    + `sha256: ${short} · integrity unchecked</span>`;
-}
-
-// Told, not left to be inferred: neither indicator covers both tamper shapes.
-const PROV_LEGEND =
-  '<div class="prov-legend">'
-  + '<b>Two independent checks.</b> '
-  + '<span class="prov-legend-row"><b>Tree integrity</b> (monospace, by the hash) &mdash; '
-  + 'does the content match its own hashes, right now?</span>'
-  + '<span class="prov-legend-row"><b>Retrieval trace</b> (chip) &mdash; '
-  + 'has anything changed since this retrieval?</span>'
-  + '<span class="prov-legend-row">Editing content and leaving the hash is caught by integrity. '
-  + 'Editing content <i>and</i> recomputing the hash passes integrity &mdash; but an earlier '
-  + 'retrieval trace still catches it, because the trace compares each leaf&rsquo;s content '
-  + '<i>directly</i> against the hash recorded at retrieval time. That comparison never consults '
-  + 'the tree root, so detection does not depend on the root moving. Neither check covers both; '
-  + 'together they do.</span>'
-  + '<span class="prov-legend-row">On a fresh clone with a fresh retrieval, <b>both read muted, and that is correct</b> &mdash; '
-  + 'nothing has elapsed yet to check against.</span>'
-  + '</div>';
 
 function provSlot(text) {
   return `<div class="prov-summary"><span class="prov-note">${escapeHtml(text)}</span></div>`;
 }
+
+// Integrity phrasing likewise comes from the check (_integrity_display).
+function integrityLine(hash, integrity) {
+  const short = escapeHtml((hash || '').slice(0, 24));
+  const label = (integrity && integrity[0]) || 'integrity unchecked';
+  const sev = (integrity && integrity[1]) || 'unknown';
+  const mark = sev === 'bad' ? '✗ ' : '';
+  return `<span class="result-hash prov-hash-${escapeHtml(sev)}">`
+    + `sha256: ${short} · ${mark}${escapeHtml(label)}</span>`;
+}
+
+// THE LEGEND IS THE ONE PLACE PROSE DOES IRREPLACEABLE WORK: it explains why
+// there are TWO indicators, which is not a description of any value, so
+// deriving it from one is not possible.
+//
+// It is also the text that was wrong twice. So it carries a rule instead:
+//
+//   EVERY SENTENCE MUST BE VERIFIABLE BY DOING. A reader must be able to
+//   produce the described behaviour. Anything that cannot be demonstrated
+//   comes out — cut, not reworded.
+//
+// The action that demonstrates each sentence is written beside it below, and
+// the full procedure is demo/TAMPER-PROTOCOL.md. That protocol is this text's
+// verification mechanism: the claim is checked against reality rather than
+// asserted next to code. A future edit has to survive it.
+//
+// The sentence that failed this rule and was cut: "editing and rehashing moves
+// the tree root". Nobody could produce that — a leaf rehash leaves the root
+// byte-identical — and it was wrong for two rounds because no action was ever
+// attached to it.
+const PROV_LEGEND =
+  '<div class="prov-legend">'
+  + '<b>Two independent checks.</b> '
+  // demonstrate: look at any result card — hash line and chip are both present
+  + '<span class="prov-legend-row"><b>Tree integrity</b> (by the hash) &mdash; '
+  + 'does the content match its own hashes, right now?</span>'
+  + '<span class="prov-legend-row"><b>Retrieval trace</b> (chip) &mdash; '
+  + 'has anything changed since this retrieval?</span>'
+  // demonstrate: TAMPER-PROTOCOL.md §1 — edit a leaf's content, leave its hash
+  + '<span class="prov-legend-row">Edit a claim in the tree and leave its hash alone: '
+  + 'integrity turns red on that card.</span>'
+  // demonstrate: TAMPER-PROTOCOL.md §2 — edit content AND recompute the leaf hash
+  + '<span class="prov-legend-row">Edit it <i>and</i> recompute its hash: integrity goes quiet, '
+  + 'but open an earlier record in the ledger below and that leaf reads '
+  + '<i>changed since trace</i> &mdash; the trace compares content against what was '
+  + 'recorded, so it does not need integrity to have noticed.</span>'
+  // demonstrate: both of the above, in sequence
+  + '<span class="prov-legend-row">Neither check catches both. Together they do.</span>'
+  // demonstrate: TAMPER-PROTOCOL.md §3 — fresh clone, run one query, read both
+  + '<span class="prov-legend-row">On a fresh clone with a fresh retrieval, <b>both read muted, '
+  + 'and that is correct</b> &mdash; nothing has elapsed yet to check against.</span>'
+  + '</div>';
 
 async function renderProvenance(recordId, slotId) {
   const slot = document.getElementById(slotId);
@@ -1422,7 +1408,7 @@ async function renderProvenance(recordId, slotId) {
     (trace.leaves || []).forEach(leaf => {
       document
         .querySelectorAll('[data-prov-leaf="' + CSS.escape(leaf.id) + '"]')
-        .forEach(el => { el.innerHTML = provStatusBadge(leaf.status); });
+        .forEach(el => { el.innerHTML = provStatusBadge(leaf); });
     });
   } catch (e) {
     slot.innerHTML = provSlot('retrieval trace: unavailable (' + e.message + ')');
@@ -1511,7 +1497,7 @@ async function openProvRecord(recordId) {
         <div style="margin-top:10px">
           ${(t.leaves || []).map(l => `
             <div style="margin:6px 0;font-family:'JetBrains Mono',monospace;font-size:11px">
-              ${provStatusBadge(l.status)}
+              ${provStatusBadge(l)}
               <span style="color:var(--text-muted);margin-left:8px">${escapeHtml(l.id)}</span>
             </div>`).join('')}
         </div>
@@ -1571,7 +1557,7 @@ async function runQuery() {
             <span>score: ${r.score}</span>
           </div>
           <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
-            ${integrityLine(r.hash, r.content_hash_ok)}
+            ${integrityLine(r.hash, r.integrity)}
           </div>
         </div>
       `).join('')}
@@ -1859,7 +1845,7 @@ async function runSearch() {
             <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">score: ${r.score}</span>
           </div>
           <div style="margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace">
-            ${integrityLine(r.hash, r.content_hash_ok)}
+            ${integrityLine(r.hash, r.integrity)}
           </div>
         </div>
       `).join('')}
