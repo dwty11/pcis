@@ -248,6 +248,62 @@ class TestRocsTamperShowsNoGreenAnywhere:
         assert "resolve" not in detail["summary"]
 
 
+class TestDetectionDoesNotDependOnTheRoot:
+    """Pins the claim the explainer makes, at the mechanism rather than in prose.
+
+    A cold read tampered a leaf AND recomputed its hash — integrity then passes,
+    and the tree root stays byte-identical because compute_root_hash reads the
+    STORED branch hashes. Drift is still caught, because _classify_all hashes
+    each leaf's CURRENT content and compares it to the hash recorded at
+    retrieval time; the root is never consulted.
+
+    An earlier version of the explainer said detection worked because the root
+    moves. It does not move, and that wrong model would lead a reader to trust
+    root state as a change signal. If someone ever makes detection depend on
+    the root, this test fails.
+    """
+
+    def test_drift_is_caught_while_the_root_is_byte_identical(self, route):
+        import knowledge_tree as kt
+
+        client, paths, ids = route
+
+        # 1. a trace taken BEFORE the tamper
+        rec_id = _run_query(client)["provenance_record_id"]
+        root_before = kt.compute_root_hash(kt.load_tree(paths["tree"]))
+
+        # 2. sophisticated tamper: edit content AND rehash the leaf, so tree
+        #    integrity is satisfied
+        tree = kt.load_tree(paths["tree"])
+        target = None
+        for bname, branch in tree["branches"].items():
+            for leaf in branch["leaves"]:
+                leaf["content"] = "[[REHASHED TAMPER]] " + leaf["content"]
+                leaf["hash"] = kt.hash_leaf(leaf["content"], bname, leaf["created"])
+                target = leaf["id"]
+                break
+            if target:
+                break
+        with open(paths["tree"], "w", encoding="utf-8") as f:
+            json.dump(tree, f)
+
+        root_after = kt.compute_root_hash(kt.load_tree(paths["tree"]))
+        assert root_after == root_before, (
+            "precondition: a leaf rehash must NOT move the root — that is the "
+            "whole reason detection cannot rely on it"
+        )
+
+        # 3. the earlier trace still catches it
+        detail = client.get(f"/api/provenance/{rec_id}").get_json()
+        statuses = {leaf["id"]: leaf["status"] for leaf in detail["leaves"]}
+
+        assert detail["attestable"] is True, (
+            "an observed difference is evidence regardless of root state"
+        )
+        assert statuses[target] == "drifted", statuses
+        assert "drifted" in detail["summary"]
+
+
 class TestScopeNotePerEmitter:
     def test_retrieval_only_note_does_not_mention_an_answer(self, route):
         client, paths, ids = route

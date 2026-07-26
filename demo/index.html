@@ -1228,7 +1228,10 @@ document.getElementById('queryInput').addEventListener('keydown', e => {
 const PROV_CHIP = {
   resolves: {
     label: 'unchanged since trace', color: 'var(--green)',
-    title: 'The tree has changed since this retrieval, and this leaf still matches what was recorded.',
+    // Not "the tree has changed" — a pass is attestable when the check COULD
+    // have failed, which is a different condition and often a different leaf.
+    title: 'This leaf’s content still matches what was recorded at retrieval time, '
+         + 'and this check could have failed — so the match means something.',
   },
   drifted: {
     label: 'changed since trace', color: 'var(--yellow)',
@@ -1289,8 +1292,11 @@ const PROV_LEGEND =
   + '<span class="prov-legend-row"><b>Retrieval trace</b> (chip) &mdash; '
   + 'has anything changed since this retrieval?</span>'
   + '<span class="prov-legend-row">Editing content and leaving the hash is caught by integrity. '
-  + 'Editing content <i>and</i> recomputing the hash passes integrity, but moves the tree root &mdash; '
-  + 'which makes earlier traces checkable and shows the drift. Neither check covers both; together they do.</span>'
+  + 'Editing content <i>and</i> recomputing the hash passes integrity &mdash; but an earlier '
+  + 'retrieval trace still catches it, because the trace compares each leaf&rsquo;s content '
+  + '<i>directly</i> against the hash recorded at retrieval time. That comparison never consults '
+  + 'the tree root, so detection does not depend on the root moving. Neither check covers both; '
+  + 'together they do.</span>'
   + '<span class="prov-legend-row">On a fresh clone with a fresh retrieval, <b>both read muted, and that is correct</b> &mdash; '
   + 'nothing has elapsed yet to check against.</span>'
   + '</div>';
@@ -1323,13 +1329,11 @@ async function renderProvenance(recordId, slotId) {
     // caveats (core/retrieval_trace.py summarize) — do not restate them.
     // scope_note comes from the server, keyed on the emitter: these routes
     // generate no answer, so answer-shaped copy would be a borrowed claim.
-    const gap = trace.attestable === false && trace.attestation_gap
-      ? `<span class="prov-caveat">why no verdict: ${escapeHtml(trace.attestation_gap)}</span>`
-      : '';
+    // summarize() already carries the attestation gap in its parenthetical.
+    // Repeating it verbatim underneath read as defensive rather than careful.
     slot.innerHTML = `
       <div class="prov-summary">
         ${escapeHtml(trace.summary)}
-        ${gap}
         <span class="prov-caveat">leaves selected by: ${escapeHtml(trace.retrieval_mode || 'unrecorded')}`
           + ` · source: ${escapeHtml(trace.injection_source || 'unrecorded')}</span>
         <span class="prov-caveat">${escapeHtml(trace.scope_note || '')}</span>
@@ -1412,14 +1416,18 @@ async function openProvRecord(recordId) {
     const res = await fetch('/api/provenance/' + encodeURIComponent(recordId));
     if (!res.ok) { panel.innerHTML = provSlot('record not found'); return; }
     const t = await res.json();
-    const gap = t.attestable === false && t.attestation_gap
-      ? `<span class="prov-caveat">why no verdict: ${escapeHtml(t.attestation_gap)}</span>` : '';
+    // Per-leaf chips lead; the trace summary follows as the technical line.
+    // Both were previously in the same slot using different words for the same
+    // thing ("resolve — 1 drifted" above "changed since trace"), which a
+    // stranger cannot reconcile. Hierarchy, not two competing headlines.
+    //
+    // root_state is deliberately NOT shown: it reads from STORED branch hashes,
+    // so it can say "current" beside a leaf that demonstrably changed — the
+    // exact false model this panel exists to avoid teaching.
     panel.innerHTML = `
       <div class="prov-summary" style="margin-top:14px">
         <b>${escapeHtml(t.timestamp)}</b> · ${escapeHtml(t.sink)}
-        <span class="prov-caveat">${escapeHtml(t.summary)}</span>
-        ${gap}
-        <span class="prov-caveat">tree root ${escapeHtml(t.root_state)} since the trace`
+        <span class="prov-caveat">re-checked against the tree as it is now`
           + ` · source: ${escapeHtml(t.injection_source || 'unrecorded')}</span>
         <div style="margin-top:10px">
           ${(t.leaves || []).map(l => `
@@ -1428,6 +1436,7 @@ async function openProvRecord(recordId) {
               <span style="color:var(--text-muted);margin-left:8px">${escapeHtml(l.id)}</span>
             </div>`).join('')}
         </div>
+        <span class="prov-caveat">trace summary: ${escapeHtml(t.summary)}</span>
         <span class="prov-caveat">${escapeHtml(t.scope_note || '')}</span>
       </div>`;
   } catch (e) {
