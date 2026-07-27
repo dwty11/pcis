@@ -89,11 +89,7 @@ def load_tree():
 PROVENANCE_LIST_LIMIT = 50
 
 
-# Every status api_boot can put in `status`. The stylesheet must define a
-# .boot-status class for each, or the value renders as unstyled default text —
-# which is how MODIFIED once displayed quieter than CLEAN. Imported by
-# tests/test_boot_manifest.py rather than restated there, so adding a status
-# here breaks the test instead of silently escaping it.
+# Every status api_boot can put in `status`.
 BOOT_STATUSES = ("CLEAN", "MODIFIED", "UNVERIFIABLE", "ERROR")
 
 # Every per-file status api_boot can emit. The headline vocabulary above was

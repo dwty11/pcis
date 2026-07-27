@@ -76,9 +76,6 @@ VOCABULARIES = {
 # Duplications present when this check was written. Each needs a reason: an
 # unexplained exemption is the same problem wearing a different hat.
 KNOWN = {
-    ("tests/test_boot_manifest.py", "BOOT_STATUSES"):
-        "asserts on boot headline states directly; imports FILE_STATUSES but "
-        "not BOOT_STATUSES",
     ("tests/test_e2e.py", "BOOT_STATUSES"):
         "end-to-end assertions on rendered output rather than on the constant",
     ("core/gardener_healthcheck.py", "FILE_STATUSES"):

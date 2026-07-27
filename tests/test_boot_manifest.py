@@ -229,11 +229,11 @@ class TestHeadlineDerivationIsSafeByConstruction:
         """Per-file vocabulary gets the same exported-constant treatment the
         headline vocabulary already has — it was guarded one level up and not
         at this one."""
-        from demo.server import FILE_STATUSES, _boot_headline
+        from demo.server import BOOT_STATUSES, FILE_STATUSES, _boot_headline
 
         for st in FILE_STATUSES:
             status, severity = _boot_headline({st}, tree_ok=True)
-            assert status in {"CLEAN", "MODIFIED", "UNVERIFIABLE"}, st
+            assert status in BOOT_STATUSES, st
             assert severity in {"ok", "bad", "unknown"}, (
                 f"{st} produced severity {severity!r}, which the CSS cannot style"
             )
