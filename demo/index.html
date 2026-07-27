@@ -1959,33 +1959,39 @@ async function loadExternalValidation() {
       </div>
     `;
 
-    // CAPTION PROVENANCE: both roots are DERIVED by compute_root_hash — before
-    // from the tree at the start of the run, after from the tree at the end.
-    // They must be measured the same way or a difference means "we computed it
-    // differently", not "it changed": `before` previously read the STORED
-    // root_hash field, so a stale stored value rendered a before→after
-    // transition for a change that never happened. This was the only Merkle
-    // block without a provenance note, which is how it survived the sweep.
-    const _rb = (data.merkle_root_before || ''), _ra = (data.merkle_root_after || '');
-    const _rootUnchanged = _rb && _ra && _rb === _ra;
-    document.getElementById('gcMerkle').innerHTML = _rootUnchanged ? `
+    // CAPTION PROVENANCE: renders data.root_claim, which the SERVER derived
+    // from the artifact. This block used to infer a verdict itself from
+    // `before !== after`, so a PROJECTED root — the root the tree would have if
+    // the counters were committed, for a tree the validator never writes —
+    // rendered as "MERKLE ROOT TRANSITION". The client now has nothing to
+    // infer: it is handed the kind and draws it.
+    const _claim = data.root_claim || { kind: 'unknown' };
+    const _card = (title, body) => `
       <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
-        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root</div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
-          <span style="color:var(--green)">${_ra.slice(0,24)}...</span>
-          <span style="color:var(--text-muted);font-family:inherit;font-size:12px">root unchanged — challenges are recorded in the validation log, not committed as tree leaves</span>
-        </div>
-      </div>
-    ` : `
-      <div class="card" style="background:rgba(167,139,250,0.05);border-color:rgba(167,139,250,0.2)">
-        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">Merkle Root Transition</div>
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">
-          <span style="color:var(--text-dim)">${_rb.slice(0,24)}...</span>
-          <span style="color:var(--purple);font-size:18px">&rarr;</span>
-          <span style="color:var(--green)">${_ra.slice(0,24)}...</span>
-        </div>
-      </div>
-    `;
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--purple);text-transform:uppercase;margin-bottom:12px">${title}</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:13px">${body}</div>
+      </div>`;
+    const _mono = (v, c) => `<span style="color:var(--${c})">${(v || '').slice(0,24)}...</span>`;
+    const _note = t => `<span style="color:var(--text-muted);font-family:inherit;font-size:12px">${t}</span>`;
+
+    let _merkleHtml;
+    if (_claim.kind === 'transition') {
+      _merkleHtml = _card('Merkle Root Transition',
+        `${_mono(_claim.before,'text-dim')}<span style="color:var(--purple);font-size:18px">&rarr;</span>${_mono(_claim.after,'green')}`);
+    } else if (_claim.kind === 'unchanged') {
+      _merkleHtml = _card('Merkle Root',
+        `${_mono(_claim.after,'green')}${_note('root unchanged — the tree was written and hashed to the same value')}`);
+    } else if (_claim.kind === 'projected') {
+      // No arrow and no green: nothing moved. The projection is shown dimmed and
+      // named, because a second hash beside the first reads as a transition
+      // however it is captioned.
+      _merkleHtml = _card('Merkle Root',
+        `${_mono(_claim.before,'green')}${_note('root unchanged — challenges are recorded in the validation log, not committed as tree leaves')}` +
+        `<div style="width:100%;color:var(--text-dim);font-family:inherit;font-size:12px;margin-top:8px">Projected if committed: <span style="font-family:'JetBrains Mono',monospace">${(_claim.projected||'').slice(0,24)}...</span> — not written, not verifiable against the tree.</div>`);
+    } else {
+      _merkleHtml = _card('Merkle Root', _note('no root recorded for this run'));
+    }
+    document.getElementById('gcMerkle').innerHTML = _merkleHtml;
 
     const list = document.getElementById('gcList');
     if (!data.counters || data.counters.length === 0) {

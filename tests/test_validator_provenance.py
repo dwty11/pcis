@@ -289,9 +289,11 @@ def test_main_commits_nothing_when_every_call_fails(tmp_path, monkeypatch):
     assert data["entries_challenged"] == 0
     assert data["summary"]["live"] == 0
     assert data["summary"]["failed"] == data["summary"]["attempted"] > 0
-    assert data["merkle_root_after"] == data["merkle_root_before"], (
-        "nothing was committed, so there is no transition to report"
+    assert "merkle_root_after" not in data, (
+        "nothing was committed, so there is no after-root to name — the field "
+        "must be absent rather than present-and-equal"
     )
+    assert data["merkle_root_projected"] == data["merkle_root_before"]
 
 
 def test_main_run_file_shows_which_calls_failed(tmp_path, monkeypatch):
@@ -318,10 +320,15 @@ def test_main_records_that_the_tree_was_not_written(tmp_path, monkeypatch):
         lambda p, u, k, m, c, conf: "a genuine counter-argument",
     )
 
-    assert data["tree_written"] is False, (
-        "the run file reports a root 'after' for a tree it does not write; "
-        "a consumer has to be able to tell that apart from a committed change"
+    # tree_written is DERIVED from the file's bytes, not asserted. The literal
+    # version of this passed even with a real write injected -- it checked the
+    # label and never the fact.
+    assert data["tree_written"] is False
+    assert "merkle_root_after" not in data, (
+        "the projection must not be emitted under a name that asserts an "
+        "observation; a consumer renders a transition from before+after"
     )
+    assert data["merkle_root_projected"]
 
 
 def test_main_refuses_an_unsupported_provider(tmp_path, monkeypatch):

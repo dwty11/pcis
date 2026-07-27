@@ -38,6 +38,7 @@ sys.path.insert(
 )
 import core.knowledge_search as knowledge_search
 from core.knowledge_tree import verify_tree_integrity, add_knowledge, compute_root_hash
+from core.root_report import build_root_report, digest_file, root_claim
 
 try:
     from core.belief_traversal import query_belief as _query_belief, assess_belief as _assess_belief
@@ -687,6 +688,12 @@ def api_external_validation():
                     if leaf["id"] == challenged_id:
                         counter["original_content"] = leaf["content"]
                         break
+    # CAPTION PROVENANCE: root_claim is DERIVED from the artifact here, once,
+    # rather than inferred by each client from a bare before/after pair. The
+    # dashboard used to key on `before !== after` alone, so a projected root
+    # rendered as "MERKLE ROOT TRANSITION" for a tree whose bytes never changed.
+    # A client cannot mis-infer a verdict it is handed.
+    data["root_claim"] = root_claim(data)
     return jsonify(data)
 
 
@@ -715,6 +722,9 @@ def api_run_validation():
         # difference in DERIVATION METHOD as a change over TIME. Both ends of a
         # before/after pair must be measured the same way or the comparison is
         # not about time at all. [PCIS-CAPTION-PROVENANCE]
+        # Digest the tree BEFORE the route does anything, so whether it was
+        # written is read off the bytes rather than assumed by this function.
+        _tree_digest_before = digest_file(DEMO_TREE_FILE)
         merkle_root_before = compute_root_hash(tree)
 
         # One provenance trace per challenged leaf. This route makes ONE model
@@ -778,17 +788,16 @@ def api_run_validation():
             "provider": "local-qwen",
             "entries_challenged": 3,
             "counters": counters,
-            "merkle_root_before": merkle_root_before,
-            # MEASURED, not copied. This was `merkle_root_before` verbatim, so
-            # the name asserted a post-state nobody had looked at — and the
-            # UI's "root unchanged" branch was always taken, making its
-            # transition branch unreachable. Today this run does not commit
-            # leaves so the two usually match; if that ever changes, the
-            # difference now shows instead of being defined away.
-            # Derived from the tree as it stands NOW, not from the stored
-            # root_hash field, which can lag the tree it came from.
-            "merkle_root_after": compute_root_hash(load_tree()),
         }
+        # Same shape as the validator, for the same reason: this route does not
+        # write the tree either, so it must not name an after-root. Whether a
+        # write happened is read off the file's bytes, not asserted here.
+        run_data.update(build_root_report(
+            root_before=merkle_root_before,
+            root_projected=compute_root_hash(load_tree()),
+            tree_path=DEMO_TREE_FILE,
+            digest_before=_tree_digest_before,
+        ))
 
         out_path = os.path.join(DEMO_DIR, "external_validation_run.json")
         with open(out_path, "w", encoding="utf-8") as f:

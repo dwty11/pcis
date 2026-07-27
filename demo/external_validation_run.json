@@ -27,5 +27,6 @@
     }
   ],
   "merkle_root_before": "c334bf6e49951a1c1ae58caff4ac03149e8eec19e115e37633affa99677dd216",
-  "merkle_root_after": "c334bf6e49951a1c1ae58caff4ac03149e8eec19e115e37633affa99677dd216"
+  "tree_written": false,
+  "merkle_root_projected": "c334bf6e49951a1c1ae58caff4ac03149e8eec19e115e37633affa99677dd216"
 }

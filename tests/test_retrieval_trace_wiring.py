@@ -536,10 +536,24 @@ class TestRunValidationRoute:
         assert data["merkle_root_before"] != "d" * 64, (
             "before must be derived, not read from the stale stored field"
         )
-        assert data["merkle_root_before"] == data["merkle_root_after"], (
-            "nothing was committed; a stale stored root must not manufacture "
-            "a before/after transition"
+        # This route does not write the tree, so it must not name an after-root
+        # at all. The projection is still checked against `before` for the
+        # original property: a stale STORED root must not make the two ends
+        # disagree, because that difference is derivation, not time.
+        assert "merkle_root_after" not in data, (
+            "no write occurred, so an after-root would name an observation "
+            "nobody made — the key must be absent, not merely equal"
         )
+        assert data["merkle_root_before"] == data["merkle_root_projected"], (
+            "nothing was committed; a stale stored root must not manufacture "
+            "a before/projected difference"
+        )
+        assert data["tree_written"] is False
+        # No root_claim assertion here: this route's body is discarded by the
+        # client, which re-fetches /api/external-validation to render. The
+        # protection that matters at THIS end is that the false pair
+        # (after-root + no write) is not expressible in the artifact at all,
+        # which the two assertions above check.
 
     def test_merkle_root_after_is_measured_not_copied(self, route, monkeypatch):
         """`merkle_root_after` was assigned `merkle_root_before` verbatim.

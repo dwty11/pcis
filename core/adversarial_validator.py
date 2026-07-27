@@ -30,6 +30,7 @@ except (AttributeError, ValueError):
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from knowledge_tree import hash_leaf
+from root_report import build_root_report, digest_file, root_claim
 # compute_root_hash / compute_branch_hash are deliberately NOT imported at
 # module scope: they are the wrong tool everywhere except inside
 # _merkle_snapshot, and a before/after pair computed with the raw
@@ -424,7 +425,10 @@ def main():
     print("=" * 60)
     print()
 
-    # Load tree
+    # Digest the tree BEFORE anything runs, so whether it was written is an
+    # observation rather than this function's opinion of itself.
+    tree_digest_before = digest_file(TREE_FILE)
+
     with open(TREE_FILE, "r", encoding="utf-8") as f:
         tree = json.load(f)
 
@@ -460,12 +464,16 @@ def main():
     print()
 
     # demo_tree.json is NEVER written — the demo tree is a curated static
-    # showcase. So merkle_root_after is a PROJECTION: the root the tree would
-    # have if these counters were committed. Computed on a copy, because a
-    # value labelled "after" must not be bought by mutating the input.
-    # CAPTION PROVENANCE: both ends via _merkle_snapshot (recomputes every
-    # branch hash); the pair is comparable, and `tree_written: false` tells a
-    # consumer this is a projection rather than an observed transition.
+    # showcase. So this root is a PROJECTION: what the tree would hash to if
+    # these counters were committed. Computed on a copy, because a value
+    # describing a post-state must not be bought by mutating the input.
+    #
+    # It is handed to build_root_report, which decides what to CALL it by
+    # re-reading the file: an after-root is emitted only if the bytes changed.
+    # The previous version of this comment claimed a `tree_written` flag "tells
+    # a consumer this is a projection" — no consumer read it, and the dashboard
+    # rendered the projection as a root transition. Naming the field correctly
+    # is the fix; a flag nothing reads is not.
     projected = json.loads(json.dumps(tree))
     for c in counters:
         projected["branches"][c["branch"]]["leaves"].append({
@@ -489,11 +497,14 @@ def main():
         "entries_challenged": summary["live"],
         "summary": summary,
         "attempts": attempts,
-        "tree_written": False,
-        "merkle_root_before": merkle_before,
-        "merkle_root_after": merkle_after,
         "counters": counters,
     }
+    run_data.update(build_root_report(
+        root_before=merkle_before,
+        root_projected=merkle_after,
+        tree_path=TREE_FILE,
+        digest_before=tree_digest_before,
+    ))
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(run_data, f, ensure_ascii=False, indent=2)
     print(f"  Saved {OUTPUT_FILE}")
@@ -506,8 +517,16 @@ def main():
     # 404'd printed the same shape as a clean one.
     print(f"  COMPLETE: {summary['live']}/{summary['attempted']} leaves challenged"
           + (f" · {summary['failed']} FAILED, no leaf built" if summary["failed"] else ""))
-    print(f"  Merkle root: {merkle_before[:16]}... → {merkle_after[:16]}... "
-          "(projected — tree not written)")
+    # CAPTION PROVENANCE: reads run_data, so the console cannot say something
+    # the artifact does not. This line and the field name drifted apart once.
+    _rc = root_claim(run_data)
+    if _rc["kind"] == "projected":
+        print(f"  Merkle root: {_rc['before'][:16]}... (tree not written; "
+              f"would be {_rc['projected'][:16]}... if committed)")
+    elif _rc["kind"] == "transition":
+        print(f"  Merkle root: {_rc['before'][:16]}... → {_rc['after'][:16]}...")
+    else:
+        print(f"  Merkle root: {merkle_before[:16]}... (unchanged)")
     print(f"  Output: adversarial_validation_run.json")
     print("─" * 60)
 
