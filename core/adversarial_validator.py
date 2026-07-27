@@ -147,12 +147,27 @@ def load_config():
     return {}
 
 
+class UnknownProviderError(ValueError):
+    """config named a provider PROVIDER_DEFAULTS has no entry for.
+
+    Raised, never substituted. On 2026-07-27 this code demoted ``openrouter``
+    to ollama behind a log warning, then called ollama with an OpenRouter model
+    name; all five calls 404'd and five canned paragraphs were written down as
+    adversarial challenges. Each step recorded the previous one's output as
+    normal input. A substitution that nothing downstream can see is worse than
+    a stop, because the run still produces a plausible artifact.
+    """
+
+
 def get_provider_config(config):
     """Determine provider, model, api_key, and url from config + env."""
     provider = config.get("llm_provider", "ollama")
     if provider not in PROVIDER_DEFAULTS:
-        log.warning("Unknown llm_provider '%s' — falling back to ollama", provider)
-        provider = "ollama"
+        raise UnknownProviderError(
+            f"llm_provider {provider!r} is not supported. Known providers: "
+            f"{', '.join(sorted(PROVIDER_DEFAULTS))}. Refusing to substitute — "
+            "a demoted provider produces a run that looks like it succeeded."
+        )
 
     defaults = PROVIDER_DEFAULTS[provider]
     model = config.get("llm_model", defaults["model"])
@@ -270,19 +285,93 @@ def send_to_llm(provider, url, api_key, model, leaf_content, leaf_confidence=0.0
     raise last_err
 
 
-# Fallback challenges when LLM API is unreachable (network/geo restrictions)
-FALLBACK_CHALLENGES = {
-    "products": "The stated product specifications are tied to a specific point in time and subject to rapid change. High confidence scores on time-sensitive data should include a staleness decay parameter — what is true today may be materially different in 30 days. The knowledge tree should track a 'valid_until' field for perishable facts.",
-    "compliance": "The compliance assertion covers current architecture but does not account for dependency updates or third-party integrations that may introduce external calls. This leaf requires a periodic re-verification trigger — a static assertion about dynamic properties is structurally weak. Suggest adding a review_by date.",
-    "lessons": "The behavioral pattern described here is based on a limited observation window and is subject to confirmation bias. Patterns inferred from fewer than 5 data points should carry confidence no higher than 0.6. Recommend flagging this leaf for re-evaluation after 3 additional interactions.",
-    "clients": "This leaf contains a subjective assessment without citing the source of the sensitivity evaluation. Recommendations derived from assumed preferences rather than stated ones carry implicit risk. The knowledge tree should distinguish between observed facts and inferred preferences.",
-    "relationships": "Relationship quality scores have a half-life. A score recorded 3+ months ago without a refresh event should be automatically downgraded in confidence. High-priority retention flags not backed by recency data can lead to misallocated effort.",
-}
+# There is deliberately no FALLBACK_CHALLENGES table here.
+#
+# It held five pre-written paragraphs keyed by branch, with an unkeyed branch
+# defaulting to the "compliance" text. On 2026-07-27 that produced five
+# "challenges" of which four were the same paragraph, each committed as a leaf
+# carrying source="adversarial-<date>" and confidence=0.65 — the values a real
+# challenge carries. The canned text was not the defect; the defect was that it
+# reached a leaf wearing a real challenge's clothes.
+#
+# Removed rather than flagged: a hedge path that still writes a leaf is one
+# forgotten field away from being indistinguishable again.
+
+# outcome vocabulary — the summary is derived from this set, never accumulated
+ATTEMPT_OUTCOMES = ("live", "failed")
+
+PRODUCED_BY_LIVE = "live-llm"
 
 
-def get_fallback_challenge(branch_name):
-    """Return a pre-generated adversarial challenge for demo purposes."""
-    return FALLBACK_CHALLENGES.get(branch_name, FALLBACK_CHALLENGES["compliance"])
+def challenge_leaves(selected, challenge_fn, model):
+    """Challenge each selected leaf, returning (counters, attempts).
+
+    ``challenge_fn(content, confidence) -> str`` raises on failure.
+
+    A failed call yields **no counter leaf** — a COUNTER built from anything
+    other than a real challenge is a templated response, not an adversarial
+    pass. The failure is still recorded in ``attempts``: refusing to commit
+    must not also erase the evidence that a call was made and did not answer.
+
+    CAPTION PROVENANCE: every field on a returned counter is derived from this
+    call — ``produced_by`` from the branch that built it, ``model`` from the
+    argument naming what actually answered. Nothing here reads config.
+    """
+    counters, attempts = [], []
+
+    for branch_name, leaf in selected:
+        attempt = {"leaf_id": leaf["id"], "branch": branch_name, "model": model}
+        try:
+            response = challenge_fn(leaf["content"], leaf.get("confidence", 0.0))
+        except Exception as e:  # noqa: BLE001 — any transport failure is a failure
+            log.error("challenge failed for leaf %s: %s", leaf["id"], e)
+            attempts.append({**attempt, "outcome": "failed", "error": str(e)})
+            continue
+
+        if not response or not response.strip():
+            attempts.append({**attempt, "outcome": "failed",
+                             "error": "empty response"})
+            continue
+
+        now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+        content = f"COUNTER: [{leaf['id']}] {response.strip()}"
+        content_hash = hash_leaf(content, branch_name, now)
+
+        counters.append({
+            "id": content_hash[:12],
+            "hash": content_hash,
+            "content": content,
+            "produced_by": PRODUCED_BY_LIVE,
+            "source": f"adversarial-{RUN_DATE}-{PRODUCED_BY_LIVE}",
+            "model": model,
+            "confidence": 0.65,
+            "created": now,
+            "promoted_to": None,
+            "challenged_id": leaf["id"],
+            "branch": branch_name,
+        })
+        attempts.append({**attempt, "outcome": "live", "error": None})
+
+    return counters, attempts
+
+
+def summarize_attempts(attempts):
+    """Derive the headline from the set of outcomes, never by accumulation.
+
+    A boolean accumulated across branches has to remember to flip in each
+    failing one; a count derived from the set cannot forget a branch. An
+    outcome outside ATTEMPT_OUTCOMES raises rather than being silently dropped
+    into neither bucket.
+    """
+    unknown = {a["outcome"] for a in attempts} - set(ATTEMPT_OUTCOMES)
+    if unknown:
+        raise ValueError(f"unclassified attempt outcome(s): {sorted(unknown)}")
+
+    return {
+        "attempted": len(attempts),
+        "live": sum(1 for a in attempts if a["outcome"] == "live"),
+        "failed": sum(1 for a in attempts if a["outcome"] == "failed"),
+    }
 
 
 # Keep legacy interface for backwards compatibility
@@ -347,93 +436,60 @@ def main():
     print(f"  Selected {len(selected)} leaves from branches: {', '.join(s[0] for s in selected)}")
     print()
 
-    # Check API key for cloud providers
-    use_fallback = False
-    if provider in ("anthropic", "openai", "openai_compat") and not api_key:
+    if provider != "ollama" and not api_key:
         env_name = PROVIDER_DEFAULTS[provider]["env_key"]
-        print(f"  No API key found (config.json or ${env_name}).")
-        print("  Using fallback mode (pre-generated challenges).\n")
-        use_fallback = True
-    elif provider == "ollama":
-        print(f"  Using local Ollama ({model}).\n")
+        print(f"  No API key found (config.json or ${env_name}) — every call "
+              "will fail and be recorded as such.\n")
     else:
-        print(f"  API key loaded for {provider}.\n")
+        print(f"  Challenging via {provider} ({model}).\n")
 
-    # Challenge each leaf
-    counters = []
-    for i, (branch_name, leaf) in enumerate(selected, 1):
-        print(f"  [{i}/{len(selected)}] Challenging leaf {leaf['id']} ({branch_name})...")
-        print(f"         \"{leaf['content'][:80]}...\"")
+    def _challenge(content, confidence):
+        return send_to_llm(provider, url, api_key, model, content, confidence)
 
-        if not use_fallback:
-            try:
-                response = send_to_llm(
-                    provider, url, api_key, model,
-                    leaf["content"], leaf.get("confidence", 0.0),
-                )
-                print(f"         Response received ({len(response)} chars)")
-            except Exception as e:
-                log.error("LLM call failed for leaf %s: %s", leaf["id"], e)
-                print(f"         API call failed: {e}")
-                print(f"         Falling back to pre-generated challenge.")
-                response = get_fallback_challenge(branch_name)
+    counters, attempts = challenge_leaves(selected, _challenge, model)
+    summary = summarize_attempts(attempts)
+
+    for a in attempts:
+        if a["outcome"] == "live":
+            print(f"  [{a['branch']}] leaf {a['leaf_id']}: challenged")
         else:
-            response = get_fallback_challenge(branch_name)
+            print(f"  [{a['branch']}] leaf {a['leaf_id']}: NO CHALLENGE — {a['error']}")
+    print()
+    print(f"  {summary['live']}/{summary['attempted']} leaves challenged"
+          + (f", {summary['failed']} failed" if summary["failed"] else ""))
+    print()
 
-        # Skip empty responses — an empty COUNTER leaf is noise in the tree
-        if not response or not response.strip():
-            log.warning("Empty response for leaf %s — skipping COUNTER leaf", leaf["id"])
-            print(f"         Empty response — skipping.")
-            continue
-
-        # Build COUNTER leaf — also guard against whitespace-only body
-        response = response.strip()
-        if not response:
-            log.warning("Whitespace-only response for leaf %s — skipping COUNTER leaf", leaf["id"])
-            print(f"         Whitespace response — skipping.")
-            continue
-        content = f"COUNTER: [{leaf['id']}] {response}"
-        now = datetime.now(TZ_UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-        content_hash = hash_leaf(content, branch_name, now)
-
-        counter_leaf = {
-            "id": content_hash[:12],
-            "hash": content_hash,
-            "content": content,
-            "source": f"adversarial-{RUN_DATE}",
-            "confidence": 0.65,
-            "created": now,
-            "promoted_to": None,
-            "challenged_id": leaf["id"],
-            "branch": branch_name,
-        }
-        counters.append(counter_leaf)
-
-        # Append to tree
-        tree["branches"][branch_name]["leaves"].append({
-            "id": counter_leaf["id"],
-            "hash": counter_leaf["hash"],
-            "content": counter_leaf["content"],
-            "source": counter_leaf["source"],
-            "confidence": counter_leaf["confidence"],
-            "created": counter_leaf["created"],
-            "promoted_to": None,
+    # demo_tree.json is NEVER written — the demo tree is a curated static
+    # showcase. So merkle_root_after is a PROJECTION: the root the tree would
+    # have if these counters were committed. Computed on a copy, because a
+    # value labelled "after" must not be bought by mutating the input.
+    # CAPTION PROVENANCE: both ends via _merkle_snapshot (recomputes every
+    # branch hash); the pair is comparable, and `tree_written: false` tells a
+    # consumer this is a projection rather than an observed transition.
+    projected = json.loads(json.dumps(tree))
+    for c in counters:
+        projected["branches"][c["branch"]]["leaves"].append({
+            "id": c["id"], "hash": c["hash"], "content": c["content"],
+            "source": c["source"], "confidence": c["confidence"],
+            "created": c["created"], "promoted_to": None,
         })
-        print(f"         COUNTER leaf: {counter_leaf['id']}")
-        print()
-
-    # Compute final Merkle root (for reporting only — demo_tree.json is NOT modified)
-    # The demo tree is a curated static showcase; only adversarial_validation_run.json is written.
-    merkle_after = _merkle_snapshot(tree)
-    print(f"  Merkle root (after):  {merkle_after[:24]}...")
-    print(f"  demo_tree.json unchanged (read-only for validator)")
+    merkle_after = _merkle_snapshot(projected)
+    print(f"  Merkle root (before):    {merkle_before[:24]}...")
+    print(f"  Merkle root (projected): {merkle_after[:24]}...")
+    print("  demo_tree.json unchanged (read-only for validator)")
 
     # Save validation run
     run_data = {
         "run_date": RUN_DATE,
         "provider": provider,
         "model": model,
-        "entries_challenged": len(counters),
+        # CAPTION PROVENANCE: derived from the attempt set, not from len(selected).
+        # This counted committed counters before, which happened to be right;
+        # deriving it from `summary` keeps it right if the leaf path changes.
+        "entries_challenged": summary["live"],
+        "summary": summary,
+        "attempts": attempts,
+        "tree_written": False,
         "merkle_root_before": merkle_before,
         "merkle_root_after": merkle_after,
         "counters": counters,
@@ -444,8 +500,14 @@ def main():
 
     print()
     print("─" * 60)
-    print(f"  COMPLETE: {len(counters)} adversarial challenges generated")
-    print(f"  Merkle root: {merkle_before[:16]}... → {merkle_after[:16]}...")
+    # CAPTION PROVENANCE: both numbers from `summary`, which is derived from
+    # the attempt set. The old line read "N adversarial challenges generated"
+    # off len(counters) with no mention of failures, so a run where every call
+    # 404'd printed the same shape as a clean one.
+    print(f"  COMPLETE: {summary['live']}/{summary['attempted']} leaves challenged"
+          + (f" · {summary['failed']} FAILED, no leaf built" if summary["failed"] else ""))
+    print(f"  Merkle root: {merkle_before[:16]}... → {merkle_after[:16]}... "
+          "(projected — tree not written)")
     print(f"  Output: adversarial_validation_run.json")
     print("─" * 60)
 
