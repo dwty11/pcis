@@ -153,6 +153,32 @@ def test_mixed_run_is_distinguishable_from_a_clean_run():
     )
 
 
+def test_every_outcome_is_in_the_declared_vocabulary():
+    """Imports ATTEMPT_OUTCOMES rather than hardcoding a copy of it.
+
+    A test holding its own copy of a producer's status list stays green when
+    the producer grows a state the test has never heard of. Asserting against
+    the constant means a new outcome shows up here instead of slipping past.
+    """
+    from core.adversarial_validator import ATTEMPT_OUTCOMES, challenge_leaves
+
+    def fails_on_second(content, confidence):
+        if "bbb" in content:
+            raise RuntimeError("HTTP 404")
+        return "a genuine counter-argument"
+
+    _counters, attempts = challenge_leaves(
+        [("compliance", _leaf("aaa", "claim aaa")),
+         ("compliance", _leaf("bbb", "claim bbb"))],
+        fails_on_second, model="m",
+    )
+
+    assert {a["outcome"] for a in attempts} == set(ATTEMPT_OUTCOMES), (
+        "this fixture is built to exercise every declared outcome; if the "
+        "vocabulary grew, the fixture needs a case for the new state"
+    )
+
+
 def test_summary_counts_are_derived_from_attempts():
     """A headline derived from the set cannot forget a branch."""
     from core.adversarial_validator import challenge_leaves, summarize_attempts

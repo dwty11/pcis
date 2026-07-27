@@ -36,14 +36,36 @@ import re
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
 
-# Sources that carry load-bearing invariant claims.
-SCANNED = [
-    os.path.join("demo", "server.py"),
-    os.path.join("core", "retrieval_trace.py"),
-    os.path.join("core", "adversarial_validator.py"),
-]
+# Sources are DISCOVERED, not listed.
+#
+# This was a hardcoded list of three paths. A hand-maintained allowlist of
+# where a convention applies is the same stale-allowlist shape the convention
+# exists to remove: writing INVARIANT(...) in a fourth file left it silently
+# unchecked, and nothing failed to say so. The list happened to be complete on
+# the day it was written, which is the most dangerous state for an allowlist —
+# it looks correct right up until someone adds a file.
+#
+# Discovery cannot go stale. The cost is scanning the tree; the benefit is that
+# "where does this convention apply?" has one answer: everywhere.
+SCANNED_DIRS = ("core", "demo", "pcis", "adapters", "scripts", "agent-plugin")
 
 MARKER = re.compile(r"INVARIANT\(([A-Za-z_][A-Za-z0-9_]*)\)")
+
+
+def _scanned_files():
+    """Every .py under the source dirs. No allowlist to forget to update."""
+    out = []
+    for d in SCANNED_DIRS:
+        root = os.path.join(_ROOT, d)
+        if not os.path.isdir(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [x for x in dirnames
+                           if x not in {"__pycache__", ".venv", "node_modules"}]
+            for fn in filenames:
+                if fn.endswith(".py"):
+                    out.append(os.path.relpath(os.path.join(dirpath, fn), _ROOT))
+    return sorted(out)
 
 
 def _all_test_defs():
@@ -58,10 +80,8 @@ def _all_test_defs():
 
 def _markers():
     found = []
-    for rel in SCANNED:
+    for rel in _scanned_files():
         path = os.path.join(_ROOT, rel)
-        if not os.path.exists(path):
-            continue
         text = open(path, encoding="utf-8").read()
         for name in MARKER.findall(text):
             found.append((rel, name))
