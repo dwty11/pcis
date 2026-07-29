@@ -10,7 +10,7 @@ PCIS is one substrate that sells into three distinct audiences via three distinc
 
 - **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated in a prior release; a multi-agent demo returns after the witness-layer redesign. (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
 - **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Shown in the Advocate Demo (Demo 1, below).
-- **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not. Future demo (Pianist Swap).
+- **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not ([amended](#amendment--model-agnosticism): the *score* does not — the performance is the pianist's). Future demo (Pianist Swap).
 
 ---
 
