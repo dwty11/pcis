@@ -537,12 +537,13 @@ def cmd_sign_verify(args):
     from signing import (
         APPROVED_CERT_FILE,
         PUBLIC_KEY_FILE,
+        _default_data_path,
         _default_key_path,
         _tree_file,
         verify_claim,
     )
 
-    cert_path = _default_key_path(APPROVED_CERT_FILE)
+    cert_path = _default_data_path(APPROVED_CERT_FILE)
     if args.key_path:
         pub_path = os.path.abspath(args.key_path)
     else:
@@ -890,11 +891,11 @@ def main():
     sign_parser = sub.add_parser("sign", help="Ed25519 root signing")
     sign_sub = sign_parser.add_subparsers(dest="sign_command")
     p = sign_sub.add_parser("init", help="Generate ed25519 keypair")
-    p.add_argument("--key-dir", help="Directory to write keypair into (default: <BASE>/data/)")
+    p.add_argument("--key-dir", help="Directory to write keypair into (default: $PCIS_KEY_DIR, else ~/.pcis/keys)")
     p = sign_sub.add_parser("root", help="Sign current Merkle root")
-    p.add_argument("--key-path", help="Path to private key (default: <BASE>/data/pcis_signing.key)")
+    p.add_argument("--key-path", help="Path to private key (default: $PCIS_KEY_DIR/pcis_signing.key, else ~/.pcis/keys/pcis_signing.key)")
     p = sign_sub.add_parser("verify", help="Verify signature against current tree")
-    p.add_argument("--key-path", help="Path to public key for verification (default: <BASE>/data/pcis_signing.pub)")
+    p.add_argument("--key-path", help="Path to public key for verification (default: $PCIS_KEY_DIR/pcis_signing.pub, else ~/.pcis/keys/pcis_signing.pub)")
     sign_sub.add_parser("pubkey", help="Print public key hex")
 
     # events (subcommand group) — ESCALATION event journal

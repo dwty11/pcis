@@ -92,6 +92,25 @@ Three buckets, so a reader can tell which gaps are on the path and which are arc
 
 ### Next — named, shaped, intended
 
+- **Timestamp attestation.** Today the root signature covers the root hash alone, so `signed_at` is
+  contextual metadata recorded beside the signature — the verify paths surface it, they do not
+  check it. A holder of the key can write any time it likes and every verifier still passes.
+  The closable part is binding the recorded time into the signed message, so the timestamp
+  cannot be altered after signing without breaking the signature.
+
+  What that closes is bounded, and worth stating rather than blurring: it makes the time
+  *tamper-evident*, not *true*. The clock is still the signer's own. Anchored, independently
+  trusted time is a timestamping authority's job and stays under **Not ours → State commitment**.
+
+- **Off-machine signing handoff.** The supported off-machine pattern narrows the exposure window
+  — the key lives on external media and is read only for the duration of an explicit
+  `pcis sign root --key-path …`. The stronger form is a handoff: the substrate submits a root and
+  receives a signature back, never reading the key at all. That is not shipped here, and neither
+  is its ceremony tooling. Until it is, the boundary is deployment discipline — `sign_root` reads
+  whatever path it is given and signs with it. The only location check is a warning when key
+  material is found at the legacy in-tree `data/` path; nothing refuses, and nothing
+  verifies a key is off-box.
+
 - **Run provenance.** An artifact describing a run records what happened, not what was attempted. A producer can write a report naming *configuration* rather than *outcome* — the model it was configured to call rather than the one that answered, a commit that was intended rather than one that landed, a status derived from a reason table rather than from a response. The report then reads as evidence of the run it describes, and nothing distinguishes it from one that is.
 
   The rule is derived, not narrated: **a field naming a state must be computed from an observation of that state.** `tree_written` is a digest of the tree file before and after the run, not a literal. A root naming a post-state is emitted only when a write occurred; otherwise the projection ships under a name that says it is one — `merkle_root_projected`, not `merkle_root_after`. A verdict distinguishes "the check ran and returned nothing" from "the check did not run," because a bare absence reads as the first and is often the second.
@@ -143,6 +162,7 @@ Named so the scope stays honest, not claimed:
 - **Identity binding** — tying the record to a real-world or hardware identity is the domain of PKI, DIDs, and runtime attestation (TPM / TEE).
 - **State commitment** — committing to current external state, rather than the history-shaped attestation log PCIS is, belongs to consensus and ledger systems (blockchains, state channels, timestamping authorities).
 - **Forward secrecy** — protecting past records against a future key compromise is a key-agreement / transport property (ephemeral-key protocols like TLS 1.3 or the Signal ratchet), not something a signed at-rest log provides.
+- **Answer provenance** — establishing that a model's output actually drew on the leaves it was given lives in model internals (attribution / interpretability), not in a memory substrate. PCIS records retrieval provenance only; nothing in it compares answer text to leaf content.
 
 ---
 

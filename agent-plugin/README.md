@@ -69,10 +69,11 @@ index already exists.
 
 ## Retrieval tracing
 
-Every `pcis_search` call appends a record to
+Every `pcis_search` call that returns at least one leaf appends a record to
 `$PCIS_BASE_DIR/data/provenance-ledger.jsonl` describing which leaves fed the
 result, a hash of each leaf's content **as retrieved**, and the Merkle root at
-that moment. Those leaf ids can later be re-verified against the tree.
+that moment. Those leaf ids can later be re-verified against the tree. A search
+that returns nothing writes no record — there is nothing to attest.
 
 Note this means a read operation writes a file. Set
 `PCIS_TRACE_RETRIEVAL=0` to disable it. A trace that cannot be written never

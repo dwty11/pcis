@@ -1,7 +1,7 @@
-"""test_retrieval_trace_wiring.py — the three emitters actually trace.
+"""test_retrieval_trace_wiring.py — the five emitters actually trace.
 
 The trace machinery already worked when called; nothing called it. These
-tests are about the wiring: that retrieval through each of the three
+tests are about the wiring: that retrieval through each of the five
 approved emitters lands a record in the ledger, hashing the right copy of
 the text, and that a ledger failure can never break retrieval.
 
@@ -15,9 +15,13 @@ claims coverage, only that traced retrievals are traced.
 
 WHICH COPY GETS HASHED
 ======================
-The two search emitters hash the INDEX copy that ``search()`` returned —
-that is the text that was injected, and the reason a stale index is
-detectable at all. ``api_run_validation`` hashes TREE content, because its
+The four search emitters — ``pcis search``, the agent plugin's
+``pcis_search``, and the demo's ``/api/query`` and ``/api/search`` — hash
+the INDEX copy that ``search()`` returned on the semantic path; that is the
+text that was injected, and the reason a stale index is detectable at all.
+Each also has a keyword fallback that reads the TREE, and each sets
+``injection_source="tree"`` there so a self-referential re-verification is
+never attested as a pass. ``api_run_validation`` hashes TREE content, because its
 candidates come from ``load_tree()`` and never touch the index, so the
 index-vs-tree staleness signal does not apply there; only post-trace drift
 does.

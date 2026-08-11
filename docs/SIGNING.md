@@ -1,6 +1,12 @@
 # Signing and verification
 
-PCIS signs the Merkle root so a verifier can check *who* attested the record, and when.
+PCIS signs the Merkle root so a verifier can check **who** attested the record and **that the
+record is intact**. The bare-root signature covers the root hash and nothing else, so the
+`signed_at` in `root_signature.json` is contextual metadata recorded beside the signature rather
+than attested by it — the bundle check surfaces it, nothing verifies it. The off-machine
+approved-root certificate covers a wider claim (root, combined root, tree snapshot, counts,
+chain position) but carries no time field at all. Timestamp attestation is a roadmap item;
+anchored third-party time belongs to a timestamping authority.
 This page states exactly what is shipped, what is a deployment choice, and how to arrange
 the off-machine key separation the design is built around.
 
@@ -15,8 +21,9 @@ the off-machine key separation the design is built around.
   signature covers the full claim and that the signed root still matches the tree, and it
   **fails closed** on any mismatch (`core/signing.py: verify_claim`). What *produces* that
   certificate — and why a bare `sign root` then `sign verify` prints `INVALID` — is covered next.
-- **The gardener holds no key and never signs.** The adversarial pass computes the root and can
-  hand off a claim, but nothing in `core/gardener.py` signs anything. Signing is a separate,
+- **The gardener holds no key and never signs.** The adversarial pass computes the root, but
+  nothing in `core/gardener.py` signs anything — and no command in this repo assembles the
+  approved-root claim either (that is the off-machine half, below). Signing is a separate,
   operator-invoked step.
 
 ## Verification, and the two signing artifacts
@@ -40,7 +47,7 @@ key handling, `sign root`, and the *verifier* — not the off-machine producer o
 So running the full chain on a fresh clone:
 
 ```bash
-pcis sign init     # -> data/pcis_signing.{key,pub}
+pcis sign init     # -> ~/.pcis/keys/pcis_signing.{key,pub}
 pcis sign root     # -> data/root_signature.json   (bare-root signature)
 pcis sign verify   # -> INVALID — no approved_root_cert.json at data/approved_root_cert.json
 ```
@@ -49,22 +56,33 @@ pcis sign verify   # -> INVALID — no approved_root_cert.json at data/approved_
 no on-machine command writes the full-claim cert, because that is the off-machine ratifier's job and
 its tooling lives outside this repo. `sign root` gives you the bare-root signature for audit export;
 a *passing* `sign verify` requires the off-machine-produced `approved_root_cert.json`. (The verifier
-itself is exercised with hand-built certs via the Python API in `tests/test_signing.py` and
-`tests/test_claim_verify_alignment.py`.)
+itself is exercised with hand-built certs in `tests/test_claim_verify_alignment.py` — both through
+the Python API (`verify_claim`) and through the CLI `pcis sign verify`.)
 
 ## Where the key lives by default
 
-`pcis sign init` writes the keypair into the record's own `data/` directory:
+`pcis sign init` writes the keypair **outside the record directory**, into a dedicated key
+directory created mode `0700`:
 
 ```
-data/pcis_signing.key   # private key (0600)
-data/pcis_signing.pub   # public key
+~/.pcis/keys/pcis_signing.key   # private key (0600)
+~/.pcis/keys/pcis_signing.pub   # public key
 ```
 
-That is **on the same machine as the tree**. Use `--key-dir` / `--key-path` to place
-the keypair or private key elsewhere (see CLI reference below). So by default the separation
-the design describes is *not* in force: an on-host process that can read `data/` can sign the
-root. Nothing in the code enforces otherwise.
+`PCIS_KEY_DIR` overrides the location. The key directory is deliberately **not** derived from
+`--dir` / `PCIS_BASE_DIR`: the CLI sets that to the current directory when unset, so a
+base-relative key dir would put the key back inside whatever checkout the command ran from.
+Tests set `PCIS_KEY_DIR` to stay off the real home directory — that isolation is the test
+harness's doing, not a property of the library. A key left at the legacy in-tree path
+`data/pcis_signing.key` is still read, with a warning — the fallback keeps existing installs
+verifying, it does not bless the location.
+
+This keeps the key out of the record directory and out of the project tree. It does **not** move
+the key off the host: the default keypair is still **on the same machine as the tree**. Use
+`--key-dir` / `--key-path` to place the keypair or private key elsewhere (see CLI reference
+below). So by default the separation the design describes is *not* in force: an on-host process
+running as that user can read the key directory and sign the root. Nothing in the code enforces
+otherwise.
 
 ## Off-machine key separation (a supported deployment pattern)
 
@@ -76,8 +94,8 @@ supported through the CLI. From the repo root:
 #    (a mounted removable disk, a hardware-backed store, a remote-mounted path):
 pcis sign init --key-dir /Volumes/signer/pcis-keys
 
-# 2. Copy ONLY the public key back to data/; leave the private key on the external volume:
-cp /Volumes/signer/pcis-keys/pcis_signing.pub data/pcis_signing.pub
+# 2. Copy ONLY the public key back to the local key dir; leave the private key on the volume:
+cp /Volumes/signer/pcis-keys/pcis_signing.pub ~/.pcis/keys/pcis_signing.pub
 
 # 3. Sign the current Merkle root using the off-machine private key:
 pcis sign root --key-path /Volumes/signer/pcis-keys/pcis_signing.key
@@ -96,9 +114,9 @@ machine, and keeping it out of version control, is the operator's responsibility
 
 | Command | Flag | Effect |
 |---------|------|--------|
-| `pcis sign init` | `--key-dir PATH` | Write keypair to `PATH/` instead of `<BASE>/data/` |
-| `pcis sign root` | `--key-path PATH` | Sign with private key at `PATH` instead of `<BASE>/data/pcis_signing.key` |
-| `pcis sign verify` | `--key-path PATH` | Verify using public key at `PATH` instead of `<BASE>/data/pcis_signing.pub` |
+| `pcis sign init` | `--key-dir PATH` | Write keypair to `PATH/` instead of the default key dir (`$PCIS_KEY_DIR`, else `<BASE>/keys` when `PCIS_BASE_DIR` is set, else `~/.pcis/keys`) |
+| `pcis sign root` | `--key-path PATH` | Sign with private key at `PATH` instead of `<KEY_DIR>/pcis_signing.key` |
+| `pcis sign verify` | `--key-path PATH` | Verify using public key at `PATH` instead of `<KEY_DIR>/pcis_signing.pub` |
 
 The same pattern is available via the Python API:
 

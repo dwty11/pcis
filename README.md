@@ -101,7 +101,8 @@ These limits are deliberate — each belongs in a separate layer, and claiming o
 
 - **Not a blockchain.** Append-only and hash-linked, yes — but no chain, no consensus, no token, no network. One agent, locally verifiable. A blockchain immortalizes data it never questions; PCIS spends its compute attacking its own.
 - **Not a vector database.** It challenges what it holds, not just returns it.
-- **Not identity binding.** PCIS proves a given keypair committed a given claim at a given time. Binding that keypair to a person or organization is the job of PKI, DIDs, or runtime attestation, on top.
+- **Not identity binding.** PCIS proves a given keypair committed a given claim. Binding that keypair to a person or organization is the job of PKI, DIDs, or runtime attestation, on top.
+- **Not timestamp attestation.** Leaf timestamps are hash-bound, so an edited `created` field is detected — but the *signature* covers no clock: `signed_at` sits beside the root signature rather than inside it, and the bundle check surfaces it without verifying it. Binding time into the signed message is on the roadmap; anchored, third-party-trusted time is a timestamping authority's job, on top.
 - **Not proof the output came from the tree.** A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
 - **Not equivocation-proof on its own.** A dishonest operator can maintain two trees and show different versions to different parties. Closing that needs an independent witness — a separate layer, not in this repo.
 - **Not a state commitment, and no forward secrecy.** The tree is an attestation log — history-shaped, not a current-state snapshot. A compromised key allows backdating; rotation is operator-driven, old records stay verifiable under old keys.

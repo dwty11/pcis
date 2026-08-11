@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import stat
+import warnings
 from datetime import datetime, timezone
 
 # --- Optional dependency gate -------------------------------------------
@@ -47,8 +48,49 @@ def _base_dir():
     )
 
 
-def _default_key_path(filename):
+def _default_data_path(filename):
+    """Record artifacts — signatures, certs — live beside the tree they describe."""
     return os.path.join(_base_dir(), "data", filename)
+
+
+def _default_key_dir():
+    """Signing keys default outside the record directory AND outside the project tree.
+
+    A private key under `data/` sits in the project tree beside the record it attests.
+    Deliberately NOT derived from `PCIS_BASE_DIR`: the CLI sets that to the current
+    directory when unset (`_set_base_dir` in `pcis/cli.py`), so a base-relative key dir
+    would put the key back inside whatever checkout the command was run from.
+
+    `PCIS_KEY_DIR` overrides — tests and sandboxes set it to stay off the real home
+    directory. Nothing here enforces the location; a caller passing an explicit path is
+    obeyed (see §4 of ARCHITECTURE.md).
+    """
+    return os.environ.get("PCIS_KEY_DIR") or os.path.join(
+        os.path.expanduser("~"), ".pcis", "keys"
+    )
+
+
+def _default_key_path(filename):
+    """Resolve a key file, preferring the out-of-tree key dir.
+
+    A key already sitting in the legacy in-tree `data/` location is still honoured so an
+    existing install keeps verifying, but it warns: the fallback exists to avoid breaking
+    people, not to bless the location.
+    """
+    primary = os.path.join(_default_key_dir(), filename)
+    if os.path.exists(primary):
+        return primary
+    legacy = _default_data_path(filename)
+    if os.path.exists(legacy):
+        warnings.warn(
+            f"PCIS: using signing key material at the legacy in-tree path {legacy}. "
+            f"Move it to {_default_key_dir()} (mode 700) — key material does not belong "
+            "in the record directory.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return legacy
+    return primary
 
 
 PRIVATE_KEY_FILE = "pcis_signing.key"
@@ -68,8 +110,10 @@ def generate_keypair(key_dir=None):
     _require_nacl()
 
     if key_dir is None:
-        key_dir = os.path.join(_base_dir(), "data")
-    os.makedirs(key_dir, exist_ok=True)
+        key_dir = _default_key_dir()
+    # 0700 on the dir, 0600 on the key file below — two barriers, not one. `exist_ok`
+    # leaves a pre-existing directory's mode alone, so this hardens creation, not adoption.
+    os.makedirs(key_dir, mode=0o700, exist_ok=True)
 
     priv_path = os.path.join(key_dir, PRIVATE_KEY_FILE)
     pub_path = os.path.join(key_dir, PUBLIC_KEY_FILE)
@@ -151,7 +195,7 @@ def sign_root(tree=None, private_key_path=None):
         "public_key": public_key_hex,
     }
 
-    sig_path = _default_key_path(SIGNATURE_FILE)
+    sig_path = _default_data_path(SIGNATURE_FILE)
     os.makedirs(os.path.dirname(sig_path), exist_ok=True)
     with open(sig_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
@@ -176,7 +220,7 @@ def verify_root(tree=None, public_key_path=None, signature_path=None):
     root_hash = compute_root_hash(tree)
 
     if signature_path is None:
-        signature_path = _default_key_path(SIGNATURE_FILE)
+        signature_path = _default_data_path(SIGNATURE_FILE)
     if public_key_path is None:
         public_key_path = _default_key_path(PUBLIC_KEY_FILE)
 

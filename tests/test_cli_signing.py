@@ -3,8 +3,10 @@
 
 import json
 import os
+import stat
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -36,14 +38,62 @@ def fresh_tree(tmp_path):
 
 
 class TestSignInit:
-    def test_sign_init_default_writes_to_data(self, fresh_tree):
-        """Default behaviour is unchanged: keypair lands in <base>/data/."""
+    def test_sign_init_default_writes_outside_the_record_dir(
+        self, fresh_tree, isolate_pcis_key_dir
+    ):
+        """Default keypair lands in the key dir, never in the record's own data/.
+
+        The key dir is deliberately NOT derived from the base dir: the CLI sets
+        PCIS_BASE_DIR to the cwd, so a base-relative key dir would drop the key back
+        inside whatever checkout the command ran from. Both halves are asserted —
+        that it lands in the key dir, and that neither the record dir nor the base
+        dir gains key material.
+        """
         out, _err, rc = run_cli(["sign", "init"], base_dir=fresh_tree)
         assert rc == 0, out
-        priv = fresh_tree / "data" / "pcis_signing.key"
-        pub = fresh_tree / "data" / "pcis_signing.pub"
+        priv = isolate_pcis_key_dir / "pcis_signing.key"
+        pub = isolate_pcis_key_dir / "pcis_signing.pub"
         assert priv.exists(), f"Private key not found at default location: {priv}"
         assert pub.exists(), f"Public key not found at default location: {pub}"
+        assert not (fresh_tree / "data" / "pcis_signing.key").exists(), (
+            "Private key must not be written into the record directory"
+        )
+        assert not (fresh_tree / "keys" / "pcis_signing.key").exists(), (
+            "Key dir must not be derived from the base dir — that is the project tree"
+        )
+
+    def test_sign_init_default_key_dir_is_0700(self, fresh_tree, isolate_pcis_key_dir):
+        """Directory mode 0700 — one of the two barriers, alongside 0600 on the key file."""
+        out, _err, rc = run_cli(["sign", "init"], base_dir=fresh_tree)
+        assert rc == 0, out
+        assert stat.S_IMODE(isolate_pcis_key_dir.stat().st_mode) == 0o700
+        key_mode = stat.S_IMODE((isolate_pcis_key_dir / "pcis_signing.key").stat().st_mode)
+        assert key_mode == 0o600, f"private key mode is {key_mode:o}, expected 600"
+
+    def test_legacy_in_tree_key_is_still_read_and_warns(self, fresh_tree):
+        """An existing install with a key in data/ keeps working — loudly.
+
+        The fallback exists so upgrading does not break verification, not to bless the
+        location. If it ever stops warning, the nudge to move the key is gone.
+        """
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "core"))
+        import signing
+
+        legacy_dir = fresh_tree / "data"
+        legacy_dir.mkdir(exist_ok=True)
+        (legacy_dir / "pcis_signing.key").write_text("00" * 32, encoding="utf-8")
+
+        monkey = os.environ.get("PCIS_BASE_DIR")
+        os.environ["PCIS_BASE_DIR"] = str(fresh_tree)
+        try:
+            with pytest.warns(RuntimeWarning, match="legacy in-tree path"):
+                resolved = signing._default_key_path(signing.PRIVATE_KEY_FILE)
+        finally:
+            if monkey is None:
+                os.environ.pop("PCIS_BASE_DIR", None)
+            else:
+                os.environ["PCIS_BASE_DIR"] = monkey
+        assert resolved == str(legacy_dir / "pcis_signing.key")
 
     def test_sign_init_key_dir_flag(self, tmp_path):
         """--key-dir must place the keypair in the given directory."""
@@ -81,7 +131,7 @@ class TestSignInit:
 
 class TestSignRoot:
     def test_sign_root_default(self, fresh_tree):
-        """Default behaviour: sign with key from <base>/data/."""
+        """Default behaviour: sign with the key from the default key dir."""
         run_cli(["sign", "init"], base_dir=fresh_tree)
         out, err, rc = run_cli(["sign", "root"], base_dir=fresh_tree)
         assert rc == 0, f"sign root failed:\nstdout: {out}\nstderr: {err}"
@@ -121,8 +171,8 @@ class TestSignRoot:
 
 
 class TestSignVerify:
-    def test_sign_verify_default_finds_pub_in_data(self, tmp_path):
-        """Default behaviour: verify uses <base>/data/pcis_signing.pub.
+    def test_sign_verify_default_finds_pub_in_key_dir(self, tmp_path, isolate_pcis_key_dir):
+        """Default behaviour: verify uses <base>/keys/pcis_signing.pub.
 
         Note: the default sign+verify integration has a pre-existing file-name mismatch
         (sign root writes root_signature.json; verify reads approved_root_cert.json).
@@ -130,8 +180,8 @@ class TestSignVerify:
         path is tested in test_signing.py via the Python API.
         """
         run_cli(["sign", "init"], base_dir=tmp_path)
-        pub = tmp_path / "data" / "pcis_signing.pub"
-        assert pub.exists(), "Default init must create pub in data/"
+        pub = isolate_pcis_key_dir / "pcis_signing.pub"
+        assert pub.exists(), "Default init must create pub in the key dir"
         # sign verify with no cert present should fail gracefully
         out, err, rc = run_cli(["sign", "verify"], base_dir=tmp_path)
         assert rc == 1, f"sign verify should fail with no cert: {out}"
@@ -154,10 +204,10 @@ class TestSignVerify:
             f"Expected INVALID message, got: {out}\nstderr: {err}"
         )
 
-    def test_sign_verify_unknown_flag(self, tmp_path):
+    def test_sign_verify_unknown_flag(self, tmp_path, isolate_pcis_key_dir):
         """--key-path must be recognised (not raise 'unrecognized argument')."""
         run_cli(["sign", "init"], base_dir=tmp_path)
-        pub = tmp_path / "data" / "pcis_signing.pub"
+        pub = isolate_pcis_key_dir / "pcis_signing.pub"
         out, err, rc = run_cli(
             ["sign", "verify", "--key-path", str(pub)], base_dir=tmp_path
         )

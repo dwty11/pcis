@@ -42,8 +42,13 @@ cd demo/advocate-demo
   id, no hint — against the same seeded tree on your own Ollama model. Counters vary run to
   run; that's disclosed on screen.
 
-**Everything runs on your machine. Nothing leaves it.** The public gardener is Ollama/MLX
-only — there is no cloud path in `core/gardener.py` — and replay needs no model at all.
+**Everything runs on your machine. No knowledge leaves it.** The public gardener is Ollama/MLX
+only — there is no cloud *model* path in `core/gardener.py` — and replay needs no model at all.
+At default configuration the file's one non-local call is an opt-in Telegram summary of three
+counts (no tree content), sent only when `PCIS_TELEGRAM_BOT_TOKEN` and `PCIS_TELEGRAM_CHAT_ID`
+are both set; the demo never reaches it. Both model endpoints are env-overridable
+(`OLLAMA_HOST`, `PCIS_MLX_HOST`), so pointing them at a remote host is something you can choose
+to do — there is just no vendor API path built in.
 
 ## How it stays honest
 
