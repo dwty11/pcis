@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import warnings
 import zipfile
 
 import pytest
@@ -262,6 +263,80 @@ def test_cli_audit_export_creates_bundle_at_default_path(tmp_audit_setup):
     assert "root_hash" in result.stdout
     assert "leaves" in result.stdout
     assert "events" in result.stdout
+
+
+# -----------------------------------------------------------------------
+# 5b. The audit anchor and the signing path resolve the SAME key by default
+#
+# An audit anchor that resolved a different public key from the one `sign init`
+# writes would verify bundles against a key the signer never used — attestation
+# and audit split apart, silently, with both sides reporting success.
+# -----------------------------------------------------------------------
+
+
+def test_audit_export_and_sign_init_resolve_the_same_key(tmp_path, isolate_pcis_key_dir):
+    """`audit export` with no --key must resolve exactly what `sign init` wrote."""
+    cli_script = os.path.join(_ROOT, "pcis", "cli.py")
+
+    def run(*args):
+        return subprocess.run(
+            [sys.executable, cli_script, "--dir", str(tmp_path), *args],
+            capture_output=True, text=True,
+        )
+
+    assert run("init").returncode == 0
+    init = run("sign", "init")
+    assert init.returncode == 0, init.stderr
+
+    # The path sign init reports is the path audit export must resolve.
+    written_pub = isolate_pcis_key_dir / "pcis_signing.pub"
+    assert written_pub.exists(), f"sign init did not write {written_pub}"
+    assert str(written_pub) in init.stdout, init.stdout
+
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import PUBLIC_KEY_FILE, _default_key_path
+
+    resolved = _default_key_path(PUBLIC_KEY_FILE)
+    assert resolved == str(written_pub), (
+        f"audit anchor resolves {resolved}, sign init wrote {written_pub} — "
+        "the audit and signing paths have split"
+    )
+
+    # And end to end: export with no --key must succeed against that key.
+    assert run("sign", "root").returncode == 0
+    export = run("audit", "export")
+    assert export.returncode == 0, f"stderr: {export.stderr}\nstdout: {export.stdout}"
+    assert "Bundle written" in export.stdout
+
+
+def test_audit_anchor_falls_back_to_legacy_data_path_with_a_warning(tmp_path, monkeypatch):
+    """The data/ path stays readable for one release — and says so when used.
+
+    This is the deprecation window, not the contract. If the warning ever stops
+    firing, an operator can sit on the legacy path indefinitely without knowing.
+    """
+    key_dir = tmp_path / "empty-key-dir"
+    key_dir.mkdir()
+    monkeypatch.setenv("PCIS_KEY_DIR", str(key_dir))
+    monkeypatch.setenv("PCIS_BASE_DIR", str(tmp_path))
+
+    legacy = tmp_path / "data"
+    legacy.mkdir(exist_ok=True)
+    (legacy / "pcis_signing.pub").write_text("aa" * 32, encoding="utf-8")
+
+    sys.path.insert(0, os.path.join(_ROOT, "core"))
+    from signing import PUBLIC_KEY_FILE, _default_key_path
+
+    with pytest.warns(RuntimeWarning, match="legacy in-tree path"):
+        resolved = _default_key_path(PUBLIC_KEY_FILE)
+    assert resolved == str(legacy / "pcis_signing.pub")
+
+    # Control: with the key present in the key dir, the legacy path must lose
+    # and no warning may fire — otherwise the test above proves nothing.
+    (key_dir / "pcis_signing.pub").write_text("bb" * 32, encoding="utf-8")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        assert _default_key_path(PUBLIC_KEY_FILE) == str(key_dir / "pcis_signing.pub")
 
 
 # -----------------------------------------------------------------------

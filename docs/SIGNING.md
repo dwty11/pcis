@@ -73,9 +73,13 @@ directory created mode `0700`:
 `--dir` / `PCIS_BASE_DIR`: the CLI sets that to the current directory when unset, so a
 base-relative key dir would put the key back inside whatever checkout the command ran from.
 Tests set `PCIS_KEY_DIR` to stay off the real home directory — that isolation is the test
-harness's doing, not a property of the library. A key left at the legacy in-tree path
-`data/pcis_signing.key` is still read, with a warning — the fallback keeps existing installs
-verifying, it does not bless the location.
+harness's doing, not a property of the library.
+
+Key material left at the legacy in-tree path `data/pcis_signing.{key,pub}` is still read for
+**one release**, and every such read emits a `RuntimeWarning` naming the path. The fallback keeps
+existing installs verifying through the upgrade; it does not bless the location, and it goes away.
+`pcis audit export` resolves its public-key anchor through the same lookup, so the audit anchor
+and the signing path cannot disagree about which key is authoritative.
 
 This keeps the key out of the record directory and out of the project tree. It does **not** move
 the key off the host: the default keypair is still **on the same machine as the tree**. Use

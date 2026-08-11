@@ -720,13 +720,20 @@ def cmd_audit_export(args):
     _set_base_dir(args)
     sys.path.insert(0, os.path.join(_ROOT, "core"))
     from audit import create_bundle
+    from signing import PUBLIC_KEY_FILE, _default_key_path
 
     base = os.environ["PCIS_BASE_DIR"]
 
     tree = args.tree or os.path.join(base, "data", "tree.json")
     sig = args.sig or os.path.join(base, "data", "root_signature.json")
     journal = args.journal or os.path.join(base, "data", "events.action.jsonl")
-    key = args.key or os.path.join(base, "data", "pcis_signing.pub")   # pinned anchor, not the emptied ~/.pcis-keys
+    # The audit anchor resolves the public key exactly as `sign init` writes it
+    # ($PCIS_KEY_DIR, else ~/.pcis/keys, with the legacy in-tree data/ path as a
+    # warned fallback). An anchor that resolved differently from the signing path
+    # would verify a bundle against a key the signer never used — a split between
+    # attestation and audit, which is the shape this project documents as unshipped
+    # rather than ships.
+    key = args.key or _default_key_path(PUBLIC_KEY_FILE)
 
     if args.output:
         output = args.output
@@ -924,7 +931,7 @@ def main():
     p.add_argument("--tree", help="Path to tree.json (default: <BASE_DIR>/data/tree.json)")
     p.add_argument("--sig", help="Path to root_signature.json (default: <BASE_DIR>/data/root_signature.json)")
     p.add_argument("--journal", help="Path to events.action.jsonl (default: <BASE_DIR>/data/events.action.jsonl)")
-    p.add_argument("--key", help="Path to pcis_signing.pub (default: <base>/data/pcis_signing.pub)")
+    p.add_argument("--key", help="Path to pcis_signing.pub (default: same as sign init — $PCIS_KEY_DIR, else ~/.pcis/keys; legacy <BASE>/data/ still read with a warning)")
     p.add_argument("--output", help="Output bundle path (default: <BASE_DIR>/data/audit/<YYYYMMDD>.belief.bundle)")
 
     p = audit_sub.add_parser("verify", help="Verify a .belief.bundle")
