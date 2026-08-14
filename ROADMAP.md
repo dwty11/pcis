@@ -174,6 +174,26 @@ Three buckets, so a reader can tell which gaps are on the path and which are arc
   so a green suite proves nothing about the contract. That is why the fragments must be non-ASCII
   and why the expected hash has to ship beside them.
 
+- **Gate direct additions — fixtures first, then the gate.** `pcis add` writes into the record with
+  no staging and no certification; the README states this in its opening section. The intended
+  shape is that a direct add fails by default, with an explicit `--force-bypass-staging` escape for
+  the cases that genuinely need it.
+
+  The cost of that change has been measured rather than estimated, because it is not where a reader
+  would expect. Refusing direct add by default takes the test suite from **754 passing to 748, with
+  6 failures** — and **only 2 of those 6 test `add` itself**. The other four use it as the *seeding
+  primitive*: they call it to build tree state which they then tamper with, attack, or inspect. So
+  gating direct add is not a CLI flag, it is a test-fixture migration, and the suite has to grow a
+  staging-aware way to construct state before the default can move.
+
+  The README quickstart migrates with it — the getting-started example is a bare `pcis add`, and
+  changing the default without changing that example would break a new adopter's first run at the
+  exact point the documentation promises success.
+
+  **Sequencing, therefore: fixtures first, then the gate, then the quickstart.** Moving a security
+  default while its test fixtures are being rewritten underneath it is how a suite ends up migrated
+  under pressure and certifying less than it appears to.
+
 > **On the source of these three items, and what it says about the bounds section.**
 > They came from an external model read of the public README. Worth recording precisely: the
 > reviewer surfaced only bounds this repository already declares — it found the limitations
@@ -254,6 +274,25 @@ These prove the log wasn't edited. Most of them don't test whether the claim sti
 
 - Confidence values are heuristic, not Bayesian — formal updating is a Later item (Bayesian confidence, above).
 - **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten only by two internal paths, neither on the CLI: passing `tree=` to `add_synapse` (a direct Python API call) and the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint). Both currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a Later item, tied to Bayesian confidence above.
+- **Confidence is outside the leaf hash, so it is outside the tamper-evidence.** Leaf hashing
+  covers `branch:timestamp:content`. Confidence is not covered. The consequence is direct: a stored
+  confidence value can be rewritten with no hash movement anywhere — the leaf hash does not change,
+  the branch hash does not change, the root does not change, `verify_tree_integrity` returns clean,
+  and the root signature still verifies. Measured, not inferred: changing a leaf's confidence from
+  0.95 to 0.10 produced no movement in any of those and no error from any check.
+
+  This matters beyond bookkeeping, because confidence is the input to the belief-stance thresholds
+  — it is what decides whether a claim reads as confident, uncertain, or contested. So the number
+  describing the system's own certainty sits outside the tamper-evidence that the rest of the
+  record has.
+
+  The honest bound at the whole-record level: belief state is attested at **ceremony cadence, as a
+  blob**. The approved-root claim carries `tree_snapshot_sha256`, a hash of the entire tree file,
+  so a ceremony fixes the whole of it — confidence included — at that instant. It never attests a
+  *transition*, and it attests nothing between ceremonies. A confidence rewritten and left in place
+  is caught by the next ceremony only as "the snapshot differs," with no account of what changed or
+  when.
+
 - Semantic search requires Ollama + `nomic-embed-text`; keyword search is always available as fallback.
 - Adversarial validator supports Anthropic, OpenAI, Ollama, and any OpenAI-compatible local adapter. Additional cloud providers can be added by extending the validator config.
 - No authentication on the demo server — demo is intended for local use only.
