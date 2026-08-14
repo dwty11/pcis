@@ -139,6 +139,60 @@ Three buckets, so a reader can tell which gaps are on the path and which are arc
 - **Ingestion.** Claims enter through `pcis add` / the CLI; nothing reads an agent's output stream and commits what it asserted.
 - **Third-party agent integration.** The plugin and skills interfaces are built and working — an agent runs on them today. What's missing is not code but *independent* evidence: no agent built by a third party has integrated against them yet. The interfaces are done; outside validation is the gap.
 
+- **Verification time inside the signed object.** `verification_time_unix`, bound into the signed
+  message rather than recorded beside it. This is the cheap half of the timestamp problem: with the
+  time inside the signature, backdating a verification stops being a free edit and requires the
+  attacker to move the system clock as well.
+
+  What it does **not** do, stated plainly because the distinction is the whole value of the item:
+  it does not make the timestamp third-party trusted. The clock remains the signer's own, and a
+  signer who controls the machine controls both. Independently anchored time is a timestamping
+  authority's job — RFC 3161 remains the roadmap answer, under **Not ours → State commitment**.
+  This item raises the cost of backdating; it does not close the question.
+
+- **Hash external evidence in the gardener's verification log.** A counter-leaf grounded in an
+  external source is only as reproducible as that source. Today the log records the reference; if
+  the page changes or disappears, the challenge cannot be re-derived and the record asserts a
+  grounding nobody can check. Store the SHA-256 of the retrieved evidence — or the full copy where
+  size permits — **at challenge time**, so a later reader can distinguish "the evidence moved" from
+  "the evidence never said that."
+
+  This is the same discipline as the retrieval trace, applied outward: that layer re-verifies
+  content the tree already holds, and this one covers content the tree only points at.
+
+- **Reference JSON fragments with expected SHA-256 in the spec.** An adapter author implementing
+  against the canonicalization rules currently has to infer them from prose and guess at their
+  formatter's defaults. The spec should carry worked fragments together with the exact SHA-256 of
+  their canonical bytes, so an implementer checks bytes instead of reading a sentence and hoping.
+
+  The worked example this needs is already measured. A claim containing non-ASCII text
+  canonicalizes to **73 bytes** under the required settings and **131 bytes** if the serializer's
+  `ensure_ascii` default is left in place — the non-ASCII characters become `\uXXXX` escapes, so a
+  *different message* is signed. Both sides then report success: the signer signs, the verifier
+  fails, and neither surfaces a reason, because the claim looks identical in every log. An
+  ASCII-only test suite cannot detect it — for ASCII input the two settings agree byte-for-byte,
+  so a green suite proves nothing about the contract. That is why the fragments must be non-ASCII
+  and why the expected hash has to ship beside them.
+
+> **On the source of these three items, and what it says about the bounds section.**
+> They came from an external model read of the public README. Worth recording precisely: the
+> reviewer surfaced only bounds this repository already declares — it found the limitations
+> section and restated it. That is a real result, and it is the argument *for* keeping that section
+> load-bearing: a reader with no access to the source reached the same edges the source does.
+>
+> It is also the argument that the section is **incomplete**, because the reviewer missed one the
+> README does not declare: **confidence sits outside `hash_leaf`.** Leaf hashing covers
+> `branch:timestamp:content`, so a leaf's confidence can be rewritten with no hash movement
+> anywhere. Verified by execution: changing a stored confidence from 0.95 to 0.10 leaves the leaf
+> hash unmoved, the root unmoved, `verify_tree_integrity` returning clean, and the root signature
+> still valid. Nothing in the integrity layer covers it.
+>
+> That matters because confidence is not decoration — it is the input to the belief-stance
+> thresholds. So the number the system uses to describe its own certainty is, today, outside the
+> tamper-evidence the rest of the record enjoys. A bounds section is only as good as the bounds
+> nobody thought to write down, and an external reader confirming the written ones does not test
+> for the unwritten ones.
+
 ### Shipped — previously in Next
 
 - **Output grounding — verified retrieval trace.** Live on five retrieval paths: the demo server's `query`, `search`, and `run-validation` routes; `pcis search`; and the agent plugin's search. Injected leaf IDs are logged with content hashes and re-verified against the tree at read time: `resolves` / `drifted` / `gone` / `withdrawn`.
