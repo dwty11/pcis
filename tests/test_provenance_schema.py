@@ -403,8 +403,8 @@ class TestEnumsAndPinning:
     def test_enum_members(self):
         import provenance as p
 
-        assert p.RECORD_KINDS == ("intake", "retrieval")
-        assert p.ACTORS == ("architect", "cc", "roc", "gardener", "user")
+        assert p.RECORD_KINDS == ("intake", "retrieval", "attestation")
+        assert p.ACTORS == ("architect", "cc", "roc", "gardener", "user", "agent")
         assert p.RE_VERIFICATION_STATUSES == (
             "pass", "mismatch", "missing", "retracted",
         )
@@ -426,6 +426,51 @@ class TestEnumsAndPinning:
         assert default_retraction_for("roc-cold-read") == "high"
         assert default_retraction_for("handoff") == "normal"
         assert default_retraction_for(None) == "normal"
+
+
+class TestAttestationRecordKind:
+    """v0.2 vocabulary extension (ruled by J, 2026-08-15).
+
+    An agent-claim attestation is neither an intake nor a retrieval. Under R0
+    nothing is injected, so the attest node looks the claim up AFTER the answer
+    already exists — there is no RetrievalProvenance to carry and no source
+    document being taken in. The discriminator previously ran if/elif over the
+    two known kinds, so a third kind would have fallen through UNVALIDATED and
+    been free to carry either block. These pin the closed branch.
+    """
+
+    def test_attestation_carries_neither_block(self):
+        r = _record(record_kind="attestation", actor="agent", retrieval=None)
+        assert r.record_kind == "attestation"
+        assert r.intake is None and r.retrieval is None
+        # R3 derives the aggregate for retrieval only — an attestation keeps the
+        # verifier result it was given, exactly as intake does.
+        assert r.verifier_result.method == "content_hash"
+
+    def test_attestation_rejects_a_retrieval_block(self):
+        with pytest.raises(ValueError, match="must NOT carry a retrieval block"):
+            _record(record_kind="attestation", actor="agent", retrieval=_retrieval())
+
+    def test_attestation_rejects_an_intake_block(self):
+        with pytest.raises(ValueError, match="must NOT carry an intake block"):
+            _record(
+                record_kind="attestation", actor="agent",
+                intake=_intake(), retrieval=None,
+            )
+
+    def test_agent_actor_accepted(self):
+        r = _record(record_kind="attestation", actor="agent", retrieval=None)
+        assert r.actor == "agent"
+
+    def test_control_unknown_actor_still_rejected(self):
+        """Control — proves the actor gate can still fail after the extension.
+
+        The rejected value is a neutral placeholder on purpose: a vendor or product
+        name here would be the very leak the ACTORS comment above forbids, and a test
+        fixture is still a line in a public repository.
+        """
+        with pytest.raises(ValueError, match="actor must be one of"):
+            _record(record_kind="attestation", actor="a-stranger", retrieval=None)
 
 
 class TestSelfCertification:

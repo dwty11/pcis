@@ -50,12 +50,18 @@ SCHEMA_VERSION = "0.2"
 
 # === Enums ==================================================================
 
-RECORD_KINDS = ("intake", "retrieval")
+# 'attestation' added 2026-08-15 (ruled by J): a record attesting an agent's
+# claim against the record is neither an intake nor a retrieval. It cannot be
+# 'retrieval' — a retrieval record carries injected_leaf_ids, and nothing is
+# injected here; the lookup happens AFTER the answer exists.
+RECORD_KINDS = ("intake", "retrieval", "attestation")
 # 'architect' is a role name, not a system name. v0.2 renamed it from a
 # private agent's name: a public schema whose actor vocabulary names a
 # private system is a leak in the contract itself, and it would be baked
 # into every line of an append-only ledger format, permanently.
-ACTORS = ("architect", "cc", "roc", "gardener", "user")
+# 'agent' (2026-08-15) follows that rule: the answering agent whose claims are
+# attested, named by role. A vendor or product name here would be the same leak.
+ACTORS = ("architect", "cc", "roc", "gardener", "user", "agent")
 SOURCE_TYPES = (
     "handoff",
     "gardener",
@@ -495,6 +501,19 @@ class ProvenanceRecord:
                 )
             # R3 — the aggregate is computed, never asserted, for retrieval.
             self.verifier_result = derive_verifier_result(self.retrieval)
+        elif self.record_kind == "attestation":
+            # Carries NEITHER block: nothing was taken in, nothing was injected.
+            # Stated explicitly rather than left to fall through — an unlisted
+            # kind reaching this if/elif unvalidated would be free to carry any
+            # block at all, and the ledger is append-only.
+            if self.intake is not None:
+                raise ValueError(
+                    "record_kind='attestation' must NOT carry an intake block"
+                )
+            if self.retrieval is not None:
+                raise ValueError(
+                    "record_kind='attestation' must NOT carry a retrieval block"
+                )
 
     # === Serialization ===
 
