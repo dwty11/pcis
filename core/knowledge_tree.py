@@ -20,7 +20,7 @@ Usage:
     python3 knowledge_tree.py --assess <leaf_id>
     python3 knowledge_tree.py --query-belief <natural language query>
     python3 knowledge_tree.py --proof <leaf_id>
-    python3 knowledge_tree.py --verify-proof <proof.json>
+    python3 knowledge_tree.py --verify-proof <proof.json> (--root <hex> | --cert <cert.json>)
     python3 knowledge_tree.py --decay [--half-life 180] [--dry-run]
 
 Examples:
@@ -286,6 +286,94 @@ def verify_proof(leaf_hash, proof, expected_root):
         else:
             current = hashlib.sha256(b'\x01' + (current + sibling).encode()).hexdigest()
     return current == expected_root
+
+
+def _branch_preimages(tree):
+    """The leaf preimages of the top-level construction, in root order.
+
+    Mirrors compute_root_hash's ``f"{name}:{branch['hash']}"`` over sorted
+    branch names. Kept as one helper so the two constructions cannot drift
+    apart silently.
+    """
+    branches = tree.get("branches", {})
+    return [f"{name}:{branches[name].get('hash', 'EMPTY')}"
+            for name in sorted(branches.keys())]
+
+
+def generate_branch_path(tree, branch_name):
+    """Sibling path from a branch's preimage up to the TREE root.
+
+    The hop ``generate_proof`` does not make. ``generate_proof`` stops at the
+    branch root; the value ``sign_root`` signs is the tree root, one Merkle
+    construction above it. Without this path a proof holder can establish
+    inclusion under a branch root only, which nothing attests to directly.
+
+    Reuses ``_merkle_tree_from_hashes``, which already returns the ``levels``
+    that ``compute_root_hash`` computes and discards — so the path is derived
+    from the same construction that produces the signed value, not a parallel
+    re-derivation that could drift.
+
+    Returns ``{branch, branch_root, path, root_hash}`` where ``path`` is a
+    list of ``{"hash", "position"}`` siblings in the shape ``verify_proof``
+    consumes, and ``root_hash`` is recomputed, not read from the tree.
+    """
+    if branch_name not in tree.get("branches", {}):
+        raise ValueError(f"branch '{branch_name}' not found in tree")
+    preimages = _branch_preimages(tree)
+    branch_root = tree["branches"][branch_name].get("hash", "EMPTY")
+    target = f"{branch_name}:{branch_root}"
+    root, levels = _merkle_tree_from_hashes(preimages)
+    idx = preimages.index(target)
+    path = []
+    for level in levels[:-1]:
+        if idx % 2 == 0:
+            sibling = level[idx + 1] if idx + 1 < len(level) else MERKLE_PAD
+            path.append({"hash": sibling, "position": "right"})
+        else:
+            path.append({"hash": level[idx - 1], "position": "left"})
+        idx = idx // 2
+    return {
+        "branch": branch_name,
+        "branch_root": branch_root,
+        "path": path,
+        "root_hash": root,
+    }
+
+
+def generate_root_proof(tree, branch_name, leaf_id):
+    """A full leaf-to-tree-root inclusion proof.
+
+    ``generate_proof`` plus ``generate_branch_path``: the leaf leg and the
+    branch leg in one envelope, so a holder can verify inclusion under the
+    root that gets signed rather than under an intermediate value.
+
+    ``root_hash`` is the recomputed root, not ``tree["root_hash"]``. On a
+    consistent tree they are equal; where they differ the tree is the thing
+    that is wrong, and the envelope should carry what the path actually
+    reconstructs.
+    """
+    envelope = dict(generate_proof(tree, branch_name, leaf_id))
+    branch_path = generate_branch_path(tree, branch_name)
+    envelope["branch_path"] = branch_path["path"]
+    envelope["root_hash"] = branch_path["root_hash"]
+    return envelope
+
+
+def verify_root_proof(envelope, expected_root):
+    """Verify leaf -> branch root -> *expected_root*.
+
+    ``expected_root`` is REQUIRED and is deliberately not defaulted from
+    ``envelope["root_hash"]``. A verifier that takes its anchor from the
+    object under test establishes that the object is internally consistent,
+    which a forger can satisfy trivially. The caller must supply a root it
+    obtained independently — an approved-root certificate, a pinned value,
+    or an operator-supplied argument.
+    """
+    if not verify_proof(envelope["leaf_hash"], envelope["proof"],
+                        envelope["branch_root"]):
+        return False
+    preimage = f"{envelope['branch']}:{envelope['branch_root']}"
+    return verify_proof(preimage, envelope["branch_path"], expected_root)
 
 
 def compute_root_hash(tree):
@@ -941,7 +1029,7 @@ if __name__ == "__main__":
             print(f"   New root: {tree['root_hash'][:24]}...")
     elif args[0] == "--proof":
         if len(args) < 2:
-            print("Usage: --proof <leaf_id>")
+            print("Usage: --proof <leaf_id> [out.json]")
             sys.exit(1)
         leaf_id = args[1]
         tree = load_tree()
@@ -957,39 +1045,95 @@ if __name__ == "__main__":
         if not branch_name:
             print(f"Error: leaf '{leaf_id}' not found in any branch.")
             sys.exit(1)
-        proof = generate_proof(tree, branch_name, leaf_id)
-        # Verify it ourselves
-        valid = verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
-        print(f"\nMerkle Inclusion Proof")
-        print(f"   Leaf:   {proof['leaf_id']}")
-        print(f"   Hash:   {proof['leaf_hash'][:24]}...")
-        print(f"   Branch: {proof['branch']}")
-        print(f"   Root:   {proof['branch_root'][:24]}...")
-        print(f"   Steps:  {len(proof['proof'])}")
-        print(f"   Valid:  {'YES' if valid else 'FAILED'}")
+        # Full leaf -> tree-root envelope. A branch-only proof cannot be
+        # anchored to anything that gets signed, so it is not what this
+        # command emits.
+        proof = generate_root_proof(tree, branch_name, leaf_id)
+        valid = verify_root_proof(proof, proof["root_hash"])
+        print(f"\nMerkle Inclusion Proof (leaf -> tree root)")
+        print(f"   Leaf:        {proof['leaf_id']}")
+        print(f"   Hash:        {proof['leaf_hash'][:24]}...")
+        print(f"   Branch:      {proof['branch']}")
+        print(f"   Branch root: {proof['branch_root'][:24]}...")
+        print(f"   Tree root:   {proof['root_hash'][:24]}...")
+        print(f"   Steps:       {len(proof['proof'])} leaf-leg "
+              f"+ {len(proof['branch_path'])} branch-leg")
+        print(f"   Self-check:  {'YES' if valid else 'FAILED'}")
+        print(f"   NOTE: verify with --verify-proof <file> --cert <approved-root-cert.json>.")
+        print(f"         A self-check proves the envelope is internally consistent, nothing more.")
         # Output JSON for external verification
         out_path = args[2] if len(args) > 2 else None
         if out_path:
             with open(out_path, 'w', encoding='utf-8') as f:
                 json.dump(proof, f, indent=2)
-            print(f"   Saved:  {out_path}")
+            print(f"   Saved:       {out_path}")
         else:
             print(f"\n{json.dumps(proof, indent=2)}")
     elif args[0] == "--verify-proof":
+        usage = ("Usage: --verify-proof <proof.json> "
+                 "(--root <hex> | --cert <approved-root-cert.json>)")
         if len(args) < 2:
-            print("Usage: --verify-proof <proof.json>")
-            sys.exit(1)
+            print(usage)
+            sys.exit(2)
+        expected_root = None
+        root_source = None
+        rest = args[2:]
+        i = 0
+        while i < len(rest):
+            if rest[i] == "--root" and i + 1 < len(rest):
+                expected_root = rest[i + 1].strip().lower()
+                root_source = "--root argument"
+                i += 2
+            elif rest[i] == "--cert" and i + 1 < len(rest):
+                cert_path = rest[i + 1]
+                try:
+                    with open(cert_path, encoding="utf-8") as f:
+                        cert = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError) as e:
+                    print(f"Error loading certificate: {e}")
+                    sys.exit(2)
+                claim = cert.get("claim", cert)
+                expected_root = str(claim.get("root_hash", "")).strip().lower()
+                if not expected_root:
+                    print(f"Error: no claim.root_hash in {cert_path}")
+                    sys.exit(2)
+                idx = claim.get("chain_index")
+                root_source = (f"certificate {os.path.basename(cert_path)}"
+                               + (f" (chain index {idx})" if idx is not None else ""))
+                i += 2
+            else:
+                print(f"Unknown argument: {rest[i]}")
+                print(usage)
+                sys.exit(2)
+        if expected_root is None:
+            print("\nRefusing to verify: no expected root supplied.")
+            print("   A proof checked against the root carried inside its own file")
+            print("   establishes that the file is internally consistent. It does not")
+            print("   establish that the leaf was in any tree — a forged envelope")
+            print("   satisfies it. Supply the root from outside:")
+            print(f"\n   {usage}")
+            sys.exit(2)
         try:
             with open(args[1], encoding="utf-8") as f:
                 proof = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading proof: {e}")
-            sys.exit(1)
-        valid = verify_proof(proof["leaf_hash"], proof["proof"], proof["branch_root"])
+            sys.exit(2)
+        if "branch_path" not in proof:
+            print("\nRefusing to verify: this proof has no branch_path.")
+            print("   It is a legacy branch-only proof, which reaches a branch root")
+            print("   and stops one Merkle construction below the signed tree root.")
+            print("   It cannot be anchored. Regenerate it with --proof <leaf_id>.")
+            sys.exit(2)
+        valid = verify_root_proof(proof, expected_root)
         print(f"\nProof Verification: {'PASS' if valid else 'FAIL'}")
-        print(f"   Leaf hash:   {proof['leaf_hash'][:24]}...")
-        print(f"   Branch root: {proof['branch_root'][:24]}...")
-        print(f"   Steps:       {len(proof['proof'])}")
+        print(f"   Leaf hash:    {proof['leaf_hash'][:24]}...")
+        print(f"   Branch:       {proof.get('branch')}")
+        print(f"   Branch root:  {proof['branch_root'][:24]}...")
+        print(f"   Expected root:{expected_root[:24]}...")
+        print(f"   Root source:  {root_source}")
+        print(f"   Steps:        {len(proof['proof'])} leaf-leg "
+              f"+ {len(proof['branch_path'])} branch-leg")
         if not valid:
             sys.exit(1)
     elif args[0] == "--help":
