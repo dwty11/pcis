@@ -31,10 +31,23 @@ have to be settled BEFORE building it rather than discovered during:
      read the same predecessor and both chain onto it. Retrieval traces are
      written from HTTP request paths, so this is a live exposure, not a
      theoretical one.
-  3. Inclusion proofs stop at the branch root. ``generate_proof`` /
-     ``verify_proof`` (core/knowledge_tree.py:208, :271) have no
-     branch-to-tree-root path, so "provably included under the root this
-     trace recorded" is not reachable without shipping the whole tree.
+  3. Inclusion proofs now reach the tree root, but a trace cannot use them.
+     ``generate_root_proof`` / ``verify_root_proof``
+     (core/knowledge_tree.py) emit and check a full leaf-to-tree-root
+     envelope, so "provably included under the root this trace recorded"
+     is reachable from a proof object — roughly 1.6 KB against a 1.17 MB
+     tree, not the whole tree. An earlier version of this note said the
+     step was "not reachable without shipping the whole tree", which
+     overstated the cost by ~2400x and was read as a reason the design
+     stopped there; it is corrected here rather than deleted, because that
+     sentence was load-bearing.
+     What still blocks the trace specifically is narrower and is a schema
+     question, not a proof one: ``content_hash`` below is
+     ``sha256(content)`` while a Merkle leaf is
+     ``hash_leaf(content, branch, created)``, so per-leaf hashes recorded
+     here are in a different namespace from the ones a proof commits to.
+     Binding the two means either adopting ``hash_leaf`` or first fixing
+     the index-time ``created`` defect that motivated the fork.
 
 Storage location: ``data/``, NOT the spec's ``state/``. ``data/`` is
 gitignored (.gitignore:2) and listed in .dockerignore; ``state/`` is
