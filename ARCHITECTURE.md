@@ -29,6 +29,28 @@ A knowledge tree that only grows becomes a liability. PCIS includes a pruning pr
 ## 7. Model-Agnostic Design
 PCIS does not depend on any specific language model. The knowledge tree and integrity layer are model-independent; the adversarial pass and gap-scan call an LLM over HTTP — the shipped gardener speaks the local Ollama and MLX endpoints (`PCIS_GARDENER_MODEL`, `OLLAMA_HOST`, `PCIS_MLX_HOST`), and the external validator (`core/adversarial_validator.py`, which runs over the demo tree) adds Anthropic, OpenAI, and OpenAI-compatible providers selected in `config.json`. The model behind those endpoints — Qwen, Llama, GPT-4, Claude, or any locally-hosted model — can be swapped without touching the memory layer; pointing the gardener itself at a cloud vendor API would need a new call path, not a config change. This means no vendor lock-in, no retraining required when models change, and the ability to run entirely on-premises with local models.
 
+**Where the line falls, measurably.** The storage and integrity layer carries no provider knowledge
+at all: `core/signing.py` and `core/provenance_ledger.py` contain **zero** provider references, and
+`core/knowledge_tree.py`'s only match is a prompt-injection pattern (`:108`) that matches
+config-extraction text such as `export OPENAI KEY` (it also covers ANTHROPIC, AWS, API, TOKEN and
+SECRET variants, with nothing but whitespace or control characters between the words, so
+`export OPENAI_API_KEY` does not match); it logs, never blocks, and is not an integration. The
+invocation layer is the opposite: `core/gardener.py` ships `call_ollama`, `call_mlx` and a
+`call_llm` dispatcher. So record integrity is model-independent; record content is not, because the
+gardener writes leaves through `call_ollama`/`call_mlx`/`call_llm`. Pruning
+(`core/knowledge_prune.py`) is rule-based and calls no model. `TestIdentityPortability` checks
+exactly this much: `compute_root_hash` ignores a `_model_config` key added to the tree. No model
+runs in it.
+
+**What model-agnosticism does not buy, and this is the honest limit.** Portability of the *record*
+is not portability of *behaviour*. The integrity layer does not move when you swap the model; **the
+agent's conduct does.** PCIS guarantees that the current substrate, with each leaf's `created`
+timestamp (part of the leaf hash), survives a model swap. A soft prune, the default, keeps the leaf
+in the Merkle root and marks it pruned. A hard prune removes it and changes the branch hash. Only a
+soft prune keeps the leaf. PCIS does not guarantee that the next model reasons over that substrate
+as well as the last one. Anyone claiming "any model, any provider" as a behavioural property is
+overreading this section.
+
 ## 8. Typed Synapse Graph
 
 `core/knowledge_synapses.py`
