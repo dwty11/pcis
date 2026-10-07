@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# verify.sh — verify the PCIS knowledge chain, end to end.
+# verify.sh — verify each leaf's content against the root stored in the tree file.
 #
 # Re-derives every leaf hash from its CONTENT (not the cached hashes),
 # recomputes the Merkle root, and reports whether the record is untampered.
 # A thin wrapper over `pcis verify` + `pcis root` — the real content check:
-# a one-byte edit to any leaf flips the status to TAMPERED.
+# a one-byte edit to any leaf's content flips the status to TAMPERED.
 #
 # Usage:
 #   bash setup.sh     # one-time: initialize data/tree.json

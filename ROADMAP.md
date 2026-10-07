@@ -1,6 +1,6 @@
 # PCIS Roadmap
 
-Honest about what v1.0 is and what comes next.
+Honest about what v1.5.0 is and what comes next.
 
 ---
 
@@ -8,8 +8,8 @@ Honest about what v1.0 is and what comes next.
 
 PCIS is one substrate that sells into three distinct audiences via three distinct framings.
 
-- **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one is detectable by the other with math — no trusted third party needed in that exchange. Demonstrated in a prior release; a multi-agent demo returns after the witness-layer redesign. (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
-- **Position B — Single-agent compliance.** Every commitment an AI makes carries an audit trail that survives discovery, replay, and dispute. Shown in the Advocate Demo (Demo 1, below).
+- **Position A — Multi-agent coordination.** Between agents that exchange signed transcripts, a lie by one can be made detectable by the other with math — no trusted third party needed in that exchange. Shown in a prior release's demo; the current code stages cross-agent checks but does not enforce them (Later → Multi-agent enforcement); a multi-agent demo returns after the witness-layer redesign. (Narrower than equivocation-proofness: a dishonest operator can still maintain two trees — see Limitations.)
+- **Position B — Single-agent compliance.** Every claim committed to the record carries an audit trail — hash-bound content and challenges, with the links between them recorded but not hash-checked — for discovery, replay and dispute. Shown in the Advocate Demo (Demo 1, below).
 - **Position C — Identity continuity.** Your AI's identity survives the model swap. The pianist changes; the song does not ([amended](#amendment--model-agnosticism): the *score* does not — the performance is the pianist's). Future demo (Pianist Swap).
 
 ---
@@ -20,37 +20,37 @@ PCIS is designed around seven recurring failure modes of production AI memory sy
 
 | Failure mode | What happens | PCIS response |
 |---|---|---|
-| **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener prunes stale leaves; near-duplicate counters are rejected at commit by a semantic dedup gate |
+| **Memory entropy** | Duplicates accumulate, outdated claims persist, retrieval returns noise | Gardener flags stale leaves for a human to read; `knowledge_prune.py` separately picks candidates by age and confidence and prunes them |
 | **No claim revision** | Contradicting memories coexist; system reasons from both | COUNTER leaves and a CONTRADICTS synapse from the adversarial pass; belief traversal then reports a lower net-under-challenge confidence at read time and surfaces the contradiction for review — the stored value is left intact, not silently overwritten |
 | **Summarization collapse** | Recursive compression destroys detail; memory becomes "various topics discussed" | Architecture avoids recursive summarization — one compression layer only |
 | **Retrieval bias** | Vector search reinforces popular/recent claims regardless of truth | Adversarial pass specifically targets high-confidence echo chambers |
-| **Identity fragmentation** | Memory clusters become disconnected; agent contradicts itself across sessions | Cross-branch synapses, single Merkle-verified root |
+| **Identity fragmentation** | Memory clusters become disconnected; agent contradicts itself across sessions | Cross-branch synapses, single Merkle-verified tree root (links sit outside it) |
 | **No epistemic hygiene** | Errors accumulate silently; no mechanism to challenge claims | Gardener is dedicated epistemic maintenance — this is the entire architecture |
-| **Storage cost collapse** | Developers delete memories or hit hard limits; knowledge base destroyed | `knowledge_prune.py` — evidence-based pruning, not size-based deletion |
+| **Storage cost collapse** | Developers delete memories or hit hard limits; knowledge base destroyed | `knowledge_prune.py` — rule-based pruning by age and confidence, not size-based deletion |
 
 > *"Memory is not the problem. Epistemology is."*
 
 ---
 
-## v1.4.1 (current)
+## v1.5.0 (current)
 
 - [x] Persistent knowledge tree — JSON-based, branch/leaf structure
 - [x] Merkle integrity verification — SHA-256 root hash, tamper-evident
 - [x] Adversarial pass — the gardener challenges high-confidence leaves on a local model, generates COUNTER entries
-- [x] Gap-scan — reads session logs, finds knowledge not yet committed to tree
+- [x] Gap-scan — reads today's session note, finds knowledge not yet committed to tree
 - [x] Pruning protocol — flags stale and low-confidence leaves for review
-- [x] Cross-branch synapses — typed edges (SUPPORTS / CONTRADICTS / REFINES / DERIVES_FROM / SUPERSEDES), Merkle-chained
+- [x] Cross-branch synapses — typed edges (SUPPORTS / CONTRADICTS / REFINES / DERIVES_FROM / SUPERSEDES), each with its own SHA-256; a combined root over tree and links is written, but nothing checks it (see Open defects)
 - [x] Belief traversal — BFS confidence assessment, stance classification (CONFIDENT / UNCERTAIN / CONTESTED / SUPERSEDED), plain-English reasoning
 - [x] Semantic search — embedding-based query via Ollama + nomic-embed-text, keyword fallback when unavailable
 - [x] Model-agnostic design — swap LLM without touching memory layer ([amended](#amendment--model-agnosticism): the *memory* is model-agnostic; cognition is not)
-- [x] Belief version history — append-only log of every confidence change, counter-argument, and update; full audit trail via belief_history.py
+- [x] Belief version history — append-only log (`belief_history.py`) of the confidence changes made by decay (`pcis decay`) and by adding a synapse through the Python API with `tree=`; gardener counters, direct adds, `knowledge_prune.py --review` refreshes and the demo server's recompute are not in this log
 - [x] Demo UI — nine-tab Flask app, runs locally in 60 seconds
 
 ---
 
 ## Demo 1 — The Advocate Demo
 
-A CLI proof-of-concept for single-agent compliance and self-challenge (Position B). A legal-assistant agent holds a fabricated case citation at 0.95 confidence; the gardener — not told which leaf to attack — challenges it against the record's own verification note. Its confidence moves under challenge and the counter is surfaced for review, permanently on the record. Runs in under 60 seconds.
+A CLI proof-of-concept for single-agent compliance and self-challenge (Position B). A legal-assistant agent holds a fabricated case citation at 0.95 confidence; the gardener — not told which leaf to attack — challenges it against the record's own verification note. Its confidence moves under challenge and the counter is surfaced for review; a live gardener pass writes the counter to the record. Runs in under 60 seconds.
 
 ```bash
 cd demo/advocate-demo
@@ -84,11 +84,22 @@ The pianist changes and the score does not — but the performance is the pianis
 
 ---
 
+## Planned: running an agent behind the record
+
+These are plans. Nothing in this section is part of this repository.
+
+- **One checkpoint.** Every tool call and model call an agent makes would pass through a single process that checks it before anything acts, and the agent would hold no files or secrets of its own.
+- **A chained log.** That checkpoint's decisions would be appended to a hash-chained log that a verifier can re-derive.
+- **A seal from outside.** The log's latest entry would be sealed with a key kept off the machine. That seal covers the log, not the tree's signed root; the two are different objects.
+- **A confirmation record.** For each conclusion an agent reaches, an entry that a named expert confirms or rejects: fingerprints of the conclusion and of what it rested on, who decided, when, and the decision. Never the content.
+
+---
+
 ## Roadmap and boundaries
 
 Three buckets, so a reader can tell which gaps are on the path and which are architectural boundaries that belong to other layers.
 
-**The floor these gaps sit on — shipped and proven today:** the record is tamper-evident end to end (a SHA-256 Merkle root re-derived from leaf content on every verify, so any edit shows), the gardener adversarially challenges the highest-confidence claims, and the Merkle root is signed with an Ed25519 key whose signature is verified against a **pinned** public-key fingerprint (no embedded-key trust). Holding that key off the machine — so a compromised host cannot forge the root — is a supported deployment pattern via the API, **not the default** ([Signing](docs/SIGNING.md)). Everything below is what is *not* yet done; none of it subtracts from that floor.
+**The floor these gaps sit on — shipped and proven today:** every leaf's content is tamper-evident (a SHA-256 Merkle root re-derived from leaf content on every verify, so a content edit that leaves the stored hashes alone shows; confidence, source, id and the pruned flag sit outside the leaf hash — see Known limitations), the gardener adversarially challenges the highest-confidence claims, and the Merkle root can be signed with an Ed25519 key whose signature is verified against a **pinned** public-key fingerprint (no embedded-key trust). Holding that key off the machine — so a compromised host cannot forge the root — is a supported deployment pattern via the API, **not the default** ([Signing](docs/SIGNING.md)). Everything below is what is *not* yet done; none of it subtracts from that floor.
 
 ### Next — named, shaped, intended
 
@@ -250,8 +261,8 @@ PCIS competes on two fronts, and the differentiator is different on each:
 |---|---|---|
 | **Memoria** (MatrixOne) | Git-level branching and rollback, hybrid semantic search, broad MCP agent support | A tamper-evident Merkle record plus an adversarial pass; runs as a local JSON file, not cloud-coupled by default. |
 | **ByteRover** | Consumer-friendly, 30k+ downloads, agent memory plugin | Tamper evidence, adversarial claim-challenge, and a compliance audit trail. |
-| **Letta / MemGPT** | Mature, multi-agent, OS-memory model | Contradiction detection and epistemic hygiene; cryptographic integrity over every state. |
-| **Mem0** | Simple API, easy integration | Claim revision (the gardener) and proof of what the agent knew, and when. |
+| **Letta / MemGPT** | Mature, multi-agent, OS-memory model | Contradiction detection and epistemic hygiene; a Merkle root re-derived from the record's content. |
+| **Mem0** | Simple API, easy integration | Claim revision (the gardener) and a tamper-evident record of what the agent held, with the times it recorded. |
 | **Traditional RAG** | Fast, scalable, well-understood | A challenged claim record with contradiction detection — retrieval alone maintains none. |
 
 ### vs. tamper-evident / audit ledgers — wedge: the self-challenge
@@ -272,8 +283,22 @@ These prove the log wasn't edited. Most of them don't test whether the claim sti
 
 ## Known limitations
 
+### Open defects
+
+Seven defects, found and not fixed in 1.5.0.
+
+- **`verify` trusts its own file.** It compares the re-derived root with the root stored in the same file, so a rewrite that recomputes every hash and the root passes; only a root held outside the file catches it. *A test in this repository shows it: `tests/test_retrieval_trace.py`, `test_coherent_rewrite_is_caught_when_nothing_else_can_see_it`, rewrites a leaf, re-derives every hash, and asserts that `verify` reports clean.*
+- **Confidence, source, leaf id and the pruned flag are outside the leaf hash.** Changing any of them passes `verify` with the root unmoved; the confidence part is set out in full below. *Reproduced by hand in three separate review passes, one of them on a clean clone. The id and pruned-flag halves were checked in the two passes that were not the clean clone. No test in this repository reproduces it.*
+- **Links between claims are not checked.** `verify` does not read them and the root signature does not cover them; the combined root over tree and links is written but nothing reads it. *Traced from the code; not yet reproduced end to end.*
+- The near-duplicate check compares a new counter only with leaves whose content starts with COUNTER:. Counters written in the gardener's current format carry no such prefix, so they are not compared with each other. Traced from the code; not yet reproduced end to end.
+- **The guard against challenging the same claim twice misses current-format counters.** It looks for a `COUNTER: [id]` prefix in leaf content, which counters in the gardener's current format do not carry. *Traced from the code; not yet reproduced end to end.*
+- **The `data/` guard covers only `pcis init` and `pcis add`.** Only those two refuse to write into the source repository's own `data/`, and only when no `--dir` or `PCIS_BASE_DIR` is set; `gardener`, `prune`, `decay`, `link` and `sign root` write to the current directory unguarded. *Traced from the code; not yet reproduced end to end.*
+- **Applying a staged synapse writes a text leaf, not a link.** `apply_staging` in `core/gardener.py` writes a staged synapse as a `SYNAPSE:` text leaf on the `philosophy` branch. *Traced from the code; not yet reproduced end to end.*
+
+### Other limitations
+
 - Confidence values are heuristic, not Bayesian — formal updating is a Later item (Bayesian confidence, above).
-- **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten only by two internal paths, neither on the CLI: passing `tree=` to `add_synapse` (a direct Python API call) and the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint). Both currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a Later item, tied to Bayesian confidence above.
+- **Belief-state ownership is unreconciled — a challenged claim carries two confidence numbers.** The *stored* value on the leaf and the *net-under-challenge* value that belief traversal computes at read time can differ, and nothing designates one as authoritative. On the paths a user actually drives — the gardener's commit and `pcis link` — the stored value is never mutated, so only the read-time net reflects a challenge (this is by design). The stored value is rewritten on other paths. Through the Python API: passing `tree=` to `add_synapse`, the batch `recompute_all` (exposed on the demo server's `/api/belief/recompute` endpoint), and `record_outcome` in the action log when the action names a belief. Through operator commands: `pcis decay`, and the refresh option of `knowledge_prune.py --review`. The `add_synapse` and `recompute_all` paths currently *double-count* — they scale the stored value down for a contradiction, and belief traversal then subtracts the same contradiction again at read time. Reconciling which number owns "the belief" is a Later item, tied to Bayesian confidence above.
 - **Confidence is outside the leaf hash, so it is outside the tamper-evidence.** Leaf hashing
   covers `branch:timestamp:content`. Confidence is not covered. The consequence is direct: a stored
   confidence value can be rewritten with no hash movement anywhere — the leaf hash does not change,

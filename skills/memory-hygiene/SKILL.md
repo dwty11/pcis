@@ -81,7 +81,7 @@ python3 core/verify_memory.py --update
 
 ## When the Gardener Runs
 
-- Counter-leaves on operational branches (`lessons`, `technical`) are auto-committed
+- Counter-leaves on every branch except `identity`, `philosophy` and `core` are auto-committed
 - Counter-leaves on constitutional branches (`identity`, `philosophy`, `core`) are staged for user review
 - Review staged challenges: `python3 core/gardener.py --apply-staging`
 

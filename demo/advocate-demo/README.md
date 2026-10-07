@@ -17,9 +17,9 @@ verification note — a session log recording that the case returned no results 
 PCIS **did not** prove the ruling doesn't exist — an offline model can't, and the case
 citation could be real for all the model knows. What it did: a high-confidence claim with
 no source was **challenged against the record's own verification note**, its confidence
-**moved under challenge** (net 0.95 → mid-0.80s), and the challenge is now **permanently on
-the record, surfaced for a human's review.** The claim did not "fail" and it did not flip —
-it moved, and the record grew. The court says verification is the professional's duty; the
+**moved under challenge** (net 0.95 → mid-0.80s), and the challenge is now **surfaced for a human's review** — a live
+gardener pass writes it to the record. The claim did not "fail" and it did not flip —
+it moved, and the challenge sits beside it. The court says verification is the professional's duty; the
 demo makes that duty **structural**.
 
 > "PCIS catches hallucinated citations" would be a lie. This is the true claim, and it is

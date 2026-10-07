@@ -6,18 +6,20 @@ Today's AI memory systems ask *"What should I remember?"* PCIS asks: **"Should I
 
 Tamper-evidence is a commodity — ChainProof, SignLedger, Capsule Protocol, Signatrust, VCP all ship it, and say so: chain verification tells you whether the *log* was touched, not whether the *claim* still holds. An intact record and a stale belief coexist just fine. PCIS is built for the second problem.
 
-On every maintenance pass, an adversarial process — **the gardener** — reads the knowledge tree, with the last five days of session memory as context, and attacks its highest-confidence claims. Challenges that hold become permanent COUNTER entries; nothing is overwritten. Routine counters on operational branches are committed automatically; challenges to constitutional beliefs and new cross-claim links are staged for you to review and apply. That gate governs what the gardener writes. It is not yet the whole surface: **direct additions to open branches are not yet gated** — a claim added with `pcis add` lands in the record without staging or certification.
+On every maintenance pass, an adversarial process — **the gardener** — reads the knowledge tree, with the daily notes of the last five days as context (500 characters of each, 1,500 in all), and attacks its highest-confidence claims. Each challenge it returns is staged for your review when it touches a constitutional belief; otherwise it is committed as a COUNTER leaf, unless a check drops it first. Nothing checks whether a challenge is right, and nothing is overwritten. The connections the gardener suggests between claims are staged too. That gate governs what the gardener writes. It is not yet the whole surface: **direct additions to open branches are not yet gated** — a claim added with `pcis add` lands in the record without staging or certification.
 
-The Merkle root is signed (Ed25519), and verification pins the signer's public key by fingerprint — a forged signature can't validate under its own embedded key. The gardener holds no key and never signs; signing is a separate, operator-invoked step. The boundary that can keep the record honest even against a compromised host is a physical one — holding that signing key off the machine — but that is a supported deployment pattern, not the default: see [Signing](docs/SIGNING.md).
+The Merkle root can be signed (Ed25519), and verification pins the signer's public key by fingerprint — a forged signature can't validate under its own embedded key. The gardener holds no key and never signs; signing is a separate, operator-invoked step. The boundary that can keep the record honest even against a compromised host is a physical one — holding that signing key off the machine — but that is a supported deployment pattern, not the default: see [Signing](docs/SIGNING.md).
 
 > **RAG retrieves. PCIS proves.**
 > **Memory is not the problem. Epistemology is.**
 
 **The full argument:** [Persistent Cognitive Integrity — the case](docs/PCIS.md). This README is the front door; the essay is the *why*.
 
-[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.4.1-green)](CHANGELOG.md)
+[![CI](https://github.com/dwty11/pcis/actions/workflows/ci.yml/badge.svg)](https://github.com/dwty11/pcis/actions/workflows/ci.yml) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![Version](https://img.shields.io/badge/version-1.5.0-green)](CHANGELOG.md)
 
 Built by [@dwty_11](https://x.com/dwty_11)
+
+**Status: reference implementation, protocol spec in progress.** This repository holds the record and the checks on it: the knowledge tree and its Merkle verification, the gardener, belief traversal, the retrieval trace, the CLI and the demos. It does not include an agent runtime, which is planned (see [Roadmap](ROADMAP.md#planned-running-an-agent-behind-the-record)), or the off-machine half of signing: `pcis sign root` writes a bare-root signature, but `pcis sign verify` prints `INVALID` unless an approved-root certificate produced off the machine is present, and nothing in this repository produces one. That is by design — see [Signing](docs/SIGNING.md).
 
 ---
 
@@ -33,7 +35,7 @@ cd pcis
 ./run_demo.sh                 # replay a locked, recorded real gardener run — zero deps, <60s
 ```
 
-The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT), the counter is computed against the tree, and the move is surfaced for review. The demo is single-shot and does not write to disk — a live gardener pass is what commits the counter permanently. PCIS did not prove the ruling doesn't exist; what it makes structural is the verification a court calls a professional duty.
+The claim's confidence **moves under challenge** (its net drops from 0.95 into the mid-0.80s; it stays CONFIDENT), the counter is computed against the tree, and the move is surfaced for review. The demo is single-shot and does not write to disk — a live gardener pass writes the counter to the record. PCIS did not prove the ruling doesn't exist; what it makes structural is the verification a court calls a professional duty.
 
 The verification note earns its place — though not the way a single number would suggest. Run the un-hinted gardener repeatedly and it targets the plant at about the same rate with the note or without it (**7/10 vs 6/10**): it is the lone 0.95 model-sourced claim, a structural outlier it attacks either way. What the note changes is the *content* of the challenge. Without the evidence in the record, the gardener can only hedge on doctrine — *"waiver isn't automatic; likely mis-cited."* With it, the same challenge becomes a specific, verified finding: *"resolves to no decision on file; fabricated."* One model (`qwen3.5:9b @ 6488c96`), one tree, one plant; rates vary by snapshot — an illustration, not a benchmark.
 
@@ -56,7 +58,7 @@ Open `http://localhost:5555` — nine tabs (Adversarial first), the full archite
 ./verify.sh        # re-derives every leaf hash from content, recomputes the Merkle root
 ```
 
-Open `data/tree.json`, change one character in any leaf, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash *from content*, so a silently changed byte has nowhere to hide. This proves the *log* wasn't touched; the gardener challenging its own beliefs — above — is the part that isn't a commodity.
+Open `data/tree.json`, change one character in any leaf's content, run `./verify.sh` again — the status flips to `✗ TAMPERED` and names the leaf. Undo the change; `✓ Untampered`. The check re-derives every hash from content and compares it with the root stored in the same file; what that does not catch is listed under [What PCIS is not](#what-pcis-is-not). This is the commodity half; the gardener challenging its own beliefs — above — is the part that isn't a commodity.
 
 ## Challenge what your agent believes — on your own claims
 
@@ -106,14 +108,25 @@ These limits are deliberate — each belongs in a separate layer, and claiming o
 - **Not proof the output came from the tree.** A pristine tree and a hallucination can coexist; PCIS catches the second only insofar as the answer contradicts a leaf the agent claimed to hold.
 - **Not equivocation-proof on its own.** A dishonest operator can maintain two trees and show different versions to different parties. Closing that needs an independent witness — a separate layer, not in this repo.
 - **Not a state commitment, and no forward secrecy.** The tree is an attestation log — history-shaped, not a current-state snapshot. A compromised key allows backdating; rotation is operator-driven, old records stay verifiable under old keys.
+- **Not a review gate on every gardener write.** A counter committed on an ordinary branch also writes a link to the claim it challenges, without staging, when the model named that claim (a failed link write is ignored); only counters on constitutional beliefs and the connections the gardener suggests wait for review. On the commit path, a challenge is dropped if it names an unknown branch, fails a check, or is judged a near-duplicate.
+
+Seven more are open defects, not design — each is listed on the [Roadmap](ROADMAP.md#open-defects):
+
+- **`verify` trusts its own file.** It compares the re-derived root with the root stored in the same file, so an edit that recomputes every hash and the root passes; only a root held outside the file, such as a signed root, catches it.
+- **Confidence, source, id and the pruned flag are not hashed.** A leaf's hash covers its branch, timestamp and content, so changing any of the four passes `verify` and leaves the root unchanged.
+- **Links are not checked.** `verify` does not check the links between claims, and the root signature does not cover them.
+- The near-duplicate check compares a new counter only with leaves whose content starts with COUNTER:. Counters written in the gardener's current format carry no such prefix, so they are not compared with each other. Traced from the code; not yet reproduced end to end.
+- **The already-challenged guard misses new counters.** It looks for a `COUNTER: [id]` prefix that counters in the gardener's current format do not carry.
+- **The `data/` guard is partial.** Only `pcis init` and `pcis add` refuse to write into the source repository's own `data/`, and only when no `--dir` or `PCIS_BASE_DIR` is set.
+- **Applying a staged synapse writes a text leaf, not a link.** It is written as a `SYNAPSE:` leaf on the `philosophy` branch.
 
 ## Operational Safety
 
-In March 2026, a misconfigured environment variable sent the gardener's counter-leaves into a *stale copy* of the tree instead of the canonical one. The canonical tree was never touched, integrity checking caught the divergence, and recovery took minutes. Since then the gardener **fails loud, not wrong**: invoked directly with no `PCIS_BASE_DIR` set, it refuses to run rather than writing into a stale copy. (The `pcis` CLI defaults an unset base directory to the current directory, and refuses to write into the source repo's own `data/`.) The incident is why that guard exists.
+In March 2026, a misconfigured environment variable sent the gardener's counter-leaves into a *stale copy* of the tree instead of the canonical one. The canonical tree was never touched, integrity checking caught the divergence, and recovery took minutes. Since then the gardener **fails loud, not wrong**: invoked directly with no `PCIS_BASE_DIR` set, it refuses to run rather than writing into a stale copy. (The `pcis` CLI defaults an unset base directory to the current directory, and `pcis init` and `pcis add` refuse to write into the source repo's own `data/`.) The incident is why that guard exists.
 
 ## Why it matters
 
-When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the EU AI Act — the question is *what the agent knew, when it knew it, and whether that belief survived internal challenge.* PCIS is the layer that answers it: beneath the orchestration layer, beneath the LLM, model-agnostic. Swap GPT for Claude for a local model and the integrity layer doesn't move.
+When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the EU AI Act — the question is *what the agent knew, when it recorded it, and whether that belief survived internal challenge.* (The time is the agent's own clock — see *Not timestamp attestation*, above.) PCIS is built to answer it for the claims an agent commits to its record: beneath the orchestration layer, beneath the LLM, model-agnostic. Swap GPT for Claude for a local model and the integrity layer doesn't move.
 
 ## Go deeper
 
@@ -121,7 +134,7 @@ When an automated decision faces external audit — SR 11-7, GDPR Art. 22, the E
 - [ARCHITECTURE.md](ARCHITECTURE.md) — how it's built
 - [ROADMAP.md](ROADMAP.md) — what's in v1 and what's next
 - [demo/advocate-demo/README.md](demo/advocate-demo/README.md) — the Advocate Demo, step by step
-- [agent-plugin/](agent-plugin/) and [skills/](skills/) — drop-in agent integration; [LangChain adapter](adapters/langchain_memory.py)
+- [agent-plugin/](agent-plugin/) and [skills/](skills/) — agent integration interfaces (working, not yet used by a third-party agent); [LangChain adapter](adapters/langchain_memory.py)
 
 ## Requirements
 

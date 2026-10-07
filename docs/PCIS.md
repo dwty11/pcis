@@ -16,7 +16,7 @@ A perfectly signed, un-tampered log can still be quietly wrong — full of overc
 
 ## Tamper-evidence is the floor, not the point
 
-Tamper-evidence is a solved, commodity property. Certificate Transparency, Sigstore/Rekor, and a field of audit ledgers — ChainProof, SignLedger, Capsule Protocol, Signatrust, VCP — all ship append-only, hash-linked, signed records, and say so plainly. PCIS uses the same machinery: a Merkle-rooted tree, append-only, every state fingerprinted from content up. That part is mundane and necessary. It is the floor.
+Tamper-evidence is a solved, commodity property. Certificate Transparency, Sigstore/Rekor, and a field of audit ledgers — ChainProof, SignLedger, Capsule Protocol, Signatrust, VCP — all ship append-only, hash-linked, signed records, and say so plainly. PCIS uses the same machinery: a Merkle-rooted tree, every state fingerprinted from content up. That part is mundane and necessary. It is the floor.
 
 What most of them don't do is test whether the claim still holds. That is the part PCIS is built around.
 
@@ -24,7 +24,7 @@ What most of them don't do is test whether the claim still holds. That is the pa
 
 On every maintenance pass, an adversarial process — the **gardener** — reads the knowledge tree and attacks its highest-confidence claims: the branches where confidence runs uniformly high and spread runs low, the places most likely to have become echo chambers. It runs on a local model, with the last few days of session memory as context, and it is told to hunt contradictions and weak reasoning — not to confirm what's already there.
 
-Where a challenge holds, it becomes a permanent **COUNTER** entry: a recorded objection, hash-linked like everything else, never overwriting the claim it challenges. Routine counters on operational branches commit automatically; challenges that touch the agent's constitutional beliefs — and new links between claims — are staged for a human to review and apply. Nothing is silently rewritten in either case. The record only grows, and it grows more honest.
+A challenge the gardener returns becomes a **COUNTER** entry, unless it is staged for review or dropped first: a recorded objection, hashed like any other leaf, that never overwrites the claim it challenges. Nothing checks that the challenge is right. Counters on every branch except the constitutional three are committed automatically; counters on those three, and the connections the gardener suggests between claims, are staged for a human to review and apply. Nothing is silently rewritten in either case. A later prune can remove a leaf.
 
 This is the line between PCIS and a ledger. A ledger immortalizes what it's given and never questions it. PCIS spends its compute attacking its own high-confidence beliefs — so a claim that survives has survived not just tampering, but challenge.
 

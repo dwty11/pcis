@@ -118,7 +118,7 @@ machine, and keeping it out of version control, is the operator's responsibility
 
 | Command | Flag | Effect |
 |---------|------|--------|
-| `pcis sign init` | `--key-dir PATH` | Write keypair to `PATH/` instead of the default key dir (`$PCIS_KEY_DIR`, else `<BASE>/keys` when `PCIS_BASE_DIR` is set, else `~/.pcis/keys`) |
+| `pcis sign init` | `--key-dir PATH` | Write keypair to `PATH/` instead of the default key dir (`$PCIS_KEY_DIR`, else `~/.pcis/keys`) |
 | `pcis sign root` | `--key-path PATH` | Sign with private key at `PATH` instead of `<KEY_DIR>/pcis_signing.key` |
 | `pcis sign verify` | `--key-path PATH` | Verify using public key at `PATH` instead of `<KEY_DIR>/pcis_signing.pub` |
 
